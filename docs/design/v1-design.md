@@ -1,309 +1,316 @@
-# WP Japanese Translation Checker v1 basic design
+# WP Japanese Translation Checker v1 基本設計書
 
-## Purpose
+## 目的
 
-This document defines the user-visible behavior of WP Japanese Translation Checker（WJTC）v1.
+本書は、WP Japanese Translation Checker（WJTC）v1 における利用者から見える振る舞いを定義する。
 
-WJTC v1 allows users to select a `.po` file, check it against the supported WordPress Japanese translation style rules, and understand the result before submitting translations.
+WJTC v1 では、利用者が `.po` ファイルを選択し、対応する WordPress 日本語翻訳スタイルのルールに沿って確認し、翻訳を提出する前に結果を理解できるようにする。
 
-This design describes screens, interactions, states, messages, and focus behavior. It does not define implementation structure, parsing algorithms, validation algorithms, or internal state management.
+本書では、画面、操作、状態、メッセージ、フォーカスの振る舞いを定義する。実装構造、PO 解析方法、判定アルゴリズム、内部の状態管理方式は定義しない。
 
-## Design principles
+## 設計原則
 
-- Keep the flow centered on one task: select a `.po` file and review the validation result.
-- Clearly separate a successful check from a file that could not be checked.
-- Present Error and Warning as different confidence levels, not as equivalent failures.
-- Give each finding enough context for the user to judge what needs attention.
-- Treat the WordPress Japanese Translation Style Guide as the primary source and provide a path to it from each finding.
-- Do not add file editing, corrected file generation, result export, direct GlotPress integration, or locale selection to v1.
-- Do not rely on color alone to communicate result meaning.
-- Keep selected translation content within the browser. WJTC does not send the selected translation content to an external service as part of validation.
+- 利用フローは「`.po` ファイルを選択し、確認結果を確認する」という1つの目的に集中させる。
+- 正常に確認できた状態と、確認を実行できなかった状態を明確に分ける。
+- Error と Warning は確実性の異なる指摘として扱い、同じ意味の失敗として見せない。
+- 各指摘には、利用者自身が確認の必要性を判断できるだけの情報を示す。
+- WordPress 日本語翻訳スタイルガイドを一次情報として扱い、各指摘から確認できるようにする。
+- v1 には、ファイル編集、修正版生成、結果エクスポート、GlotPress との直接統合、ロケール選択を追加しない。
+- 意味の違いを色だけで伝えない。
+- 選択された翻訳内容はブラウザー内で扱い、確認処理のために外部サービスへ送信しない。
 
-## Primary user flow
+## 基本的な利用フロー
 
-1. The user opens WJTC.
-2. The user selects a `.po` file.
-3. WJTC shows the selected file and makes the check action available.
-4. The user starts the check.
-5. WJTC determines whether the file can be checked and whether its locale is supported.
-6. If the file cannot be checked, WJTC explains why and does not present the state as a successful result.
-7. If the locale cannot be determined, WJTC explains that the file could not be checked because its target locale could not be identified.
-8. If the locale can be determined but is unsupported, WJTC explains which locale was detected and that v1 supports Japanese (`ja`) only.
-9. If the check completes, WJTC shows a result summary.
-10. If findings exist, the user reviews individual Error and Warning findings.
-11. If no findings exist, WJTC clearly shows that the check completed successfully and no supported-rule issues were detected.
+1. 利用者が WJTC を開く。
+2. 利用者が `.po` ファイルを選択する。
+3. WJTC が選択されたファイルを表示し、確認を開始できる状態にする。
+4. 利用者が確認を開始する。
+5. WJTC が、ファイルを確認可能か、対象ロケールを判定できるか、対応ロケールかを確認する。
+6. ファイルを正常に確認できない場合、WJTC は理由を示し、正常な確認結果としては扱わない。
+7. ロケールを判定できない場合、WJTC は対象ロケールを特定できないため確認を実行できないことを示す。
+8. ロケールを判定できるが未対応の場合、WJTC は判定したロケールと、v1 が日本語（`ja`）のみ対応していることを示す。
+9. 確認が正常に完了した場合、WJTC は結果概要を表示する。
+10. 指摘がある場合、利用者は個々の Error / Warning を確認する。
+11. 指摘がない場合、WJTC は確認が正常に完了し、v1 の対象ルールでは問題が検出されなかったことを明確に示す。
 
-The same screen can contain multiple areas described below. The design does not require navigation to another page.
+以下の各領域は同一画面上に配置できる。本設計は、画面遷移を必須とはしない。
 
-## Screen areas
+## 画面上の主要領域
 
-### File input area
+### ファイル入力領域
 
-The file input area is the starting point for the task.
+ファイル入力領域は、確認作業の開始地点とする。
 
-It shows:
+以下を表示する。
 
-- an action for selecting a `.po` file
-- the selected file name after selection
-- an action for starting the check once a file is available
+- `.po` ファイルを選択するための操作
+- 選択後のファイル名
+- ファイル選択後に確認を開始するための操作
 
-Before a file is selected, the result area does not imply that a check has already taken place.
+ファイル未選択時は、まだ確認が行われていないことが分かる状態とし、結果が存在するようには見せない。
 
-When a different file is selected, the screen treats it as a new check target. Previous results must not be mistaken for results of the newly selected file.
+別のファイルが選択された場合、そのファイルを新しい確認対象として扱う。以前の確認結果を、新しく選択したファイルの結果と誤認させない。
 
-### Important feedback area
+### 重要なフィードバック領域
 
-When WJTC cannot complete a check, the important feedback area explains the reason.
+WJTC が確認を完了できない場合、重要なフィードバック領域で理由を説明する。
 
-This area is used for states such as:
+この領域では、少なくとも以下の状態を扱う。
 
-- the selected file cannot be read or interpreted as a checkable `.po` file
-- the target locale cannot be determined
-- the target locale is known but unsupported
+- 選択されたファイルを読み取れない、または確認可能な `.po` ファイルとして扱えない
+- 対象ロケールを判定できない
+- 対象ロケールは判定できるが未対応である
 
-The message should state what happened and what the user can do next, such as selecting another `.po` file.
+メッセージでは、何が起きたかと、別の `.po` ファイルを選択するなど利用者が次に行えることを示す。
 
-This area must not use wording that could be interpreted as "no issues found."
+この領域では、「問題がありませんでした」と誤解される表現を使用しない。
 
-### Result summary area
+### 結果概要領域
 
-After a successful check, the result summary shows:
+確認が正常に完了した後、結果概要領域で以下を確認できるようにする。
 
-- that the check completed
-- the Error count
-- the Warning count
-- whether no supported-rule issues were detected
+- 確認が完了したこと
+- Error 件数
+- Warning 件数
+- v1 の対象ルールで問題が検出されなかったかどうか
 
-The summary appears before the individual findings so the user can understand the overall result first.
+利用者が個々の指摘を読む前に全体像を把握できるよう、結果概要は指摘一覧より先に配置する。
 
-Error and Warning are identified by text labels in addition to any visual styling.
+Error / Warning は、視覚的な表現だけでなく文字ラベルでも識別できるようにする。
 
-### Findings area
+### 指摘一覧
 
-When one or more findings exist, the findings area lists each finding in a stable, understandable order.
+1件以上の指摘がある場合、各指摘を一定した分かりやすい順序で表示する。
 
-Each finding shows enough information for the user to answer:
+各指摘から、利用者が少なくとも以下を確認できるようにする。
 
-- Which translation is this about?
-- Is this an Error or a Warning?
-- What was detected?
-- Why was it detected?
-- Which WordPress Japanese Translation Style Guide item is the basis for this finding?
-- Where can I open the primary source?
+- どの翻訳が対象か
+- Error / Warning のどちらか
+- 何が問題として検出されたか
+- なぜ指摘されたか
+- WordPress 日本語翻訳スタイルガイドのどの項目が根拠か
+- 一次情報をどこで確認できるか
 
-At minimum, a finding shows:
+各指摘には、少なくとも以下を表示する。
 
-- the target translation
-- Severity: Error or Warning
-- a concise description of the detected issue
-- an explanation of why the item was flagged
-- the relevant style guide item
-- a link to the WordPress Japanese Translation Style Guide
+- 対象となった翻訳
+- Severity: Error または Warning
+- 検出された問題の概要
+- 指摘された理由
+- 対応するスタイルガイドの項目
+- WordPress 日本語翻訳スタイルガイドへのリンク
 
-When a rule depends on the source text, including v1 Warning rules based on English wording, the same finding also shows the source text needed to judge the result.
+原文の内容を前提として判定するルールでは、v1 の Warning ルールを含め、利用者が判断に必要な原文を同じ指摘から確認できるようにする。
 
-If the `.po` file provides additional location or reference information that helps identify the translation, it may be shown as supporting context. The design does not require such information when it is not available.
+`.po` ファイル内に、対象箇所の特定に役立つ参照情報が存在する場合は、補助情報として表示してよい。ただし、その情報が存在しない場合まで必須とはしない。
 
-### No-findings completion area
+### 問題なしの完了表示
 
-If the check completes and neither Error nor Warning is found, WJTC shows a clear completion message.
+確認が正常に完了し、Error も Warning も検出されなかった場合、WJTC はそのことを明確に表示する。
 
-The message communicates both facts:
+表示では、以下の2点を伝える。
 
-- the file was checked successfully
-- no issues were detected by the rules supported in v1
+- ファイルの確認が正常に完了したこと
+- v1 が対応するルールでは問題が検出されなかったこと
 
-The message must not imply that the translation is universally correct or that the full WordPress Japanese Translation Style Guide has been satisfied.
+翻訳全体が完全に正しいことや、WordPress 日本語翻訳スタイルガイドのすべてを満たしていることを保証する表現にはしない。
 
-## User-visible states
+## 利用者から見える状態
 
-### No file selected
+### ファイル未選択
 
-The user can select a `.po` file.
+利用者は `.po` ファイルを選択できる。
 
-No validation result is shown.
+確認結果は表示しない。
 
-### File selected
+### ファイル選択済み
 
-The selected file name is visible and the user can start the check.
+選択されたファイル名を表示し、利用者が確認を開始できる。
 
-The screen does not present any old result as belonging to this file.
+以前の確認結果を、このファイルの結果として表示しない。
 
-### Checking
+### 確認中
 
-After the user starts the check, WJTC indicates that the selected file is being checked.
+利用者が確認を開始した後、WJTC が選択されたファイルを確認中であることを示す。
 
-During this state, the user should not be able to accidentally start the same check repeatedly.
+この状態では、同じ確認を誤って重複実行しないようにする。
 
-The checking indication ends when the check either completes or cannot continue.
+確認が正常に完了するか、継続できない状態になった時点で確認中表示を終了する。
 
-### Check failed because the file cannot be processed
+### ファイルを正常に確認できない
 
-WJTC explains that the file could not be checked.
+WJTC は、ファイルを確認できなかったことを説明する。
 
-This state is separate from a successful check with zero findings.
+この状態は、正常に確認した結果として指摘が0件だった状態とは明確に区別する。
 
-The user can select another file and try again.
+利用者は別のファイルを選択して再度確認できる。
 
-### Locale cannot be determined
+### ロケールを判定できない
 
-The file can be read far enough to attempt locale identification, but WJTC cannot determine the target locale.
+ファイル自体はロケール判定を試みられるところまで読み取れたが、対象ロケールを特定できない状態とする。
 
-WJTC explains that the check cannot continue because the locale could not be identified.
+WJTC は、ロケールを特定できないため確認を継続できないことを説明する。
 
-This is treated as an input that could not be fully checked, not as an unsupported-locale result and not as a successful result.
+この状態は、未対応ロケールとは分けて扱い、正常結果としても扱わない。
 
-### Unsupported locale
+### 未対応ロケール
 
-WJTC can identify the locale, but the locale is not supported by v1.
+WJTC は対象ロケールを特定できるが、v1 の対応範囲外である状態とする。
 
-WJTC shows the detected locale when it is available and explains that v1 checks Japanese (`ja`) only.
+判定できたロケールを表示可能な場合は表示し、v1 が日本語（`ja`）のみを確認対象としていることを説明する。
 
-No Japanese-specific validation result is presented for that file.
+そのファイルに対して、日本語固有ルールによる確認結果は表示しない。
 
-### Check completed with findings
+### 指摘ありで正常完了
 
-WJTC shows the summary and the findings.
+WJTC は結果概要と指摘一覧を表示する。
 
-The user can distinguish Error from Warning and can inspect the reason and style-guide basis for each item.
+利用者は Error / Warning を区別し、各指摘の理由とスタイルガイド上の根拠を確認できる。
 
-### Check completed with no findings
+### 指摘なしで正常完了
 
-WJTC shows the summary and the no-findings completion message.
+WJTC は結果概要と問題なしの完了表示を示す。
 
-The user can distinguish this state from every state where the file was not checked.
+利用者は、この状態を「確認できなかった状態」と明確に区別できる。
 
-## Error and Warning presentation
+## Error / Warning の見せ方
 
 ### Error
 
-Error means WJTC can identify the issue with high mechanical confidence under the supported rule.
+Error は、対応するルールの条件下で、機械的に高い確度で問題と判断できる指摘を示す。
 
-The finding uses the explicit label **Error**.
+各指摘には **Error** という文字ラベルを表示する。
 
-The presentation may use additional visual emphasis, but the label must carry the meaning without relying on color alone.
+追加の視覚的強調を使用してよいが、色だけに依存せず、ラベル自体で意味を判断できるようにする。
 
 ### Warning
 
-Warning means the item may be correct depending on context or an exception and should be reviewed by a person.
+Warning は、文脈や例外によって正しい可能性があり、人による確認が必要な指摘を示す。
 
-The finding uses the explicit label **Warning**.
+各指摘には **Warning** という文字ラベルを表示する。
 
-The explanation should make it clear that Warning is a review prompt rather than a statement with the same certainty as Error.
+説明では、Warning が Error と同じ確実性を持つ断定ではなく、利用者に確認を促す指摘であることが分かるようにする。
 
-For source-dependent Warning rules, the user can inspect both the source text and translation in the same finding.
+原文を参照して判定する Warning では、同じ指摘から原文と翻訳の両方を確認できるようにする。
 
-## Finding detail behavior
+## 指摘詳細の振る舞い
 
-A finding should be understandable without prior knowledge of WJTC rule names or style-guide numbering.
+各指摘は、利用者が WJTC のルール名やスタイルガイドの項目番号を事前に知らなくても理解できるようにする。
 
-The finding therefore presents the human-readable issue first and uses the style-guide item as supporting traceability.
+そのため、まず人が理解しやすい問題内容を示し、スタイルガイドの項目番号は根拠を追跡するための情報として扱う。
 
-A typical reading order is:
+基本的な確認順序は以下とする。
 
 1. Severity
-2. What translation was flagged
-3. Source text when needed for the rule
-4. What was detected
-5. Why WJTC flagged it
-6. The related style-guide item
-7. A link to the primary style-guide source
+2. 対象となった翻訳
+3. ルール上必要な場合の原文
+4. 何が問題として検出されたか
+5. なぜ WJTC が指摘したか
+6. 対応するスタイルガイドの項目
+7. 一次情報であるスタイルガイドへのリンク
 
-The style-guide link points to the WordPress Japanese Translation Style Guide:
+スタイルガイドへのリンク先は、WordPress 日本語翻訳スタイルガイドとする。
 
 https://ja.wordpress.org/team/handbook/translation/translation-style-guide/
 
-## Focus and important feedback
+## フォーカスと重要なフィードバック
 
-Focus changes are used only when they help the user reach an important result or error.
+フォーカス移動は、利用者が重要な結果やエラーへ到達しやすくなる場合に限定して行う。
 
-### After an unsuccessful check
+### 確認を正常に完了できなかった場合
 
-When the check cannot continue because of an invalid file, an unknown locale, or an unsupported locale, focus moves to the important feedback so keyboard and assistive-technology users immediately reach the reason.
+ファイル不正、ロケール判定不能、未対応ロケールにより確認を継続できない場合、フォーカスを重要なフィードバックへ移動する。
 
-### After a successful check
+これにより、キーボード利用者や支援技術の利用者が、確認できなかった理由へすぐ到達できるようにする。
 
-When the check completes successfully, focus moves to the result summary.
+### 確認が正常に完了した場合
 
-The user can then continue through the findings in document order.
+確認が正常に完了した場合、フォーカスを結果概要へ移動する。
 
-### After selecting a different file
+その後、利用者は文書上の順序で個々の指摘を確認できる。
 
-Selecting another file does not unexpectedly move focus away from the file-selection task. The user remains in control of when to start the next check.
+### 別のファイルを選択した場合
 
-## Repeated checks and consistency
+別のファイルを選択しただけでは、ファイル選択に関する操作から予期せずフォーカスを移動させない。
 
-Under the same supported rule conditions, checking the same `.po` file again produces the same user-visible result:
+次の確認をいつ開始するかは利用者が決定できる状態を維持する。
 
-- the same Error count
-- the same Warning count
-- the same set of findings
-- the same Severity for each finding
-- the same explanations and style-guide references
-- the same stable finding order
+## 再確認時の一貫性
 
-The presentation must not vary based on timing, previous checks, or unrelated prior user actions.
+同じルール条件で同じ `.po` ファイルを再度確認した場合、利用者から見える結果は同一とする。
 
-## Locale behavior
+少なくとも以下を同一とする。
 
-v1 supports Japanese (`ja`) only.
+- Error 件数
+- Warning 件数
+- 指摘の集合
+- 各指摘の Severity
+- 各指摘の説明
+- 各指摘のスタイルガイド上の根拠
+- 指摘の表示順序
 
-WJTC applies only the rules associated with the detected target locale.
+結果は、実行タイミング、過去の確認結果、今回の確認と無関係な以前の操作によって変化しない。
 
-For v1:
+## ロケールの扱い
 
-- Japanese (`ja`) uses the v1 Japanese style rules.
-- A known non-Japanese locale is shown as unsupported.
-- A file whose locale cannot be determined is shown as unable to be checked.
-- The user does not manually choose or override the locale.
+v1 では、日本語（`ja`）のみを確認対象とする。
 
-This keeps the v1 user flow simple while preserving a clear boundary for future locale support.
+WJTC は、判定した対象ロケールに適用されるルールだけを使用する。
 
-## v1 boundaries
+v1 では以下のように扱う。
 
-The following are not part of this design:
+- 日本語（`ja`）には、v1 の日本語翻訳スタイルルールを適用する。
+- 日本語以外のロケールを判定できた場合は、未対応ロケールとして扱う。
+- ロケール自体を判定できない場合は、確認を実行できない状態として扱う。
+- 利用者によるロケールの手動選択や上書きは行わない。
 
-- editing translations inside WJTC
-- automatically correcting a `.po` file
-- generating a corrected `.po` file
-- exporting the validation result
-- sending changes to translate.wordpress.org
-- direct GlotPress integration
-- selecting a locale manually
-- checking non-Japanese locale rules
-- AI evaluation of translation quality
-- general Japanese spell checking
-- replacing the WordPress Japanese Translation Style Guide
+これにより、v1 の利用フローを単純に保ちつつ、将来ロケールを追加する場合の境界も明確にする。
 
-## Requirements traceability
+## v1 の対象外
 
-| Requirement | User-visible design |
+以下は、本設計の対象に含めない。
+
+- WJTC 上での翻訳編集
+- `.po` ファイルの自動修正
+- 修正版 `.po` ファイルの生成
+- 確認結果のエクスポート
+- translate.wordpress.org への変更反映
+- GlotPress との直接統合
+- 利用者によるロケール選択
+- 日本語以外のロケールルールの確認
+- AI による翻訳品質評価
+- 一般的な日本語スペルチェック
+- WordPress 日本語翻訳スタイルガイドそのものの代替
+
+## 要件トレーサビリティ
+
+| 要件 | 利用者向け設計 |
 | --- | --- |
-| FR-01 | File input area and primary user flow allow a user to select and check a `.po` file. |
-| FR-02 | Invalid-file and locale-undetermined states clearly say that the file could not be checked and are separated from successful results. |
-| FR-03 | Successful checks produce findings for the Japanese rules defined as v1 scope. |
-| FR-04 | Result summary shows completion, Error count, Warning count, and no-findings status. |
-| FR-05 | Each finding shows the target translation and available supporting context needed to identify it. |
-| FR-06 | Each finding shows Severity, what was detected, and why it was flagged; source text is included when needed to judge the rule. |
-| FR-07 | Each finding identifies the relevant style-guide item and provides a link to the WordPress Japanese Translation Style Guide. |
-| FR-08 | A dedicated no-findings completion state clearly distinguishes a successful zero-finding result from an empty or failed state. |
-| FR-09 | Locale behavior applies only the rules for the detected locale; v1 applies Japanese rules only to Japanese files. |
-| FR-10 | A known unsupported locale is shown as unsupported and is never presented as a successful no-findings result. |
-| QR-01 | The design states that selected translation content remains in the browser and is not sent to an external validation service. |
-| QR-02 | Repeated checks with the same file and rule conditions produce the same counts, findings, severity, explanations, references, and stable order. |
-| QR-03 | Findings use plain-language explanations and source/style-guide context so users do not need prior knowledge of WJTC internals or guide numbering. |
+| FR-01 | ファイル入力領域と基本的な利用フローにより、利用者が `.po` ファイルを選択して確認できる。 |
+| FR-02 | ファイル不正とロケール判定不能を、確認できなかった状態として明示し、正常結果と分離する。 |
+| FR-03 | 正常に確認できた場合、v1 対象として定義された日本語ルールによる指摘を表示する。 |
+| FR-04 | 結果概要で、確認完了、Error 件数、Warning 件数、問題なしの状態を確認できる。 |
+| FR-05 | 各指摘から対象翻訳と、利用可能な補助情報を確認できる。 |
+| FR-06 | 各指摘から Severity、問題内容、判定理由を確認でき、必要なルールでは原文も確認できる。 |
+| FR-07 | 各指摘から対応するスタイルガイド項目と WordPress 日本語翻訳スタイルガイドへのリンクを確認できる。 |
+| FR-08 | 問題なしの完了表示により、正常に確認した結果として指摘が0件だった状態を、未確認・確認失敗と区別できる。 |
+| FR-09 | 判定したロケールに適用されるルールだけを使用し、v1 では日本語ファイルにのみ日本語ルールを適用する。 |
+| FR-10 | 判定できた未対応ロケールは未対応として案内し、正常に確認済みの問題なし状態として扱わない。 |
+| QR-01 | 選択された翻訳内容をブラウザー内で扱い、外部の確認サービスへ送信しない。 |
+| QR-02 | 同じファイルと同じルール条件では、件数、指摘、Severity、説明、根拠、表示順序を含む同じ結果を示す。 |
+| QR-03 | 各指摘を平易な説明と原文・スタイルガイド情報で示し、WJTC 内部知識や項目番号を事前に知らなくても理解できる。 |
 
-## Completion view
+## 完了状態
 
-The v1 experience is complete when a user can move from selecting a `.po` file to one of two clearly distinguishable outcomes:
+v1 の利用体験では、利用者が `.po` ファイルを選択してから、以下のどちらかへ明確に到達できることを基本とする。
 
-- the file was successfully checked and the result can be understood, or
-- the file could not be checked and the reason can be understood
+- ファイルを正常に確認でき、結果を理解できる
+- ファイルを確認できず、その理由を理解できる
 
-Within a successful result, the user can then distinguish between:
+正常に確認できた場合は、さらに以下を区別できる。
 
-- Error findings
-- Warning findings
-- no supported-rule findings
+- Error の指摘
+- Warning の指摘
+- v1 の対象ルールでは指摘なし
 
-and can trace each finding back to the relevant WordPress Japanese Translation Style Guide item.
+また、各指摘から対応する WordPress 日本語翻訳スタイルガイドの項目を確認できるようにする。
