@@ -47,12 +47,6 @@ gh pr view <pr-number>
 
 # PR一覧を表示
 gh pr list
-
-# 手動検証ワークフローを実行
-gh workflow run "PR Validation" --ref <branch-name>
-
-# ワークフローの実行状況を確認
-gh run list --workflow "PR Validation" --limit 10
 ```
 
 必要な場合は`--repo YamabikoLab/wp-ja-translation-checker`を付けて対象リポジトリを明示します。
