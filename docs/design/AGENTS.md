@@ -26,8 +26,8 @@ These instructions apply to design documents under `docs/design/`.
 
 Good:
 
-> When the first-time guidance appears, move focus to the row-reordering control so the user can immediately identify where to start. Display the guidance message near the control without covering it.
+> After the user pastes translation text and starts a check, show each detected issue with enough context to understand what needs attention.
 
 Bad:
 
-> During the first-time guidance, make the entry point to row reordering easy to identify.
+> Run the checker and update the result state when parsing finishes.
