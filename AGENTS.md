@@ -32,6 +32,7 @@ These instructions apply to the entire repository.
 - When repository work is performed, briefly report the work performed, changed files, validation results, and any open items.
 - Never report validation as successful unless it actually ran successfully.
 - If validation was not run or was intentionally left to the user, state that clearly.
+- When changes are pushed, include a compare URL using the repository state at the start of the work and the pushed SHA.
 
 ## Working rules
 
