@@ -38,10 +38,10 @@ Use requirement IDs when individual requirements need stable references from des
 
 Use these prefixes:
 
-| Prefix | Meaning | Use for |
-| --- | --- | --- |
-| `FR` | Functional Requirement | Capabilities or behavior that users or the product must be able to achieve. |
-| `QR` | Quality Requirement | Qualities or constraints the product must satisfy, such as performance, reliability, compatibility, usability, or security. |
+| Prefix | Meaning                | Use for                                                                                                                     |
+| ------ | ---------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `FR`   | Functional Requirement | Capabilities or behavior that users or the product must be able to achieve.                                                 |
+| `QR`   | Quality Requirement    | Qualities or constraints the product must satisfy, such as performance, reliability, compatibility, usability, or security. |
 
 Examples:
 
