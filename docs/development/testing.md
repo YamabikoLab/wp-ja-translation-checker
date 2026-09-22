@@ -17,10 +17,12 @@ This is environment setup rather than a source validation check.
 The current `package.json` provides these non-interactive validation commands:
 
 ```bash
+npm run format:check
 npm run lint
 npm run build
 ```
 
+- `npm run format:check` checks repository formatting with Prettier.
 - `npm run lint` runs ESLint across the repository.
 - `npm run build` runs the TypeScript build and creates the Vite production bundle.
 - The build writes generated output under `dist/`; do not commit it.
@@ -47,8 +49,8 @@ They are long-running or interactive and should not be treated as handoff valida
 ## Which checks to run
 
 - Documentation-only changes: `git diff --check origin/main...HEAD`.
-- JavaScript, TypeScript, JSX, TSX, or configuration changes that affect application compilation: `npm run lint`, `npm run build`, and the repository check.
-- Dependency manifest or lock-file changes: run the applicable source checks after `npm ci` and keep `package.json` and `package-lock.json` aligned.
+- JavaScript, TypeScript, JSX, TSX, or configuration changes that affect application compilation: `npm run format:check`, `npm run lint`, `npm run build`, and the repository check.
+- Dependency manifest or lock-file changes: run `npm run format:check` plus the applicable source checks after `npm ci`, and keep `package.json` and `package-lock.json` aligned.
 - Mixed changes: combine the applicable groups.
 
 Use only checks that exist in the current repository. When `package.json` scripts or validation tooling change, update this document in the same change.
