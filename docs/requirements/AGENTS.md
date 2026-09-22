@@ -22,7 +22,7 @@ When writing **Why**:
 - Keep the reason at the same user, product, quality, or business abstraction level as requirements.
 - Do not add new behavior, constraints, supported scope, acceptance criteria, or quality guarantees that are not already part of the requirement.
 - Do not use the reason to change, narrow, or broaden the meaning of the requirement.
-- Do not duplicate Basic Design or Architecture decisions. If a reason depends on a specific realization choice, that content belongs in downstream design documentation instead.
+- Do not duplicate Design or Architecture decisions. If a reason depends on a specific realization choice, that content belongs in downstream design documentation instead.
 - Write the reason so that downstream documents can reference the requirement ID and understand both the required outcome and its intent.
 
 ## Abstraction boundary
@@ -34,29 +34,21 @@ When writing **Why**:
 
 ## Requirement IDs
 
-Use requirement IDs to make individual requirements easy to reference from design, architecture, implementation, tests, Issues, and PRs.
+Use requirement IDs when individual requirements need stable references from design, architecture, implementation, tests, Issues, or PRs.
 
-Use the following prefixes unless another category or requirement scope is explicitly defined in this file.
+Use these prefixes:
 
 | Prefix | Meaning | Use for |
 | --- | --- | --- |
 | `FR` | Functional Requirement | Capabilities or behavior that users or the product must be able to achieve. |
 | `QR` | Quality Requirement | Qualities or constraints the product must satisfy, such as performance, reliability, compatibility, usability, or security. |
-| `RF-FR` | Reorder Form Functional Requirement | Functional requirements specific to the Reorder Form requirement scope. |
-| `A11Y-FR` | Accessibility Functional Requirement | Functional requirements specific to the independently managed Accessibility requirement scope. |
 
 Examples:
 
-- `FR-01`: A supported table row can be reordered.
-- `QR-01`: YTR does not substantially increase the update cost of the supported table it reorders.
-- `RF-FR-01`: A user can uniquely specify the row or column to move with Reorder Form.
-- `A11Y-FR-01`: A user can complete the required Reorder Form operation using only a keyboard.
+- `FR-01`: A user can check pasted translation text for supported style-guide issues.
+- `QR-01`: The checker does not send pasted translation text to an external service without an explicit product requirement.
 
-`RF-FR-XX` is a scoped Functional Requirement ID. `RF` identifies the Reorder Form requirement scope, while `FR` keeps the requirement category explicit. Requirements shared by multiple reorder methods continue to use the common `FR-XX` IDs and must not be duplicated under an RF-scoped ID.
-
-`A11Y-FR-XX` is a scoped Functional Requirement ID. `A11Y` identifies the independently managed Accessibility requirement scope, while `FR` keeps the requirement category explicit. Existing Reorder or Reorder Form capabilities remain defined by their original requirement IDs; Accessibility requirements add only the capabilities needed to make those existing behaviors accessible and must not redefine them.
-
-Do not introduce a new requirement prefix or scope only to make a document look more structured. Add another prefix or scope only when a distinct requirement category or independently managed requirement scope is actually needed, and define its meaning and intended use here before using it in requirements documents.
+Do not introduce a new requirement prefix or scope only to make a document look more structured. Add another prefix only when a distinct requirement category or independently managed scope is actually needed, and define its meaning before using it.
 
 ## Readability
 
@@ -67,10 +59,10 @@ Do not introduce a new requirement prefix or scope only to make a document look 
 
 Good:
 
-> What: First-time users must be able to clearly identify the entry point to row reordering.
+> What: Users must be able to identify supported style-guide issues before submitting a translation.
 >
-> Why: So users can discover the capability without prior knowledge of the product.
+> Why: So avoidable style-guide problems can be corrected before review.
 
 Bad:
 
-> Focus the row-reorder toolbar control when the first pointer event is handled.
+> Run each check in sequence and append violations to the result array.
