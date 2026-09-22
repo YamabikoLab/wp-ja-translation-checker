@@ -145,7 +145,14 @@ function App() {
               <span className="step">2</span>
               <h2 id="result-heading">確認結果</h2>
             </div>
-            <span className="locale-chip">Locale: ja</span>
+            <span className="locale-chip">
+              Locale:{' '}
+              {mockState === 'unsupported-locale'
+                ? 'fr_FR'
+                : mockState === 'unknown-locale'
+                  ? '判定不能'
+                  : 'ja'}
+            </span>
           </div>
 
           <div ref={resultRef} tabIndex={-1} className="result-focus-target">
