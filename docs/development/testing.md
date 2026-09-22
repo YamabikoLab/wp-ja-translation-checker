@@ -35,6 +35,12 @@ git diff --check origin/main...HEAD
 
 The repository currently has no configured automated test runner. Do not report unit, integration, or E2E tests as passing unless a test runner has been added and the corresponding command was actually run.
 
+## Security validation
+
+Gitleaks runs in GitHub Actions as a dedicated security workflow for pull requests, pushes to `main`, and manual runs. It scans the full Git history with the standard Gitleaks rules and redacts detected secret values from logs.
+
+Gitleaks is not an npm validation command and is not required as a local development dependency.
+
 ## Development commands
 
 These commands are useful for development but are not completion checks:
@@ -51,6 +57,7 @@ They are long-running or interactive and should not be treated as handoff valida
 - Documentation-only changes: `git diff --check origin/main...HEAD`.
 - JavaScript, TypeScript, JSX, TSX, or configuration changes that affect application compilation: `npm run format:check`, `npm run lint`, `npm run build`, and the repository check.
 - Dependency manifest or lock-file changes: run `npm run format:check` plus the applicable source checks after `npm ci`, and keep `package.json` and `package-lock.json` aligned.
+- GitHub Actions workflow changes: review the final workflow diff and run `git diff --check origin/main...HEAD`.
 - Mixed changes: combine the applicable groups.
 
 Use only checks that exist in the current repository. When `package.json` scripts or validation tooling change, update this document in the same change.
