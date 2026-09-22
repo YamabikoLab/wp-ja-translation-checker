@@ -1,0 +1,76 @@
+# Requirements documentation instructions
+
+These instructions apply to requirements documents under `docs/requirements/`.
+
+## Purpose
+
+- Describe what users, the product, quality, or the business must be able to achieve.
+- Keep requirements focused on **What** and, when it helps explain the requirement, **Why**.
+- Do not describe **How** a requirement will be realized. Leave that to design documentation.
+- Keep requirements independent from a specific implementation approach.
+
+## What / Why / How boundary
+
+- **What** defines the capability, behavior, quality, or business outcome that must be satisfied.
+- **Why** explains why that requirement exists or what user, product, quality, or business value it protects.
+- **How** describes realization details such as interaction flow, internal responsibility, state management, APIs, events, data structures, DOM, source structure, or implementation technique. Keep **How** out of requirements documents.
+- A requirement and its reason should be understandable together without consulting implementation or design details.
+
+When writing **Why**:
+
+- Explain the need, intent, or value behind the requirement rather than restating the requirement in different words.
+- Keep the reason at the same user, product, quality, or business abstraction level as requirements.
+- Do not add new behavior, constraints, supported scope, acceptance criteria, or quality guarantees that are not already part of the requirement.
+- Do not use the reason to change, narrow, or broaden the meaning of the requirement.
+- Do not duplicate Basic Design or Architecture decisions. If a reason depends on a specific realization choice, that content belongs in downstream design documentation instead.
+- Write the reason so that downstream documents can reference the requirement ID and understand both the required outcome and its intent.
+
+## Abstraction boundary
+
+- Write from a user, product, quality, or business perspective.
+- Leave concrete screen behavior, interaction flow, focus destination, and other realization details to design documents.
+- Do not include source files, functions, variables, events, internal state, APIs, CSS, DOM structure, or test implementation details.
+- Do not write statements that require reading source code to understand their meaning.
+
+## Requirement IDs
+
+Use requirement IDs to make individual requirements easy to reference from design, architecture, implementation, tests, Issues, and PRs.
+
+Use the following prefixes unless another category or requirement scope is explicitly defined in this file.
+
+| Prefix | Meaning | Use for |
+| --- | --- | --- |
+| `FR` | Functional Requirement | Capabilities or behavior that users or the product must be able to achieve. |
+| `QR` | Quality Requirement | Qualities or constraints the product must satisfy, such as performance, reliability, compatibility, usability, or security. |
+| `RF-FR` | Reorder Form Functional Requirement | Functional requirements specific to the Reorder Form requirement scope. |
+| `A11Y-FR` | Accessibility Functional Requirement | Functional requirements specific to the independently managed Accessibility requirement scope. |
+
+Examples:
+
+- `FR-01`: A supported table row can be reordered.
+- `QR-01`: YTR does not substantially increase the update cost of the supported table it reorders.
+- `RF-FR-01`: A user can uniquely specify the row or column to move with Reorder Form.
+- `A11Y-FR-01`: A user can complete the required Reorder Form operation using only a keyboard.
+
+`RF-FR-XX` is a scoped Functional Requirement ID. `RF` identifies the Reorder Form requirement scope, while `FR` keeps the requirement category explicit. Requirements shared by multiple reorder methods continue to use the common `FR-XX` IDs and must not be duplicated under an RF-scoped ID.
+
+`A11Y-FR-XX` is a scoped Functional Requirement ID. `A11Y` identifies the independently managed Accessibility requirement scope, while `FR` keeps the requirement category explicit. Existing Reorder or Reorder Form capabilities remain defined by their original requirement IDs; Accessibility requirements add only the capabilities needed to make those existing behaviors accessible and must not redefine them.
+
+Do not introduce a new requirement prefix or scope only to make a document look more structured. Add another prefix or scope only when a distinct requirement category or independently managed requirement scope is actually needed, and define its meaning and intended use here before using it in requirements documents.
+
+## Readability
+
+- Use plain language understandable to non-technical readers, including management-level readers with no programming knowledge.
+- Prefer outcomes and needs over implementation terminology.
+
+## Examples
+
+Good:
+
+> What: First-time users must be able to clearly identify the entry point to row reordering.
+>
+> Why: So users can discover the capability without prior knowledge of the product.
+
+Bad:
+
+> Focus the row-reorder toolbar control when the first pointer event is handled.
