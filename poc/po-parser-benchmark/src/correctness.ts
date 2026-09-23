@@ -8,10 +8,10 @@ export interface CorrectnessCheck {
 
 const representativePo = String.raw`msgid ""
 msgstr ""
-"Project-Id-Version: wjtc-poc\\n"
-"Language: ja\\n"
-"Content-Type: text/plain; charset=UTF-8\\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\\n"
+"Project-Id-Version: wjtc-poc\n"
+"Language: ja\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 msgid "Hello"
 msgstr "こんにちは"
@@ -59,7 +59,9 @@ export const runCorrectnessGate = (
       'header metadata',
       parsed.headers?.Language === 'ja' &&
         parsed.headers?.['Content-Type'] === 'text/plain; charset=UTF-8',
-      'Language と Content-Type を保持する',
+      `Language=${parsed.headers?.Language ?? '(none)'}, Content-Type=${
+        parsed.headers?.['Content-Type'] ?? '(none)'
+      }`,
     ),
     result(
       'singular msgid / msgstr',
