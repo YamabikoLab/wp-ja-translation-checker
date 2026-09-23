@@ -1,5 +1,3 @@
-import 'gettext-converter-browser'
-
 export interface ParsedTranslation {
   msgid: string
   msgid_plural?: string
