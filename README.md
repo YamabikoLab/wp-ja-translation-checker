@@ -1,73 +1,36 @@
-# React + TypeScript + Vite
+# WP Translation Checker
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+WP Translation Checker (WTC) checks WordPress translation files for supported translation-style issues before submission.
 
-Currently, two official plugins are available:
+The product is designed to support locale-specific rule sets. **v1 supports Japanese (`ja`) only**, using rules based on the WordPress Japanese Translation Style Guide. Unsupported locales must not fall back to the Japanese rule set.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+All PO processing is performed in the browser. The v1 scope does not upload translation files to a server or integrate directly with translate.wordpress.org.
 
-## React Compiler
+## Development
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+This repository uses React, TypeScript, Vite, and Vitest.
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm ci
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+Repository-wide validation commands and guidance are documented in [`docs/development/testing.md`](docs/development/testing.md).
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Documentation
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- [v1 requirements](docs/requirements/v1-requirements.md)
+- [v1 design](docs/design/v1-design.md)
+- [v1 architecture](docs/architecture/v1-architecture.md)
+- [v1 implementation plan](docs/plans/v1-plan.md)
+
+## v1 locale scope
+
+WTC itself is not limited to a specific locale. Locale-specific checks are selected through the locale boundary defined by the architecture.
+
+For v1:
+
+- supported locale: Japanese (`ja`)
+- rule source: WordPress Japanese Translation Style Guide
+- unsupported locales: reported as unsupported, without applying `ja` rules
+- additional locale rule sets: out of scope
