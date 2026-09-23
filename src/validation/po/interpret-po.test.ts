@@ -260,6 +260,84 @@ msgstr "開く"
     ])
   })
 
+
+  /**
+   * 未翻訳 entry が途中にある場合に、公開する entryIndex が filtering 後の連番になることを確認する。
+   *
+   * 事前条件:
+   * - 翻訳済み entry の間に未翻訳 entry がある。
+   *
+   * 操作:
+   * - PO 文字列を解釈する。
+   *
+   * 期待結果:
+   * - 未翻訳 entry は除外され、残る entry の entryIndex は 0 から連続する。
+   */
+  it('when untranslated entries are filtered out between translated entries, should renumber entry indexes after filtering', () => {
+    const source = `msgid ""
+msgstr ""
+
+msgid "A"
+msgstr "甲"
+
+msgid "B"
+msgstr ""
+
+msgid "C"
+msgstr "丙"
+`
+
+    const result = interpretPo(source)
+
+    expect(result.status).toBe('success')
+    if (result.status !== 'success') {
+      throw new Error('正常な PO が解析不能として扱われました。')
+    }
+
+    expect(result.document.entries.map((entry) => entry.entryIndex)).toEqual([
+      0, 1,
+    ])
+    expect(result.document.entries.map((entry) => entry.source.singular)).toEqual([
+      'A',
+      'C',
+    ])
+  })
+
+  /**
+   * 複数の plural form が翻訳済みの場合に、各 form の identity を失わないことを確認する。
+   *
+   * 事前条件:
+   * - 1つの plural entry に複数の翻訳済み form がある。
+   *
+   * 操作:
+   * - PO 文字列を解釈する。
+   *
+   * 期待結果:
+   * - 各 form が元の index と text の組で保持される。
+   */
+  it('when multiple plural forms are translated, should preserve each original translation form index', () => {
+    const source = `msgid ""
+msgstr ""
+
+msgid "One item"
+msgid_plural "Many items"
+msgstr[0] "1件"
+msgstr[1] "複数件"
+`
+
+    const result = interpretPo(source)
+
+    expect(result.status).toBe('success')
+    if (result.status !== 'success') {
+      throw new Error('正常な PO が解析不能として扱われました。')
+    }
+
+    expect(result.document.entries[0]?.translations).toEqual([
+      { index: 0, text: '1件' },
+      { index: 1, text: '複数件' },
+    ])
+  })
+
   /**
    * 同じ PO を繰り返し解釈した場合に、interpreted entry order と identity が安定することを確認する。
    *
