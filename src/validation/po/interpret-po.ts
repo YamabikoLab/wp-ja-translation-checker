@@ -1,36 +1,49 @@
 /**
- * PO 文字列を Validation Core が利用する意味データへ変換する責任を持つ。
+ * PO 文字列を Validation Core 用の意味データへ解釈する責任を持つ。
  *
- * parser 固有の表現、PO 構文名、raw source を後続責務へ公開せず、locale 判定と
- * Rule Evaluation に必要な metadata、原文、plural、翻訳 form、安定した identity だけを提供する。
+ * gettext-converter 固有の解析結果をこの境界内に閉じ込め、Locale Resolution と
+ * Rule Evaluation が必要とするメタデータ、原文、複数形、翻訳フォーム、安定した識別情報だけを公開する。
  */
 
+/**
+ * gettext-converter が1件の翻訳エントリについて返す、境界内だけの解析表現を表す。
+ *
+ * 後続責務へ公開せず、PO Interpretation の正規化にだけ利用する。
+ */
 type ParserTranslation = {
   msgid: string
   msgid_plural?: string
   msgstr?: string[]
 }
 
+/**
+ * gettext-converter が PO 全体について返す、境界内だけの解析表現を表す。
+ *
+ * ヘッダーとコンテキスト別の翻訳表は、公開契約へ変換した後は保持しない。
+ */
 type ParsedPo = {
   headers?: Record<string, string>
   translations: Record<string, Record<string, ParserTranslation>>
 }
 
+/**
+ * ブラウザー用 gettext-converter が提供する、PO Interpretation に必要な最小操作を表す。
+ */
 type GettextBrowserBundle = {
   po2js: (source: string) => unknown
 }
 
 /**
- * PO Interpretation が後続責務へ公開する metadata を表す。
+ * PO Interpretation が後続責務へ公開するメタデータを表す。
  */
 export type PoMetadata = {
   language?: string
 }
 
 /**
- * 1つの翻訳 form を表す。
+ * 1つの翻訳フォームを表す。
  *
- * index は正規化後配列の位置ではなく、元の msgstr[n] の n を保持する。
+ * index は正規化後の配列位置ではなく、元の `msgstr[n]` の `n` を保持する。
  */
 export type TranslationForm = {
   index: number
@@ -38,10 +51,10 @@ export type TranslationForm = {
 }
 
 /**
- * Rule Evaluation の1対象となる翻訳 entry を表す。
+ * Rule Evaluation の1対象となる翻訳エントリを表す。
  *
- * entryIndex は validation 対象 filtering 後の interpreted entry order に対する
- * 0-based の安定した identity であり、元 PO の物理 entry order を意味しない。
+ * entryIndex は検証対象の絞り込み後に得られる解釈済みエントリ順の0始まりの識別情報であり、
+ * 元 PO の物理的なエントリ順を意味しない。
  */
 export type TranslationEntry = {
   entryIndex: number
@@ -53,7 +66,7 @@ export type TranslationEntry = {
 }
 
 /**
- * 正常に解釈された PO の、Validation Core 用データを表す。
+ * 正常に解釈された PO の Validation Core 用データを表す。
  */
 export type InterpretedPo = {
   metadata: PoMetadata
@@ -63,8 +76,8 @@ export type InterpretedPo = {
 /**
  * PO Interpretation の公開結果を表す。
  *
- * malformed PO だけを invalid-po とし、parser bundle 不在などの実装・構成異常は
- * この結果へ丸めず例外として扱う。
+ * 構文不正な PO だけを `invalid-po` とし、ブラウザー用パーサー不在などの
+ * 実装・構成異常は入力不正へ読み替えない。
  */
 export type PoInterpretationResult =
   | {
@@ -75,6 +88,11 @@ export type PoInterpretationResult =
       status: 'invalid-po'
     }
 
+/**
+ * PO Interpretation が利用するブラウザー用パーサーを取得する。
+ *
+ * @returns gettext-converter の PO 解析操作。
+ */
 const getParser = (): GettextBrowserBundle => {
   const gettext = (
     globalThis as typeof globalThis & {
@@ -82,6 +100,7 @@ const getParser = (): GettextBrowserBundle => {
     }
   ).gettext
 
+  // パーサー不在は入力 PO の問題ではなく実行環境の構成異常として扱う。
   if (!gettext) {
     throw new Error(
       'gettext-converter の browser bundle を読み込めませんでした。',
@@ -91,7 +110,14 @@ const getParser = (): GettextBrowserBundle => {
   return gettext
 }
 
+/**
+ * parser の返却値が PO Interpretation が利用できる最小構造を持つことを確認する。
+ *
+ * @param value gettext-converter が返した解析結果。
+ * @returns PO Interpretation 内部で利用する解析表現。
+ */
 const toParsedPo = (value: unknown): ParsedPo => {
+  // 想定構造の欠落は PO の構文不正ではなく、parser integration の契約不整合として扱う。
   if (
     typeof value !== 'object' ||
     value === null ||
@@ -105,29 +131,66 @@ const toParsedPo = (value: unknown): ParsedPo => {
   return value as ParsedPo
 }
 
+/**
+ * parser が返した翻訳フォームから、Rule Evaluation が評価するフォームだけを作る。
+ *
+ * @param translation gettext-converter が返した1件の翻訳エントリ。
+ * @returns 元の `msgstr[n]` の index を保持した検証対象フォーム。
+ */
 const toTranslationForms = (
   translation: ParserTranslation,
-): readonly TranslationForm[] =>
-  (translation.msgstr ?? []).flatMap((text, index) =>
-    text === '' ? [] : [{ index, text }],
-  )
+): readonly TranslationForm[] => {
+  const forms: TranslationForm[] = []
 
+  // 元の plural form identity を維持しながら、各翻訳フォームを検証対象へ含めるか判断する。
+  for (const [index, text] of (translation.msgstr ?? []).entries()) {
+    // 未翻訳として除外するのは厳密な空文字列だけとし、空白のみの翻訳は検証対象に残す。
+    if (text === '') {
+      continue
+    }
+
+    forms.push({ index, text })
+  }
+
+  return forms
+}
+
+/**
+ * parser のヘッダー表現から、Locale Resolution が必要とするメタデータだけを公開形へ変換する。
+ *
+ * @param parsed gettext-converter が返した PO 全体の解析結果。
+ * @returns Language header の値だけを保持する公開メタデータ。
+ */
+const createMetadata = (parsed: ParsedPo): PoMetadata => {
+  // Language header の欠落は正常な PO として許容し、ロケール未解決の判断を Locale Resolution に委ねる。
+  if (parsed.headers?.Language === undefined) {
+    return {}
+  }
+
+  return { language: parsed.headers.Language }
+}
+
+/**
+ * parser の翻訳表から、Rule Evaluation が評価するエントリ集合を作る。
+ *
+ * @param parsed gettext-converter が返した PO 全体の解析結果。
+ * @returns 検証対象の絞り込み後に連続した entryIndex を持つ翻訳エントリ。
+ */
 const createEntries = (parsed: ParsedPo): readonly TranslationEntry[] => {
   const entries: TranslationEntry[] = []
 
-  /**
-   * parser が保持する context ごとの entry を、validation 対象だけの interpreted entry order へ変換する。
-   *
-   * context 自体は v1 の Rule Evaluation へ公開しないが、context ごとの collection を個別に走査することで
-   * 同じ原文・翻訳を持つ別 entry を統合せず、entry identity を維持する。
-   */
+  // msgctxt ごとの翻訳表を別々に扱い、同じ原文・翻訳を持つ別コンテキストのエントリを統合しない。
   for (const translationsByMsgid of Object.values(parsed.translations)) {
+    // 各 parser entry を公開契約へ変換し、検証対象だけを解釈済みエントリ順へ追加する。
     for (const translation of Object.values(translationsByMsgid)) {
+      // 空 msgid のヘッダーエントリは翻訳内容ではないため Rule Evaluation へ渡さない。
       if (translation.msgid === '') {
         continue
       }
 
       const translations = toTranslationForms(translation)
+
+      // 翻訳済みフォームが1つも残らないエントリは、訳文に対するルール評価の対象にしない。
       if (translations.length === 0) {
         continue
       }
@@ -152,7 +215,7 @@ const createEntries = (parsed: ParsedPo): readonly TranslationEntry[] => {
  * PO 文字列を Validation Core 用の正規化データへ解釈する。
  *
  * @param source PO ファイル内容の文字列。関数内で変更せず、戻り値にも保持しない。
- * @returns 正常時は正規化済み document、malformed PO の場合は invalid-po。
+ * @returns 正常時は正規化済み document、構文不正な PO の場合は `invalid-po`。
  */
 export function interpretPo(source: string): PoInterpretationResult {
   const parser = getParser()
@@ -161,6 +224,7 @@ export function interpretPo(source: string): PoInterpretationResult {
   try {
     parsed = toParsedPo(parser.po2js(source))
   } catch (error) {
+    // parser が構文不正として報告した場合だけ入力不正へ変換し、その他の実装異常は呼び出し元へ伝える。
     if (error instanceof SyntaxError) {
       return { status: 'invalid-po' }
     }
@@ -171,11 +235,7 @@ export function interpretPo(source: string): PoInterpretationResult {
   return {
     status: 'success',
     document: {
-      metadata: {
-        ...(parsed.headers?.Language === undefined
-          ? {}
-          : { language: parsed.headers.Language }),
-      },
+      metadata: createMetadata(parsed),
       entries: createEntries(parsed),
     },
   }
