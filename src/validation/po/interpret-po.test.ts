@@ -489,6 +489,53 @@ msgstr "壊れた"`),
   })
 
   /**
+   * 引用文字列の途中で入力が終了した場合に、不正 PO を成功扱いしないことを確認する。
+   *
+   * 事前条件:
+   * - msgstr の終了引用符がない PO がある。
+   *
+   * 操作:
+   * - PO 文字列を解釈する。
+   *
+   * 期待結果:
+   * - parser が例外を返さない場合でも invalid-po になる。
+   */
+  it('when a PO string is truncated before its closing quote, should return invalid-po', () => {
+    expect(
+      interpretPo(`msgid "Hello"
+msgstr "こんにちは`),
+    ).toEqual({ status: 'invalid-po' })
+  })
+
+  /**
+   * escape された引用符を含む正常な文字列を、不正 PO と誤判定しないことを確認する。
+   *
+   * 事前条件:
+   * - 内容中に escape された引用符を持ち、終端引用符は正常に閉じている PO がある。
+   *
+   * 操作:
+   * - PO 文字列を解釈する。
+   *
+   * 期待結果:
+   * - success となり、escape 展開後の翻訳文字列が保持される。
+   */
+  it('when a valid PO string contains escaped quotes, should keep the entry valid', () => {
+    const result = interpretPo(
+      String.raw`msgid "Quote"
+msgstr "引用 \"確認\""`,
+    )
+
+    expect(result.status).toBe('success')
+    if (result.status !== 'success') {
+      throw new Error('正常な PO が解析不能として扱われました。')
+    }
+
+    expect(result.document.entries[0]?.translations[0]?.text).toBe(
+      '引用 "確認"',
+    )
+  })
+
+  /**
    * PO Interpretation の実装・構成異常がある場合に、入力不正として扱わないことを確認する。
    *
    * 事前条件:
