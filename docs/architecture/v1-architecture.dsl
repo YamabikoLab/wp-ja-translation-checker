@@ -1,5 +1,5 @@
 // Generated from docs/architecture/v1-architecture.md. Do not edit manually.
-workspace "WP Japanese Translation Checker v1 Architecture" {
+workspace "WP Translation Checker v1 Architecture" {
 	!impliedRelationships false
 
 	model {
@@ -90,7 +90,7 @@ workspace "WP Japanese Translation Checker v1 Architecture" {
 			tags "Structural Dependency"
 		}
 
-		PF_001 = EXT_USER_PO_FILE -> RESP_PRESENTATION "利用者が選択した確認対象が WJTC の利用フローへ入る。" {
+		PF_001 = EXT_USER_PO_FILE -> RESP_PRESENTATION "利用者が選択した確認対象が WTC の利用フローへ入る。" {
 			tags "Process Flow,ProcessFlow_PV_VALIDATION_END_TO_END,normal"
 		}
 		PF_002 = RESP_PRESENTATION -> RESP_CHECK_ORCHESTRATION "確認要求が検証処理の調整責務へ進む。" {

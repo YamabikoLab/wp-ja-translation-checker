@@ -1,4 +1,4 @@
-# WP Japanese Translation Checker repository instructions
+# WP Translation Checker repository instructions
 
 These instructions apply to the entire repository.
 

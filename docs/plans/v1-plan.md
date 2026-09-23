@@ -1,4 +1,4 @@
-# WP Japanese Translation Checker v1 implementation plan
+# WP Translation Checker v1 implementation plan
 
 ## References
 
@@ -18,7 +18,7 @@
 
 ### Included
 
-- 現在の Vite starter UI を WJTC v1 の Presentation へ置き換える。
+- 現在の Vite starter UI を WTC v1 の Presentation へ置き換える。
 - Validation Core の責務を、Architecture の境界に沿って React / DOM から独立した TypeScript モジュールとして実装する。
 - PO Interpretation、Locale Resolution、Locale Rule Selection、Rule Evaluation、Finding Coordination、Check Orchestration を実装する。
 - v1 Requirements で対象とした日本語ルールを実装する。
@@ -34,7 +34,7 @@
 - `.po` ファイルの編集、自動修正、修正版ファイル生成。
 - 確認結果の export。
 - translate.wordpress.org または GlotPress との直接統合。
-- 日本語以外のロケールルール。
+- 日本語以外のロケールルール。WTC 全体は将来の locale 追加を許容するが、v1 実装では追加しない。
 - 利用者によるロケール選択または上書き。
 - AI による翻訳品質評価。
 - 将来ロケール向けの plugin system、DI container、動的ロード、永続化、queue。
@@ -42,7 +42,7 @@
 
 ## Current implementation and implementation gap
 
-現在の `src/App.tsx`、`src/App.css`、`src/index.css` は Vite starter の内容であり、Architecture で定義された Validation Core と WJTC Presentation はまだ実装されていない。
+現在の `src/App.tsx`、`src/App.css`、`src/index.css` は Vite starter の内容であり、Architecture で定義された Validation Core と WTC Presentation はまだ実装されていない。
 
 現在の `package.json` に test runner はなく、検証コマンドは formatting、lint、build が中心である。そのため、ルール判定や Finding Coordination のような決定論的なドメインロジックを実装する前に、テスト基盤を追加する。
 
@@ -215,7 +215,7 @@ Presentation で lifecycle を自動検証する必要がある箇所だけ Reac
 ### Phase 8: Presentation and browser input
 
 - Outcome:
-  - Vite starter UI が WJTC v1 の利用フローへ置き換わり、利用者がファイル選択、確認、結果理解まで行える。
+  - Vite starter UI が WTC v1 の利用フローへ置き換わり、利用者がファイル選択、確認、結果理解まで行える。
 - Tasks:
   - `src/App.tsx` を薄い application entry とし、意味のある UI 責務を Presentation component へ分ける。
   - file input、確認開始、checking state、result state を実装する。
