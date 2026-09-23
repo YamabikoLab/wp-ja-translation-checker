@@ -31,7 +31,9 @@ if (
   !memoryButtons ||
   !memoryStatus
 ) {
-  throw new Error('Performance validation POC の初期化に必要な要素がありません。')
+  throw new Error(
+    'Performance validation POC の初期化に必要な要素がありません。',
+  )
 }
 
 /**

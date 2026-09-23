@@ -9,8 +9,10 @@
     <main>
       <h1>PO Interpretation performance validation POC</h1>
       <p>
-        production の <code>interpretPo(source)</code> 全体を main thread 上で計測します。
-        parser 単体ではなく、pre-scan、parse、正規化、<code>InterpretedPo</code>
+        production の <code>interpretPo(source)</code> 全体を main thread
+        上で計測します。 parser 単体ではなく、pre-scan、parse、正規化、<code
+          >InterpretedPo</code
+        >
         生成までを対象にします。
       </p>
 
@@ -40,9 +42,14 @@
         <h2>Representative real PO</h2>
         <p>
           実 PO はブラウザー内だけで読み込みます。WooCommerce stable ja などの
-          representative PO を選択して <code>interpretPo()</code> 全体を計測します。
+          representative PO を選択して
+          <code>interpretPo()</code> 全体を計測します。
         </p>
-        <input id="po-file" type="file" accept=".po,text/x-gettext-translation" />
+        <input
+          id="po-file"
+          type="file"
+          accept=".po,text/x-gettext-translation"
+        />
         <p id="file-status"></p>
         <dl id="file-results"></dl>
       </section>
@@ -50,8 +57,9 @@
       <section>
         <h2>Memory validation</h2>
         <p>
-          自動 heap 値は記録しません。DevTools の Memory recording / allocation profile
-          を開始してから対象サイズを1件ずつ実行し、pre-scan の一時 allocation を含む
+          自動 heap 値は記録しません。DevTools の Memory recording / allocation
+          profile を開始してから対象サイズを1件ずつ実行し、pre-scan の一時
+          allocation を含む
           <code>interpretPo()</code> 呼び出し全体の peak を確認してください。
         </p>
         <div id="memory-buttons"></div>
