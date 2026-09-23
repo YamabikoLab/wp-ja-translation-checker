@@ -115,17 +115,13 @@ Presentation は利用者向け interaction state と表示を所有するが、
 | RESP_CHECK_ORCHESTRATION | RESP_RULE_EVALUATION | 選択済みルール集合による検出結果を得る必要があるため。 |
 | RESP_CHECK_ORCHESTRATION | RESP_FINDING_COORDINATION | 個別検出結果を一貫した最終 Finding へ整える必要があるため。 |
 | RESP_PO_INTERPRETATION | EXT_USER_PO_FILE | 確認対象であるローカル PO 内容を解釈するため。 |
-| RESP_LOCALE_RULE_SELECTION | RESP_LOCALE_RESOLUTION | 判定されたロケールを基に適用ルール集合を選択するため。 |
-| RESP_RULE_EVALUATION | RESP_LOCALE_RULE_SELECTION | 選択されたロケール固有ルール集合だけを評価対象とするため。 |
-| RESP_FINDING_COORDINATION | RESP_RULE_EVALUATION | 個別ルールから生成された検出結果を最終 Finding へ調整するため。 |
-| RESP_PRESENTATION | EXT_STYLE_GUIDE | 指摘から一次情報への参照導線を提示するため。 |
 
 ### Dependency Views
 
 | ID | Name | Includes |
 | --- | --- | --- |
 | DV_VALIDATION_CORE | Validation Core | RESP_CHECK_ORCHESTRATION RESP_PO_INTERPRETATION RESP_LOCALE_RESOLUTION RESP_LOCALE_RULE_SELECTION RESP_RULE_EVALUATION RESP_FINDING_COORDINATION EXT_USER_PO_FILE |
-| DV_PRESENTATION_BOUNDARY | Presentation Boundary | RESP_PRESENTATION RESP_CHECK_ORCHESTRATION EXT_BROWSER_FILE_CAPABILITY EXT_STYLE_GUIDE |
+| DV_PRESENTATION_BOUNDARY | Presentation Boundary | RESP_PRESENTATION RESP_CHECK_ORCHESTRATION EXT_BROWSER_FILE_CAPABILITY |
 
 ### Responsibility Details
 
@@ -329,8 +325,12 @@ v1 では日本語（`ja`）のみを対応ロケールとして扱う。
 | Step | Source | Target | Interaction |
 | ---: | --- | --- | --- |
 | 1 | RESP_PRESENTATION | RESP_CHECK_ORCHESTRATION | 確認開始時点の選択入力を対象として確認を要求する。 |
-| 2 | RESP_CHECK_ORCHESTRATION | RESP_FINDING_COORDINATION | 評価済み検出結果を最終 Finding 集合へ整えるよう求める。 |
-| 3 | RESP_CHECK_ORCHESTRATION | RESP_PRESENTATION | 指摘なし正常完了として確認全体の結果を通知する。 |
+| 2 | RESP_CHECK_ORCHESTRATION | RESP_PO_INTERPRETATION | 入力を翻訳エントリとメタデータへ解釈するよう求める。 |
+| 3 | RESP_CHECK_ORCHESTRATION | RESP_LOCALE_RESOLUTION | 解釈済みメタデータから対象ロケールの判定を求める。 |
+| 4 | RESP_CHECK_ORCHESTRATION | RESP_LOCALE_RULE_SELECTION | 判定済みロケールに対応するルール集合の選択を求める。 |
+| 5 | RESP_CHECK_ORCHESTRATION | RESP_RULE_EVALUATION | 翻訳エントリへ選択済みルール集合を適用するよう求める。 |
+| 6 | RESP_CHECK_ORCHESTRATION | RESP_FINDING_COORDINATION | 検出結果を空の最終 Finding 集合へ整えるよう求める。 |
+| 7 | RESP_CHECK_ORCHESTRATION | RESP_PRESENTATION | 指摘なし正常完了として確認全体の結果を通知する。 |
 
 ### Invalid PO input {#RV_INVALID_PO_INPUT}
 
@@ -365,14 +365,12 @@ PO は解釈できるが対象ロケールを判定できない場合を示す�
 
 ### Input replaced during validation {#RV_INPUT_REPLACED}
 
-確認中に利用者が別のファイルを選択した場合でも、古い結果を現在の入力へ誤適用しないことを示す。
+確認中に利用者が別のファイルを選択した場合でも、旧入力に対応付いた結果を現在の入力へ誤適用しないことを示す。利用者による現在入力の置き換えは Presentation 内の state transition であり、責務間 interaction としては扱わない。
 
 | Step | Source | Target | Interaction |
 | ---: | --- | --- | --- |
 | 1 | RESP_PRESENTATION | RESP_CHECK_ORCHESTRATION | 旧入力を対象とする確認を開始する。 |
-| 2 | RESP_PRESENTATION | RESP_PRESENTATION | 利用者の新しいファイル選択を現在の入力として採用する。 |
-| 3 | RESP_CHECK_ORCHESTRATION | RESP_PRESENTATION | 旧入力を対象とする確認結果を通知する。 |
-| 4 | RESP_PRESENTATION | RESP_PRESENTATION | 通知された結果が現在の入力に対応しないため、現在結果として採用しない。 |
+| 2 | RESP_CHECK_ORCHESTRATION | RESP_PRESENTATION | 旧入力に対応付いた確認結果を通知する。 |
 
 ## 8. Crosscutting Concepts
 
