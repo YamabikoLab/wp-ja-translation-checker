@@ -1,5 +1,12 @@
 export type Severity = 'error' | 'warning'
 
+/**
+ * A location within the source or translation text.
+ *
+ * Range locations use a half-open interval: startOffset is included and
+ * endOffset is excluded. Boundary locations identify a position between
+ * characters with a single offset.
+ */
 export type ProblemLocation =
   | {
       side: 'source' | 'translation'
