@@ -1,11 +1,14 @@
 import { runBenchmark } from './benchmark'
 import { runCorrectnessGate } from './correctness'
-import { parsePo } from './parser'
+import { parsePo, type ParsedPo } from './parser'
 
 const benchmarkSizes = [500, 5_000, 15_000, 30_000] as const
 
 const correctnessStatus = document.querySelector('#correctness-status')
 const correctnessResults = document.querySelector('#correctness-results')
+const fileInput = document.querySelector<HTMLInputElement>('#po-file')
+const fileStatus = document.querySelector('#file-status')
+const fileResults = document.querySelector('#file-results')
 const runButton = document.querySelector<HTMLButtonElement>('#run-benchmark')
 const benchmarkStatus = document.querySelector('#benchmark-status')
 const benchmarkResults = document.querySelector('#benchmark-results')
@@ -13,6 +16,9 @@ const benchmarkResults = document.querySelector('#benchmark-results')
 if (
   !correctnessStatus ||
   !correctnessResults ||
+  !fileInput ||
+  !fileStatus ||
+  !fileResults ||
   !runButton ||
   !benchmarkStatus ||
   !benchmarkResults
@@ -30,9 +36,54 @@ for (const check of gateResults) {
 }
 
 correctnessStatus.textContent = gatePassed
-  ? 'PASS: performance comparison を実行できます。'
-  : 'FAIL: correctness gate を通過していないため benchmark は実行しません。'
+  ? 'PASS: 実 PO ファイル確認と performance comparison を実行できます。'
+  : 'FAIL: correctness gate を通過していないため後続確認は実行しません。'
+fileInput.disabled = !gatePassed
 runButton.disabled = !gatePassed
+
+const countEntries = (parsed: ParsedPo): number =>
+  Object.values(parsed.translations).reduce(
+    (total, context) =>
+      total + Object.keys(context).filter((msgid) => msgid !== '').length,
+    0,
+  )
+
+const appendFileResult = (label: string, value: string): void => {
+  const term = document.createElement('dt')
+  const detail = document.createElement('dd')
+  term.textContent = label
+  detail.textContent = value
+  fileResults.append(term, detail)
+}
+
+fileInput.addEventListener('change', async () => {
+  const file = fileInput.files?.[0]
+  fileResults.replaceChildren()
+
+  if (!file) {
+    fileStatus.textContent = ''
+    return
+  }
+
+  fileStatus.textContent = '読み込み・解析中...'
+
+  try {
+    const source = await file.text()
+    const startedAt = performance.now()
+    const parsed = parsePo(source)
+    const elapsedMs = performance.now() - startedAt
+
+    appendFileResult('File', file.name)
+    appendFileResult('Input bytes', file.size.toLocaleString())
+    appendFileResult('Entries', countEntries(parsed).toLocaleString())
+    appendFileResult('Language', parsed.headers?.Language ?? '(none)')
+    appendFileResult('Parse time', `${elapsedMs.toFixed(2)} ms`)
+    fileStatus.textContent = 'PASS: ブラウザー内で PO を解析できました。'
+  } catch (error) {
+    fileStatus.textContent =
+      error instanceof Error ? `FAIL: ${error.message}` : 'FAIL: PO の解析に失敗しました。'
+  }
+})
 
 runButton.addEventListener('click', async () => {
   runButton.disabled = true
