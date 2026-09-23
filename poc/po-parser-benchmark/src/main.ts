@@ -36,9 +36,9 @@ for (const check of gateResults) {
 }
 
 correctnessStatus.textContent = gatePassed
-  ? 'PASS: 実 PO ファイル確認と performance comparison を実行できます。'
-  : 'FAIL: correctness gate を通過していないため後続確認は実行しません。'
-fileInput.disabled = !gatePassed
+  ? 'PASS: performance comparison を実行できます。'
+  : 'FAIL: correctness gate を通過していないため benchmark は実行しません。実 PO ファイル確認は利用できます。'
+fileInput.disabled = false
 runButton.disabled = !gatePassed
 
 const countEntries = (parsed: ParsedPo): number =>
