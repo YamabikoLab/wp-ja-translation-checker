@@ -118,10 +118,11 @@ Presentation は利用者向け interaction state と表示を所有するが、
 
 ### Dependency Views
 
-| ID                       | Name                  | Includes                                                                                                                                                          |
-| ------------------------ | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| DV_VALIDATION_CORE       | Validation Core       | RESP_CHECK_ORCHESTRATION RESP_PO_INTERPRETATION RESP_LOCALE_RESOLUTION RESP_LOCALE_RULE_SELECTION RESP_RULE_EVALUATION RESP_FINDING_COORDINATION EXT_USER_PO_FILE |
-| DV_PRESENTATION_BOUNDARY | Presentation Boundary | RESP_PRESENTATION RESP_CHECK_ORCHESTRATION EXT_BROWSER_FILE_CAPABILITY                                                                                            |
+| ID                       | Name                  | Includes                                                                                                                                                                                                                         |
+| ------------------------ | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| DV_WTC_OVERVIEW          | WTC Overview          | RESP_PRESENTATION RESP_CHECK_ORCHESTRATION RESP_PO_INTERPRETATION RESP_LOCALE_RESOLUTION RESP_LOCALE_RULE_SELECTION RESP_RULE_EVALUATION RESP_FINDING_COORDINATION EXT_USER_PO_FILE EXT_BROWSER_FILE_CAPABILITY                    |
+| DV_VALIDATION_CORE       | Validation Core       | RESP_CHECK_ORCHESTRATION RESP_PO_INTERPRETATION RESP_LOCALE_RESOLUTION RESP_LOCALE_RULE_SELECTION RESP_RULE_EVALUATION RESP_FINDING_COORDINATION EXT_USER_PO_FILE                                                                |
+| DV_PRESENTATION_BOUNDARY | Presentation Boundary | RESP_PRESENTATION RESP_CHECK_ORCHESTRATION EXT_BROWSER_FILE_CAPABILITY                                                                                                                                                           |
 
 ### Responsibility Details
 
