@@ -23,13 +23,17 @@ npm run format:check
 npm run lint
 npm test
 npm run build
+npm run validate
 ```
 
 - `npm run format:check` checks repository formatting with Prettier.
 - `npm run lint` runs ESLint across the repository.
 - `npm test` runs the Vitest suite once with `vitest run`.
 - `npm run build` runs the TypeScript build and creates the Vite production bundle.
+- `npm run validate` runs the full application validation sequence in this order: formatting, linting, tests, then build.
 - The build writes generated output under `dist/`; do not commit it.
+
+Use `npm run validate` as the repository-wide completion check when all application validation steps apply. Keep `npm test` scoped to Vitest so automated tests can be run independently from formatting, linting, and build validation.
 
 Check changed lines for whitespace errors with:
 
@@ -59,8 +63,8 @@ They are long-running or interactive and should not be treated as handoff valida
 ## Which checks to run
 
 - Documentation-only changes: `git diff --check origin/main...HEAD`.
-- JavaScript, TypeScript, JSX, TSX, test, or configuration changes that affect application compilation: `npm run format:check`, `npm run lint`, `npm test`, `npm run build`, and the repository check.
-- Dependency manifest or lock-file changes: run `npm run format:check` plus the applicable source checks after `npm ci`, and keep `package.json` and `package-lock.json` aligned.
+- JavaScript, TypeScript, JSX, TSX, test, or configuration changes that affect application compilation: `npm run validate` and the repository check.
+- Dependency manifest or lock-file changes: run `npm run validate` after `npm ci`, and keep `package.json` and `package-lock.json` aligned.
 - GitHub Actions workflow changes: review the final workflow diff and run `git diff --check origin/main...HEAD`.
 - Mixed changes: combine the applicable groups.
 
