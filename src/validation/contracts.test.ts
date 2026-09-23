@@ -1,3 +1,9 @@
+/**
+ * 検証コアの最小契約が、確認結果と問題箇所に必要な意味を表現できることを確認する。
+ *
+ * 実装方法ではなく、後続フェーズが依存する責務間契約の成立条件をテスト対象とする。
+ */
+
 import { describe, expect, it } from 'vitest'
 import type {
   CheckResult,
@@ -14,7 +20,7 @@ describe('validation contracts', () => {
    * - 翻訳側に既存文字の範囲として表現する問題箇所がある。
    *
    * 操作:
-   * - Problem Locationとして翻訳側の文字範囲を表現する。
+   * - `ProblemLocation` として翻訳側の文字範囲を表現する。
    *
    * 期待結果:
    * - 翻訳側であることと、範囲の開始位置・終了位置が保持される。
@@ -42,7 +48,7 @@ describe('validation contracts', () => {
    * - 原文側に文字間境界として表現する問題箇所がある。
    *
    * 操作:
-   * - Problem Locationとして原文側の文字間境界を表現する。
+   * - `ProblemLocation` として原文側の文字間境界を表現する。
    *
    * 期待結果:
    * - 原文側であることと、境界位置が保持される。
@@ -62,13 +68,13 @@ describe('validation contracts', () => {
   })
 
   /**
-   * 個別ルールで問題が検出された場合に、Finding Coordinationに必要な情報を保持できることを確認する。
+   * 個別ルールで問題が検出された場合に、Finding Coordination に必要な情報を保持できることを確認する。
    *
    * 事前条件:
-   * - ルール固有の検出結果にSeverity、問題概要、原文、翻訳、問題箇所、理由、スタイルガイド根拠がある。
+   * - ルール固有の検出結果に重要度、問題概要、原文、翻訳、問題箇所、理由、スタイルガイド根拠がある。
    *
    * 操作:
-   * - Rule-specific detectionとして検出結果を表現する。
+   * - `RuleSpecificDetection` として検出結果を表現する。
    *
    * 期待結果:
    * - 問題箇所とスタイルガイド項目を含む、後続責務に必要な情報が保持される。
@@ -103,13 +109,13 @@ describe('validation contracts', () => {
    * 確認が正常完了した場合に、確認不能状態と区別できる結果を保持することを確認する。
    *
    * 事前条件:
-   * - 確認が正常完了し、1件のFindingがある。
+   * - 確認が正常完了し、1件の `Finding` がある。
    *
    * 操作:
-   * - Check Resultとして正常完了結果を表現する。
+   * - `CheckResult` として正常完了結果を表現する。
    *
    * 期待結果:
-   * - statusがsuccessとなり、Findingが保持される。
+   * - status が success となり、`Finding` が保持される。
    */
   it('when validation succeeds, should distinguish success from non-checkable results', () => {
     const finding: Finding = {
@@ -148,10 +154,10 @@ describe('validation contracts', () => {
    * - 入力解析不能、ロケール判定不能、または未対応ロケールのいずれかで確認を正常完了できない。
    *
    * 操作:
-   * - 各確認不能状態をCheck Resultとして表現する。
+   * - 各確認不能状態を `CheckResult` として表現する。
    *
    * 期待結果:
-   * - いずれの結果もsuccessとして扱われない。
+   * - いずれの結果も success として扱われない。
    */
   it.each<CheckResult>([
     { status: 'invalid-po' },
