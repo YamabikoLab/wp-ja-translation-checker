@@ -1,19 +1,23 @@
 /**
- * PO Interpretation の公開境界が、parser 固有表現を漏らさず Validation Core 用の意味データを返すことを確認する。
+ * PO Interpretation の公開境界が、パーサー固有表現を漏らさず Validation Core 用の意味データを返すことを確認する。
  *
- * production で採用する gettext-converter を直接利用し、parser の test double は使用しない。
+ * 本番で採用する gettext-converter を直接利用し、パーサーのテストダブルは使用しない。
  */
 
 import po2js from 'gettext-converter/po2js'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { interpretPo } from './interpret-po'
 
+/**
+ * テスト開始前のブラウザー用パーサー状態を保持し、テスト終了後に実行環境を元へ戻すために利用する。
+ */
 const originalGettext = (
   globalThis as typeof globalThis & {
     gettext?: { po2js: (source: string) => unknown }
   }
 ).gettext
 
+// 各ケースを本番と同じ PO 解析処理へ通すため、テスト環境へ実パーサーを接続する。
 beforeAll(() => {
   ;(
     globalThis as typeof globalThis & {
@@ -22,6 +26,7 @@ beforeAll(() => {
   ).gettext = { po2js }
 })
 
+// テストで変更した実行環境を復元し、他のテストへブラウザー用パーサー状態を漏らさない。
 afterAll(() => {
   const target = globalThis as typeof globalThis & {
     gettext?: { po2js: (source: string) => unknown }
