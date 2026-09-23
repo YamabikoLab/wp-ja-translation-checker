@@ -284,6 +284,111 @@ msgstr "乙"
   })
 
   /**
+   * fuzzy entry を解釈した場合に、fuzzy であることだけを理由に validation 対象から除外しないことを確認する。
+   *
+   * 事前条件:
+   * - fuzzy flag を持つ翻訳済み entry がある。
+   *
+   * 操作:
+   * - PO 文字列を解釈する。
+   *
+   * 期待結果:
+   * - 翻訳済み entry が validation 対象として保持される。
+   */
+  it('when a translated entry is fuzzy, should keep it as a validation target', () => {
+    const source = `msgid ""
+msgstr ""
+
+#, fuzzy
+msgid "Hello"
+msgstr "こんにちは"
+`
+
+    const result = interpretPo(source)
+
+    expect(result.status).toBe('success')
+    if (result.status !== 'success') {
+      throw new Error('正常な PO が解析不能として扱われました。')
+    }
+
+    expect(result.document.entries).toHaveLength(1)
+    expect(result.document.entries[0]?.source.singular).toBe('Hello')
+  })
+
+  /**
+   * obsolete entry を parser が除外できる場合に、validation 対象へ含めないことを確認する。
+   *
+   * 事前条件:
+   * - obsolete entry と通常の翻訳済み entry が同じ PO にある。
+   *
+   * 操作:
+   * - PO 文字列を解釈する。
+   *
+   * 期待結果:
+   * - obsolete entry は公開結果に現れず、通常 entry だけが保持される。
+   */
+  it('when an obsolete entry is present, should not expose it as a validation entry', () => {
+    const source = `msgid ""
+msgstr ""
+
+#~ msgid "Old"
+#~ msgstr "古い"
+
+msgid "Current"
+msgstr "現在"
+`
+
+    const result = interpretPo(source)
+
+    expect(result.status).toBe('success')
+    if (result.status !== 'success') {
+      throw new Error('正常な PO が解析不能として扱われました。')
+    }
+
+    expect(result.document.entries).toEqual([
+      {
+        entryIndex: 0,
+        source: { singular: 'Current' },
+        translations: [{ index: 0, text: '現在' }],
+      },
+    ])
+  })
+
+  /**
+   * Unicode の結合文字を含む翻訳を解釈した場合に、Normalization Form を変更しないことを確認する。
+   *
+   * 事前条件:
+   * - NFD 形式の文字列を翻訳として持つ entry がある。
+   *
+   * 操作:
+   * - PO 文字列を解釈する。
+   *
+   * 期待結果:
+   * - コードポイント列が変更されず保持される。
+   */
+  it('when a translation uses decomposed Unicode characters, should preserve the original normalization form', () => {
+    const decomposed = 'e\u0301'
+    const source = `msgid ""
+msgstr ""
+
+msgid "Accent"
+msgstr "${decomposed}"
+`
+
+    const result = interpretPo(source)
+
+    expect(result.status).toBe('success')
+    if (result.status !== 'success') {
+      throw new Error('正常な PO が解析不能として扱われました。')
+    }
+
+    expect(result.document.entries[0]?.translations[0]?.text).toBe(decomposed)
+    expect(
+      result.document.entries[0]?.translations[0]?.text.codePointAt(1),
+    ).toBe(0x0301)
+  })
+
+  /**
    * malformed PO を解釈した場合に、正常な空 entry 集合と区別することを確認する。
    *
    * 事前条件:
