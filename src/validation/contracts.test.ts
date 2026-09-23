@@ -102,6 +102,8 @@ describe('validation contracts', () => {
    */
   it('when a rule-specific problem is detected, should preserve the data needed for finding coordination', () => {
     const detection: RuleSpecificDetection = {
+      entryIndex: 3,
+      translationFormIndex: 0,
       ruleId: '1-4',
       severity: 'error',
       summary: '半角文字と全角文字の間に不要なスペースがあります。',
@@ -122,6 +124,8 @@ describe('validation contracts', () => {
       },
     }
 
+    expect(detection.entryIndex).toBe(3)
+    expect(detection.translationFormIndex).toBe(0)
     expect(detection.locations).toHaveLength(1)
     expect(detection.styleGuide.item).toBe('1-4')
   })
