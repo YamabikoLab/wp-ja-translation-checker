@@ -93,6 +93,73 @@ export type PoInterpretationResult =
  *
  * @returns gettext-converter の PO 解析操作。
  */
+/**
+ * PO の翻訳文字列を記述する1行が、開始・終了の引用符を持つか確認する。
+ *
+ * @param literal PO のキーに続く文字列、または複数行文字列の継続行。
+ * @returns 行内の文字列が閉じている場合は true。
+ */
+const hasClosedPoStringLiteral = (literal: string): boolean => {
+  const trimmed = literal.trimEnd()
+
+  if (!trimmed.startsWith('"') || !trimmed.endsWith('"')) {
+    return false
+  }
+
+  let precedingBackslashes = 0
+
+  // 行末の引用符が escape された内容文字か、文字列を閉じる引用符かを判定する。
+  for (
+    let index = trimmed.length - 2;
+    index >= 0 && trimmed[index] === '\\';
+    index -= 1
+  ) {
+    precedingBackslashes += 1
+  }
+
+  return precedingBackslashes % 2 === 0
+}
+
+/**
+ * gettext-converter が正常結果として受理し得る、途中で切れた PO 文字列を識別する。
+ *
+ * 独自の PO 解析は行わず、PO のキー行と複数行文字列の継続行について
+ * 引用文字列がその行で閉じていることだけを補完確認する。
+ *
+ * @param source PO ファイル内容の文字列。
+ * @returns 閉じていない引用文字列が存在する場合は true。
+ */
+const hasUnterminatedPoString = (source: string): boolean => {
+  const keyPattern =
+    /^\s*(?:msgctxt|msgid(?:_plural)?|msgstr(?:\[\d+\])?)(?=\s|$)/
+
+  // PO の各物理行を確認し、parser が見落とす引用文字列の途中終了だけを検出する。
+  for (const line of source.split(/\r\n|\n|\r/)) {
+    const keyMatch = line.match(keyPattern)
+
+    if (keyMatch) {
+      const literal = line.slice(keyMatch[0].length).trimStart()
+
+      if (!hasClosedPoStringLiteral(literal)) {
+        return true
+      }
+
+      continue
+    }
+
+    const continuation = line.trimStart()
+
+    if (
+      continuation.startsWith('"') &&
+      !hasClosedPoStringLiteral(continuation)
+    ) {
+      return true
+    }
+  }
+
+  return false
+}
+
 const getParser = (): GettextBrowserBundle => {
   const gettext = (
     globalThis as typeof globalThis & {
@@ -218,6 +285,11 @@ const createEntries = (parsed: ParsedPo): readonly TranslationEntry[] => {
  * @returns 正常時は正規化済み document、構文不正な PO の場合は `invalid-po`。
  */
 export function interpretPo(source: string): PoInterpretationResult {
+  // 途中で切れた引用文字列を parser が成功扱いする既知の境界を、入力不正として先に識別する。
+  if (hasUnterminatedPoString(source)) {
+    return { status: 'invalid-po' }
+  }
+
   const parser = getParser()
   let parsed: ParsedPo
 
