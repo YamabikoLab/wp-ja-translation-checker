@@ -233,6 +233,19 @@ Error / Warning のどちらでも、同じ指摘から原文と翻訳の両方�
 
 https://ja.wordpress.org/team/handbook/translation/translation-style-guide/
 
+## 画面イメージ
+
+本書の UI 仕様を視覚的に確認するため、代表的な画面イメージと HTML モックを補助資料として用意する。
+
+- 画面イメージ: [v1-screen-mock.png](../mock/v1/v1-screen-mock.png)
+- HTML モック: [docs/mock/v1/index.html](../mock/v1/index.html)
+
+![WJTC v1 画面モック](../mock/v1/v1-screen-mock.png)
+
+HTML モックは、本書で定義した画面構成、原文・翻訳の比較、長文の省略表示と全文表示などを視覚的に確認するための補助資料とする。
+
+仕様の正は本書とし、HTML モック固有の色、余白、文字サイズ、装飾などを、そのまま実装要件とはしない。
+
 ## フォーカスと重要なフィードバック
 
 フォーカス移動は、利用者が重要な結果やエラーへ到達しやすくなる場合に限定して行う。
