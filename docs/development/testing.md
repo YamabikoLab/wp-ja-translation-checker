@@ -33,7 +33,7 @@ npm run validate
 - `npm run validate` runs the full application validation sequence in this order: formatting, linting, tests, then build.
 - The build writes generated output under `dist/`; do not commit it.
 
-Use `npm run validate` as the repository-wide completion check when all application validation steps apply. PR Validation runs this same completion check automatically for pull requests and can also be run manually. Keep `npm test` scoped to Vitest so automated tests can be run independently from formatting, linting, and build validation.
+Use `npm run validate` as the repository-wide completion check when all application validation steps apply. PR Validation runs this same completion check only when started manually with GitHub Actions. Keep `npm test` scoped to Vitest so automated tests can be run independently from formatting, linting, and build validation.
 
 Check changed lines for whitespace errors with:
 
