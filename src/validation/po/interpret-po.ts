@@ -89,11 +89,6 @@ export type PoInterpretationResult =
     }
 
 /**
- * PO Interpretation が利用するブラウザー用パーサーを取得する。
- *
- * @returns gettext-converter の PO 解析操作。
- */
-/**
  * PO の翻訳文字列を記述する1行が、開始・終了の引用符を持つか確認する。
  *
  * @param literal PO のキーに続く文字列、または複数行文字列の継続行。
@@ -108,7 +103,7 @@ const hasClosedPoStringLiteral = (literal: string): boolean => {
 
   let precedingBackslashes = 0
 
-  // 行末の引用符が escape された内容文字か、文字列を閉じる引用符かを判定する。
+  // 行末の引用符がエスケープされた内容文字か、文字列を閉じる引用符かを判定する。
   for (
     let index = trimmed.length - 2;
     index >= 0 && trimmed[index] === '\\';
@@ -133,7 +128,7 @@ const hasUnterminatedPoString = (source: string): boolean => {
   const keyPattern =
     /^\s*(?:msgctxt|msgid(?:_plural)?|msgstr(?:\[\d+\])?)(?=\s|$)/
 
-  // PO の各物理行を確認し、parser が見落とす引用文字列の途中終了だけを検出する。
+  // PO の各物理行を確認し、パーサーが見落とす引用文字列の途中終了だけを検出する。
   for (const line of source.split(/\r\n|\n|\r/)) {
     const keyMatch = line.match(keyPattern)
 
@@ -160,6 +155,11 @@ const hasUnterminatedPoString = (source: string): boolean => {
   return false
 }
 
+/**
+ * PO Interpretation が利用するブラウザー用パーサーを取得する。
+ *
+ * @returns gettext-converter の PO 解析操作。
+ */
 const getParser = (): GettextBrowserBundle => {
   const gettext = (
     globalThis as typeof globalThis & {
@@ -178,13 +178,13 @@ const getParser = (): GettextBrowserBundle => {
 }
 
 /**
- * parser の返却値が PO Interpretation が利用できる最小構造を持つことを確認する。
+ * パーサーの返却値が PO Interpretation が利用できる最小構造を持つことを確認する。
  *
  * @param value gettext-converter が返した解析結果。
  * @returns PO Interpretation 内部で利用する解析表現。
  */
 const toParsedPo = (value: unknown): ParsedPo => {
-  // 想定構造の欠落は PO の構文不正ではなく、parser integration の契約不整合として扱う。
+  // 想定構造の欠落は PO の構文不正ではなく、パーサー連携の契約不整合として扱う。
   if (
     typeof value !== 'object' ||
     value === null ||
@@ -199,7 +199,7 @@ const toParsedPo = (value: unknown): ParsedPo => {
 }
 
 /**
- * parser が返した翻訳フォームから、Rule Evaluation が評価するフォームだけを作る。
+ * パーサーが返した翻訳フォームから、Rule Evaluation が評価するフォームだけを作る。
  *
  * @param translation gettext-converter が返した1件の翻訳エントリ。
  * @returns 元の `msgstr[n]` の index を保持した検証対象フォーム。
@@ -223,7 +223,7 @@ const toTranslationForms = (
 }
 
 /**
- * parser のヘッダー表現から、Locale Resolution が必要とするメタデータだけを公開形へ変換する。
+ * パーサーのヘッダー表現から、Locale Resolution が必要とするメタデータだけを公開形へ変換する。
  *
  * @param parsed gettext-converter が返した PO 全体の解析結果。
  * @returns Language header の値だけを保持する公開メタデータ。
@@ -238,7 +238,7 @@ const createMetadata = (parsed: ParsedPo): PoMetadata => {
 }
 
 /**
- * parser の翻訳表から、Rule Evaluation が評価するエントリ集合を作る。
+ * パーサーの翻訳表から、Rule Evaluation が評価するエントリ集合を作る。
  *
  * @param parsed gettext-converter が返した PO 全体の解析結果。
  * @returns 検証対象の絞り込み後に連続した entryIndex を持つ翻訳エントリ。
@@ -248,7 +248,7 @@ const createEntries = (parsed: ParsedPo): readonly TranslationEntry[] => {
 
   // msgctxt ごとの翻訳表を別々に扱い、同じ原文・翻訳を持つ別コンテキストのエントリを統合しない。
   for (const translationsByMsgid of Object.values(parsed.translations)) {
-    // 各 parser entry を公開契約へ変換し、検証対象だけを解釈済みエントリ順へ追加する。
+    // 各パーサーエントリを公開契約へ変換し、検証対象だけを解釈済みエントリ順へ追加する。
     for (const translation of Object.values(translationsByMsgid)) {
       // 空 msgid のヘッダーエントリは翻訳内容ではないため Rule Evaluation へ渡さない。
       if (translation.msgid === '') {
@@ -285,7 +285,7 @@ const createEntries = (parsed: ParsedPo): readonly TranslationEntry[] => {
  * @returns 正常時は正規化済み document、構文不正な PO の場合は `invalid-po`。
  */
 export function interpretPo(source: string): PoInterpretationResult {
-  // 途中で切れた引用文字列を parser が成功扱いする既知の境界を、入力不正として先に識別する。
+  // 途中で切れた引用文字列をパーサーが成功扱いする既知の境界を、入力不正として先に識別する。
   if (hasUnterminatedPoString(source)) {
     return { status: 'invalid-po' }
   }
@@ -296,7 +296,7 @@ export function interpretPo(source: string): PoInterpretationResult {
   try {
     parsed = toParsedPo(parser.po2js(source))
   } catch (error) {
-    // parser が構文不正として報告した場合だけ入力不正へ変換し、その他の実装異常は呼び出し元へ伝える。
+    // パーサーが構文不正として報告した場合だけ入力不正へ変換し、その他の実装異常は呼び出し元へ伝える。
     if (error instanceof SyntaxError) {
       return { status: 'invalid-po' }
     }
