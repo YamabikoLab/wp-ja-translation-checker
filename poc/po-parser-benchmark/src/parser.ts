@@ -1,4 +1,4 @@
-import po2js from 'gettext-converter/po2js'
+import 'gettext-converter-browser'
 
 export interface ParsedTranslation {
   msgid: string
@@ -12,4 +12,17 @@ export interface ParsedPo {
   translations: Record<string, Record<string, ParsedTranslation>>
 }
 
-export const parsePo = (source: string): ParsedPo => po2js(source) as ParsedPo
+interface GettextBrowserBundle {
+  po2js: (source: string) => unknown
+}
+
+const gettext = (
+  globalThis as typeof globalThis & { gettext?: GettextBrowserBundle }
+).gettext
+
+if (!gettext) {
+  throw new Error('gettext-converter の browser bundle を読み込めませんでした。')
+}
+
+export const parsePo = (source: string): ParsedPo =>
+  gettext.po2js(source) as ParsedPo
