@@ -1,5 +1,5 @@
 {
-  "name": "WP Japanese Translation Checker",
+  "name": "WP Translation Checker",
   "dockerComposeFile": "../compose.yml",
   "service": "app",
   "workspaceFolder": "/workspace",
