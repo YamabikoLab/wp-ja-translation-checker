@@ -4,8 +4,8 @@ export type ProblemLocation =
   | {
       side: 'source' | 'translation'
       kind: 'range'
-      start: number
-      end: number
+      startOffset: number
+      endOffset: number
     }
   | {
       side: 'source' | 'translation'
