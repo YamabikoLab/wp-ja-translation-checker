@@ -130,8 +130,8 @@ Do not reuse a removed ID for a different architecture concept.
 
 When external context is relevant, define it under `## 3. Context and Scope` using a child heading exactly named `### External Context` followed immediately by this table structure:
 
-| ID | Name | Type | Summary |
-| --- | --- | --- | --- |
+| ID                   | Name             | Type            | Summary                                                 |
+| -------------------- | ---------------- | --------------- | ------------------------------------------------------- |
 | EXT_WORDPRESS_EDITOR | WordPress Editor | External System | Provides the editing environment in which YTR operates. |
 
 Rules:
@@ -170,10 +170,10 @@ Process Flow View `kind` must be one of:
 
 Immediately below the heading, include a short human-readable purpose or flow description, followed by a table with this exact structure for every Process Flow View kind:
 
-| From | To | Kind | Meaning |
-| --- | --- | --- | --- |
-| EXT_WORDPRESS_EDITOR | RESP_INPUT_INTERACTION | normal | Reorder processing enters YTR from editor input. |
-| RESP_INPUT_INTERACTION | RESP_DND_INTERACTION | normal | Input processing proceeds into common DnD processing. |
+| From                   | To                     | Kind   | Meaning                                               |
+| ---------------------- | ---------------------- | ------ | ----------------------------------------------------- |
+| EXT_WORDPRESS_EDITOR   | RESP_INPUT_INTERACTION | normal | Reorder processing enters YTR from editor input.      |
+| RESP_INPUT_INTERACTION | RESP_DND_INTERACTION   | normal | Input processing proceeds into common DnD processing. |
 
 `A → B` means that processing progresses from A toward B at the architecture level.
 
@@ -223,10 +223,10 @@ Use `## 5. Building Block View` as the home of the YTR responsibility model.
 
 Start the Building Block View with a child heading exactly named `### Responsibility Inventory` followed immediately by this table structure:
 
-| ID | Responsibility | Summary |
-| --- | --- | --- |
+| ID                   | Responsibility  | Summary                                                                    |
+| -------------------- | --------------- | -------------------------------------------------------------------------- |
 | RESP_DND_INTERACTION | DnD Interaction | Manages DnD start eligibility and interaction progress through completion. |
-| RESP_DATA_UPDATE | Data Update | Applies a committed reorder request to Table data. |
+| RESP_DATA_UPDATE     | Data Update     | Applies a committed reorder request to Table data.                         |
 
 Rules:
 
@@ -240,10 +240,10 @@ Rules:
 
 After the Responsibility Inventory, define a child heading exactly named `### Ownership Boundaries` followed immediately by this table structure:
 
-| ID | Name | Includes |
-| --- | --- | --- |
-| BOUNDARY_ROW_REORDER | Row Reorder | RESP_INPUT_INTERACTION RESP_DND_INTERACTION RESP_TABLE_INTEGRATION |
-| BOUNDARY_WORDPRESS | WordPress Integration | EXT_WORDPRESS_EDITOR EXT_TABLE_BLOCK |
+| ID                   | Name                  | Includes                                                           |
+| -------------------- | --------------------- | ------------------------------------------------------------------ |
+| BOUNDARY_ROW_REORDER | Row Reorder           | RESP_INPUT_INTERACTION RESP_DND_INTERACTION RESP_TABLE_INTEGRATION |
+| BOUNDARY_WORDPRESS   | WordPress Integration | EXT_WORDPRESS_EDITOR EXT_TABLE_BLOCK                               |
 
 An Ownership Boundary is an architecture-level ownership, subsystem, or external integration boundary that is useful when reading the Markdown architecture and when viewing generated diagrams. It is not a presentation-only grouping instruction.
 
@@ -264,8 +264,8 @@ Rules:
 
 After the Ownership Boundaries, define a child heading exactly named `### Dependencies` followed immediately by this table structure:
 
-| Dependent | Depends on | Reason |
-| --- | --- | --- |
+| Dependent            | Depends on        | Reason                                            |
+| -------------------- | ----------------- | ------------------------------------------------- |
 | RESP_DND_INTERACTION | RESP_REORDER_MODE | DnD start requires the current reorder direction. |
 
 `A → B` means that A requires B in order to fulfill A's own responsibility. This direction represents a Structural Dependency.
@@ -291,9 +291,9 @@ An architecture document may define static views of the Structural Dependency mo
 
 Use this exact table structure:
 
-| ID | Name | Includes |
-| --- | --- | --- |
-| DV_GUIDANCE | Guidance | RESP_FIRST_USE_GUIDANCE RESP_REORDER_REDISCOVERY RESP_REORDER_MODE RESP_EDITOR_DOM_CONTEXT EXT_WORDPRESS_EDITOR |
+| ID          | Name     | Includes                                                                                                                      |
+| ----------- | -------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| DV_GUIDANCE | Guidance | RESP_FIRST_USE_GUIDANCE RESP_REORDER_REDISCOVERY RESP_REORDER_MODE RESP_EDITOR_DOM_CONTEXT EXT_WORDPRESS_EDITOR               |
 | DV_DND_CORE | DnD Core | RESP_INPUT_INTERACTION RESP_DND_INTERACTION RESP_REORDER_TARGET_RESOLUTION RESP_DROP_TARGET_RESOLUTION RESP_TABLE_INTEGRATION |
 
 Rules:
@@ -381,10 +381,10 @@ The runtime scenario name and embedded ID in this heading are machine-readable a
 
 Immediately below the heading, include a short human-readable purpose or scenario description, followed by a table with this exact structure:
 
-| Step | Source | Target | Interaction |
-| ---: | --- | --- | --- |
-| 1 | RESP_INPUT_INTERACTION | RESP_DND_INTERACTION | Passes a DnD start attempt and its start target. |
-| 2 | RESP_DND_INTERACTION | RESP_REORDER_TARGET_RESOLUTION | Requests resolution of the movable reorder target. |
+| Step | Source                 | Target                         | Interaction                                        |
+| ---: | ---------------------- | ------------------------------ | -------------------------------------------------- |
+|    1 | RESP_INPUT_INTERACTION | RESP_DND_INTERACTION           | Passes a DnD start attempt and its start target.   |
+|    2 | RESP_DND_INTERACTION   | RESP_REORDER_TARGET_RESOLUTION | Requests resolution of the movable reorder target. |
 
 Rules:
 
@@ -461,8 +461,8 @@ Good:
 
 ### External Context
 
-| ID | Name | Type | Summary |
-| --- | --- | --- | --- |
+| ID                   | Name             | Type            | Summary                                                 |
+| -------------------- | ---------------- | --------------- | ------------------------------------------------------- |
 | EXT_WORDPRESS_EDITOR | WordPress Editor | External System | Provides the editing environment in which YTR operates. |
 
 ## 4. Solution Strategy
@@ -473,50 +473,50 @@ Good:
 
 Show the major processing direction from editor input into reorder processing.
 
-| From | To | Kind | Meaning |
-| --- | --- | --- | --- |
+| From                 | To                   | Kind   | Meaning                                                              |
+| -------------------- | -------------------- | ------ | -------------------------------------------------------------------- |
 | EXT_WORDPRESS_EDITOR | RESP_DND_INTERACTION | normal | Reorder processing progresses from the editor into DnD coordination. |
-| RESP_DND_INTERACTION | RESP_DATA_UPDATE | normal | A confirmed reorder progresses to data update. |
+| RESP_DND_INTERACTION | RESP_DATA_UPDATE     | normal | A confirmed reorder progresses to data update.                       |
 
 #### Reorder Failure and Recovery {#PV_REORDER_FAILURE_RECOVERY kind=failure-recovery}
 
 Show failure propagation and the recovery path back to a stable reorder state.
 
-| From | To | Kind | Meaning |
-| --- | --- | --- | --- |
-| RESP_DATA_UPDATE | RESP_DND_INTERACTION | failure | A failed update progresses back to the reorder operation boundary. |
-| RESP_DND_INTERACTION | RESP_REORDER_PRESENTATION | recovery | Recovery progresses to presentation cleanup and abort. |
+| From                 | To                        | Kind     | Meaning                                                            |
+| -------------------- | ------------------------- | -------- | ------------------------------------------------------------------ |
+| RESP_DATA_UPDATE     | RESP_DND_INTERACTION      | failure  | A failed update progresses back to the reorder operation boundary. |
+| RESP_DND_INTERACTION | RESP_REORDER_PRESENTATION | recovery | Recovery progresses to presentation cleanup and abort.             |
 
 ## 5. Building Block View
 
 ### Responsibility Inventory
 
-| ID | Responsibility | Summary |
-| --- | --- | --- |
-| RESP_DND_INTERACTION | DnD Interaction | Manages DnD start eligibility and interaction progress through completion. |
-| RESP_REORDER_MODE | Reorder Mode | Owns the current edit, row-reorder, or column-reorder mode. |
+| ID                             | Responsibility            | Summary                                                                            |
+| ------------------------------ | ------------------------- | ---------------------------------------------------------------------------------- |
+| RESP_DND_INTERACTION           | DnD Interaction           | Manages DnD start eligibility and interaction progress through completion.         |
+| RESP_REORDER_MODE              | Reorder Mode              | Owns the current edit, row-reorder, or column-reorder mode.                        |
 | RESP_REORDER_TARGET_RESOLUTION | Reorder Target Resolution | Determines whether the attempted start target can become the moving row or column. |
-| RESP_DATA_UPDATE | Data Update | Applies a committed reorder request to Table data. |
-| RESP_REORDER_PRESENTATION | Reorder Presentation | Represents reorder interaction state to the user without owning Table data. |
+| RESP_DATA_UPDATE               | Data Update               | Applies a committed reorder request to Table data.                                 |
+| RESP_REORDER_PRESENTATION      | Reorder Presentation      | Represents reorder interaction state to the user without owning Table data.        |
 
 ### Ownership Boundaries
 
-| ID | Name | Includes |
-| --- | --- | --- |
-| BOUNDARY_REORDER | Reorder | RESP_DND_INTERACTION RESP_REORDER_MODE RESP_REORDER_TARGET_RESOLUTION RESP_DATA_UPDATE RESP_REORDER_PRESENTATION |
-| BOUNDARY_WORDPRESS | WordPress Integration | EXT_WORDPRESS_EDITOR |
+| ID                 | Name                  | Includes                                                                                                         |
+| ------------------ | --------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| BOUNDARY_REORDER   | Reorder               | RESP_DND_INTERACTION RESP_REORDER_MODE RESP_REORDER_TARGET_RESOLUTION RESP_DATA_UPDATE RESP_REORDER_PRESENTATION |
+| BOUNDARY_WORDPRESS | WordPress Integration | EXT_WORDPRESS_EDITOR                                                                                             |
 
 ### Dependencies
 
-| Dependent | Depends on | Reason |
-| --- | --- | --- |
-| RESP_DND_INTERACTION | RESP_REORDER_MODE | DnD start requires the current reorder direction. |
-| RESP_DND_INTERACTION | RESP_REORDER_TARGET_RESOLUTION | DnD start requires movable-target eligibility. |
+| Dependent            | Depends on                     | Reason                                            |
+| -------------------- | ------------------------------ | ------------------------------------------------- |
+| RESP_DND_INTERACTION | RESP_REORDER_MODE              | DnD start requires the current reorder direction. |
+| RESP_DND_INTERACTION | RESP_REORDER_TARGET_RESOLUTION | DnD start requires movable-target eligibility.    |
 
 ### Dependency Views
 
-| ID | Name | Includes |
-| --- | --- | --- |
+| ID          | Name     | Includes                                                              |
+| ----------- | -------- | --------------------------------------------------------------------- |
 | DV_DND_CORE | DnD Core | RESP_DND_INTERACTION RESP_REORDER_MODE RESP_REORDER_TARGET_RESOLUTION |
 
 ### Responsibility Details
@@ -549,10 +549,10 @@ Create active DnD state only after successful target resolution and discard it o
 
 Describe the collaboration that either starts DnD with a movable target or rejects the attempt before active DnD state exists.
 
-| Step | Source | Target | Interaction |
-| ---: | --- | --- | --- |
-| 1 | RESP_DND_INTERACTION | RESP_REORDER_TARGET_RESOLUTION | Requests movable-target resolution for the attempted start target. |
-| 2 | RESP_REORDER_TARGET_RESOLUTION | RESP_DND_INTERACTION | Notifies DnD Interaction when the target cannot be used and why. |
+| Step | Source                         | Target                         | Interaction                                                        |
+| ---: | ------------------------------ | ------------------------------ | ------------------------------------------------------------------ |
+|    1 | RESP_DND_INTERACTION           | RESP_REORDER_TARGET_RESOLUTION | Requests movable-target resolution for the attempted start target. |
+|    2 | RESP_REORDER_TARGET_RESOLUTION | RESP_DND_INTERACTION           | Notifies DnD Interaction when the target cannot be used and why.   |
 ```
 
 The Process Flow rows describe overall processing direction without defining runtime order. Process Flow View and Edge kinds explicitly classify the flow for generated representations without changing Process Flow direction semantics. The second runtime step may point opposite to the Structural Dependency. Runtime direction represents interaction direction, not dependency or Process Flow direction.
