@@ -11,15 +11,15 @@ describe('validation contracts', () => {
     const location: ProblemLocation = {
       side: 'translation',
       kind: 'range',
-      start: 2,
-      end: 5,
+      startOffset: 2,
+      endOffset: 5,
     }
 
     expect(location).toEqual({
       side: 'translation',
       kind: 'range',
-      start: 2,
-      end: 5,
+      startOffset: 2,
+      endOffset: 5,
     })
   })
 
@@ -48,8 +48,8 @@ describe('validation contracts', () => {
         {
           side: 'translation',
           kind: 'range',
-          start: 5,
-          end: 6,
+          startOffset: 5,
+          endOffset: 6,
         },
       ],
       reason: '半角文字と全角文字の間には原則としてスペースを入れません。',
@@ -74,8 +74,8 @@ describe('validation contracts', () => {
         {
           side: 'translation',
           kind: 'range',
-          start: 5,
-          end: 6,
+          startOffset: 5,
+          endOffset: 6,
         },
       ],
       reason: '半角文字と全角文字の間には原則としてスペースを入れません。',
