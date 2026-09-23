@@ -57,17 +57,17 @@ Presentation は利用者向け interaction state と表示を所有するが、
 
 通常の確認処理が、利用者の入力から表示可能な結果へ進む主要方向を示す。
 
-| From                       | To                         | Kind   | Meaning                                              |
-| -------------------------- | -------------------------- | ------ | ---------------------------------------------------- |
+| From                       | To                         | Kind   | Meaning                                             |
+| -------------------------- | -------------------------- | ------ | --------------------------------------------------- |
 | EXT_USER_PO_FILE           | RESP_PRESENTATION          | normal | 利用者が選択した確認対象が WTC の利用フローへ入る。 |
-| RESP_PRESENTATION          | RESP_CHECK_ORCHESTRATION   | normal | 確認要求が検証処理の調整責務へ進む。                 |
-| RESP_CHECK_ORCHESTRATION   | RESP_PO_INTERPRETATION     | normal | 確認対象の解釈処理へ進む。                           |
-| RESP_PO_INTERPRETATION     | RESP_LOCALE_RESOLUTION     | normal | 解釈済みメタデータからロケール判定へ進む。           |
-| RESP_LOCALE_RESOLUTION     | RESP_LOCALE_RULE_SELECTION | normal | 判定済みロケールから適用ルール集合の選択へ進む。     |
-| RESP_LOCALE_RULE_SELECTION | RESP_RULE_EVALUATION       | normal | 選択済みロケールルールによる評価へ進む。             |
-| RESP_RULE_EVALUATION       | RESP_FINDING_COORDINATION  | normal | 個別ルールの検出結果が指摘調整へ進む。               |
-| RESP_FINDING_COORDINATION  | RESP_CHECK_ORCHESTRATION   | normal | 調整済み Finding が確認全体の結果へ統合される。      |
-| RESP_CHECK_ORCHESTRATION   | RESP_PRESENTATION          | normal | 確認全体の結果が利用者向け表示へ進む。               |
+| RESP_PRESENTATION          | RESP_CHECK_ORCHESTRATION   | normal | 確認要求が検証処理の調整責務へ進む。                |
+| RESP_CHECK_ORCHESTRATION   | RESP_PO_INTERPRETATION     | normal | 確認対象の解釈処理へ進む。                          |
+| RESP_PO_INTERPRETATION     | RESP_LOCALE_RESOLUTION     | normal | 解釈済みメタデータからロケール判定へ進む。          |
+| RESP_LOCALE_RESOLUTION     | RESP_LOCALE_RULE_SELECTION | normal | 判定済みロケールから適用ルール集合の選択へ進む。    |
+| RESP_LOCALE_RULE_SELECTION | RESP_RULE_EVALUATION       | normal | 選択済みロケールルールによる評価へ進む。            |
+| RESP_RULE_EVALUATION       | RESP_FINDING_COORDINATION  | normal | 個別ルールの検出結果が指摘調整へ進む。              |
+| RESP_FINDING_COORDINATION  | RESP_CHECK_ORCHESTRATION   | normal | 調整済み Finding が確認全体の結果へ統合される。     |
+| RESP_CHECK_ORCHESTRATION   | RESP_PRESENTATION          | normal | 確認全体の結果が利用者向け表示へ進む。              |
 
 #### Validation Failure Boundaries {#PV_VALIDATION_FAILURE_BOUNDARIES kind=failure-recovery}
 
