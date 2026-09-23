@@ -1,6 +1,6 @@
 # Development foundation
 
-This document defines cross-cutting development principles for WP Japanese Translation Checker. Working instructions live in `AGENTS.md` files, and validation commands live in `testing.md`.
+This document defines cross-cutting development principles for WP Translation Checker. Working instructions live in `AGENTS.md` files, and validation commands live in `testing.md`.
 
 ## Development flow
 
