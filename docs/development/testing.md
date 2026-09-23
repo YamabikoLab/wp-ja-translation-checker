@@ -33,7 +33,7 @@ npm run validate
 - `npm run validate` runs the full application validation sequence in this order: formatting, linting, tests, then build.
 - The build writes generated output under `dist/`; do not commit it.
 
-Use `npm run validate` as the repository-wide completion check when all application validation steps apply. Keep `npm test` scoped to Vitest so automated tests can be run independently from formatting, linting, and build validation.
+Use `npm run validate` as the repository-wide completion check when all application validation steps apply. PR Validation runs this same completion check automatically for pull requests and can also be run manually. Keep `npm test` scoped to Vitest so automated tests can be run independently from formatting, linting, and build validation.
 
 Check changed lines for whitespace errors with:
 
@@ -45,7 +45,7 @@ Vitest uses its Node environment by default. Add a DOM environment or React DOM 
 
 ## Security validation
 
-Gitleaks runs in GitHub Actions as a dedicated security workflow for pull requests, pushes to `main`, and manual runs. It scans the full Git history with the standard Gitleaks rules and redacts detected secret values from logs.
+Gitleaks runs in GitHub Actions as a dedicated security workflow for pull requests, pushes to `main`, and manual runs. It scans the full Git history with the standard Gitleaks rules and redacts detected secret values from logs. This responsibility remains separate from PR Validation, which covers application quality checks.
 
 Gitleaks is not an npm validation command and is not required as a local development dependency.
 
