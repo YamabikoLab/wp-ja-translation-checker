@@ -40,7 +40,7 @@ export type StyleGuideReference = {
 /**
  * 個別ルールが Finding Coordination へ渡す検出結果を表す。
  *
- * 各ルールが所有する重要度、問題概要、判定理由、スタイルガイド根拠、問題箇所を保持し、
+ * 各ルールが所有する重要度、問題概要、判定理由、スタイルガイド根拠、1つ以上の問題箇所を保持し、
  * 後続責務が重複解消や集約を行うための意味情報を失わないことを目的とする。
  */
 export type RuleSpecificDetection = {
@@ -49,7 +49,7 @@ export type RuleSpecificDetection = {
   summary: string
   source: string
   translation: string
-  locations: readonly ProblemLocation[]
+  locations: readonly [ProblemLocation, ...ProblemLocation[]]
   reason: string
   styleGuide: StyleGuideReference
 }
@@ -57,7 +57,7 @@ export type RuleSpecificDetection = {
 /**
  * Finding Coordination が Presentation へ渡す、利用者向けの最終指摘を表す。
  *
- * Presentation が原文や翻訳を再解析せず、問題概要、重要度、問題箇所、判定理由、
+ * Presentation が原文や翻訳を再解析せず、問題概要、重要度、1つ以上の問題箇所、判定理由、
  * スタイルガイド根拠をそのまま表示できる情報を保持する。
  */
 export type Finding = {
@@ -66,7 +66,7 @@ export type Finding = {
   summary: string
   source: string
   translation: string
-  locations: readonly ProblemLocation[]
+  locations: readonly [ProblemLocation, ...ProblemLocation[]]
   reason: string
   styleGuide: StyleGuideReference
 }
