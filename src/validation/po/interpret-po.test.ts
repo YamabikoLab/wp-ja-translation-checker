@@ -565,6 +565,36 @@ msgstr ""`),
   })
 
   /**
+   * パーサー不在と入力不正が同時にある場合に、構成異常を入力不正で隠さないことを確認する。
+   *
+   * 事前条件:
+   * - browser bundle が利用できない。
+   * - 終了引用符がない PO が入力される。
+   *
+   * 操作:
+   * - PO 文字列を解釈する。
+   *
+   * 期待結果:
+   * - `invalid-po` ではなく、パーサーの構成異常として例外になる。
+   */
+  it('when the parser browser bundle is unavailable and the PO is malformed, should preserve the configuration error', () => {
+    const target = globalThis as typeof globalThis & {
+      gettext?: { po2js: (source: string) => unknown }
+    }
+    const current = target.gettext
+    delete target.gettext
+
+    try {
+      expect(() =>
+        interpretPo(`msgid "Hello"
+msgstr "こんにちは`),
+      ).toThrow('gettext-converter の browser bundle を読み込めませんでした。')
+    } finally {
+      target.gettext = current
+    }
+  })
+
+  /**
    * 入力文字列を解釈した場合に、呼び出し元が保持する文字列内容を変更しないことを確認する。
    *
    * 操作:
