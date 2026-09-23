@@ -1,8 +1,8 @@
-# WP Japanese Translation Checker v1 Architecture
+# WP Translation Checker v1 Architecture
 
 ## 1. Introduction and Goals
 
-本書は、WP Japanese Translation Checker（WJTC）v1 の基本設計を実現するための内部責務、境界、契約、依存方向、不変条件を定義する。
+本書は、WP Translation Checker（WTC）v1 の基本設計を実現するための内部責務、境界、契約、依存方向、不変条件を定義する。
 
 v1 の主なアーキテクチャ目標は以下とする。
 
@@ -18,7 +18,7 @@ v1 の主なアーキテクチャ目標は以下とする。
 
 ## 2. Architecture Constraints
 
-- v1 の確認対象ロケールは日本語（`ja`）のみとする。
+- WTC 全体は特定ロケールに限定しない。v1 の確認対象ロケールは日本語（`ja`）のみとする。
 - 検証処理はブラウザー内で完結し、確認対象の翻訳内容を検証のために外部サービスへ送信しない。
 - 入力 `.po` の内容を確認処理で変更しない。
 - 検証コアは React、DOM、focus API に依存しない。
@@ -31,7 +31,7 @@ v1 の主なアーキテクチャ目標は以下とする。
 
 ## 3. Context and Scope
 
-WJTC v1 は、利用者がローカルで選択した `.po` ファイルを、ブラウザーが提供する能力を用いて読み取り、内部で確認し、React UI へ結果を返す。
+WTC v1 は、利用者がローカルで選択した `.po` ファイルを、ブラウザーが提供する能力を用いて読み取り、内部で確認し、React UI へ結果を返す。
 
 WordPress 日本語翻訳スタイルガイドは指摘根拠を利用者が確認するための一次情報であり、確認実行時に取得・解析する依存先ではない。
 
@@ -45,7 +45,7 @@ WordPress 日本語翻訳スタイルガイドは指摘根拠を利用者が確�
 
 ## 4. Solution Strategy
 
-WJTC v1 は、確認要求を調整する責務と、意味解釈・ロケール判定・ルール評価・指摘調整を分離する。
+WTC v1 は、確認要求を調整する責務と、意味解釈・ロケール判定・ルール評価・指摘調整を分離する。
 
 PO Interpretation は入力を検証可能な翻訳エントリとメタデータへ変換し、Locale Resolution はその結果から対象ロケールを解決する。Locale Rule Selection は解決済みロケールに対応するルール集合だけを選択し、Rule Evaluation はそのルール集合を翻訳エントリへ適用する。Finding Coordination は個別ルールの検出結果を、重複や優先関係を解決した利用者向け Finding へ整える。
 
@@ -59,7 +59,7 @@ Presentation は利用者向け interaction state と表示を所有するが、
 
 | From                       | To                         | Kind   | Meaning                                              |
 | -------------------------- | -------------------------- | ------ | ---------------------------------------------------- |
-| EXT_USER_PO_FILE           | RESP_PRESENTATION          | normal | 利用者が選択した確認対象が WJTC の利用フローへ入る。 |
+| EXT_USER_PO_FILE           | RESP_PRESENTATION          | normal | 利用者が選択した確認対象が WTC の利用フローへ入る。 |
 | RESP_PRESENTATION          | RESP_CHECK_ORCHESTRATION   | normal | 確認要求が検証処理の調整責務へ進む。                 |
 | RESP_CHECK_ORCHESTRATION   | RESP_PO_INTERPRETATION     | normal | 確認対象の解釈処理へ進む。                           |
 | RESP_PO_INTERPRETATION     | RESP_LOCALE_RESOLUTION     | normal | 解釈済みメタデータからロケール判定へ進む。           |
@@ -561,7 +561,7 @@ Presentation や個別ルールへ競合解決を分散させず、QR-02 を維�
 
 **Context**
 
-WJTC は確認ツールであり、入力修正は v1 対象外である。また、確認中に入力が変更される可能性がある。
+WTC は確認ツールであり、入力修正は v1 対象外である。また、確認中に入力が変更される可能性がある。
 
 **Decision**
 
