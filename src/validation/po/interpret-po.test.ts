@@ -265,7 +265,6 @@ msgstr "開く"
     ])
   })
 
-
   /**
    * 未翻訳 entry が途中にある場合に、公開する entryIndex が filtering 後の連番になることを確認する。
    *
@@ -302,10 +301,9 @@ msgstr "丙"
     expect(result.document.entries.map((entry) => entry.entryIndex)).toEqual([
       0, 1,
     ])
-    expect(result.document.entries.map((entry) => entry.source.singular)).toEqual([
-      'A',
-      'C',
-    ])
+    expect(
+      result.document.entries.map((entry) => entry.source.singular),
+    ).toEqual(['A', 'C'])
   })
 
   /**
