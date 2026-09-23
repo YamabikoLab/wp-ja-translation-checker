@@ -20,6 +20,16 @@
       </section>
 
       <section>
+        <h2>実 PO ファイル確認</h2>
+        <p>
+          選択したファイルはブラウザー内だけで読み込みます。サーバーへのアップロードは行いません。
+        </p>
+        <input id="po-file" type="file" accept=".po,text/x-gettext-translation" disabled />
+        <p id="file-status"></p>
+        <dl id="file-results"></dl>
+      </section>
+
+      <section>
         <h2>Benchmark</h2>
         <p>
           計測対象は parser の parse 処理だけです。各サイズを 5 回計測し、
@@ -43,6 +53,7 @@
       </section>
     </main>
 
+    <script src="/gettext-converter.js"></script>
     <script type="module" src="/src/bootstrap.ts"></script>
   </body>
 </html>
