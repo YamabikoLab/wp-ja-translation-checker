@@ -51,3 +51,12 @@ Tests should be structured so that their purpose and expected behavior can be un
 - Keep React integration tests scoped to the behavior owned by the React boundary. Do not duplicate the specification of React-independent responsibilities already verified by their own tests.
 - Prefer user-observable queries for rendered UI. Use implementation-oriented queries such as test IDs only when no meaningful user-facing query exists.
 - Keep test setup focused on the scenario being verified. Do not reproduce production component trees, providers, or DOM structure unrelated to the responsibility under test.
+
+## Test case documentation
+
+Follow [`test-case-documentation.md`](./test-case-documentation.md) for the common test case documentation format.
+
+For Vitest tests:
+
+- Describe conditions and expected results at the responsibility or externally observable behavior boundary being tested.
+- Do not document mocks, test doubles, helper calls, or internal state transitions unless they are themselves part of the responsibility contract being verified.
