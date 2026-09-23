@@ -9,9 +9,6 @@ type ParserTranslation = {
   msgid: string
   msgid_plural?: string
   msgstr?: string[]
-  comments?: {
-    flag?: string
-  }
 }
 
 type ParsedPo = {
@@ -158,27 +155,17 @@ const createEntries = (
  * @returns 正常時は正規化済み document、malformed PO の場合は invalid-po。
  */
 export function interpretPo(source: string): PoInterpretationResult {
+  const parser = getParser()
   let parsed: ParsedPo
 
   try {
-    parsed = toParsedPo(getParser().po2js(source))
+    parsed = toParsedPo(parser.po2js(source))
   } catch (error) {
-    if (
-      error instanceof Error &&
-      error.message ===
-        'gettext-converter の browser bundle を読み込めませんでした。'
-    ) {
-      throw error
+    if (error instanceof SyntaxError) {
+      return { status: 'invalid-po' }
     }
 
-    if (
-      error instanceof Error &&
-      error.message === 'gettext-converter が想定外の解析結果を返しました。'
-    ) {
-      throw error
-    }
-
-    return { status: 'invalid-po' }
+    throw error
   }
 
   return {
