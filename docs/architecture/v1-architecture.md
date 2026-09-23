@@ -37,11 +37,11 @@ WordPress 日本語翻訳スタイルガイドは指摘根拠を利用者が確�
 
 ### External Context
 
-| ID | Name | Type | Summary |
-| --- | --- | --- | --- |
-| EXT_USER_PO_FILE | Local PO File | External System | 利用者が確認対象として選択するローカルの `.po` ファイル。 |
-| EXT_BROWSER_FILE_CAPABILITY | Browser File Capability | External Capability | 選択されたローカルファイルの内容をブラウザー内で読み取る能力を提供する。 |
-| EXT_STYLE_GUIDE | WordPress Japanese Translation Style Guide | External System | 各指摘の根拠として利用者が任意に参照する一次情報。 |
+| ID                          | Name                                       | Type                | Summary                                                                  |
+| --------------------------- | ------------------------------------------ | ------------------- | ------------------------------------------------------------------------ |
+| EXT_USER_PO_FILE            | Local PO File                              | External System     | 利用者が確認対象として選択するローカルの `.po` ファイル。                |
+| EXT_BROWSER_FILE_CAPABILITY | Browser File Capability                    | External Capability | 選択されたローカルファイルの内容をブラウザー内で読み取る能力を提供する。 |
+| EXT_STYLE_GUIDE             | WordPress Japanese Translation Style Guide | External System     | 各指摘の根拠として利用者が任意に参照する一次情報。                       |
 
 ## 4. Solution Strategy
 
@@ -57,71 +57,71 @@ Presentation は利用者向け interaction state と表示を所有するが、
 
 通常の確認処理が、利用者の入力から表示可能な結果へ進む主要方向を示す。
 
-| From | To | Kind | Meaning |
-| --- | --- | --- | --- |
-| EXT_USER_PO_FILE | RESP_PRESENTATION | normal | 利用者が選択した確認対象が WJTC の利用フローへ入る。 |
-| RESP_PRESENTATION | RESP_CHECK_ORCHESTRATION | normal | 確認要求が検証処理の調整責務へ進む。 |
-| RESP_CHECK_ORCHESTRATION | RESP_PO_INTERPRETATION | normal | 確認対象の解釈処理へ進む。 |
-| RESP_PO_INTERPRETATION | RESP_LOCALE_RESOLUTION | normal | 解釈済みメタデータからロケール判定へ進む。 |
-| RESP_LOCALE_RESOLUTION | RESP_LOCALE_RULE_SELECTION | normal | 判定済みロケールから適用ルール集合の選択へ進む。 |
-| RESP_LOCALE_RULE_SELECTION | RESP_RULE_EVALUATION | normal | 選択済みロケールルールによる評価へ進む。 |
-| RESP_RULE_EVALUATION | RESP_FINDING_COORDINATION | normal | 個別ルールの検出結果が指摘調整へ進む。 |
-| RESP_FINDING_COORDINATION | RESP_CHECK_ORCHESTRATION | normal | 調整済み Finding が確認全体の結果へ統合される。 |
-| RESP_CHECK_ORCHESTRATION | RESP_PRESENTATION | normal | 確認全体の結果が利用者向け表示へ進む。 |
+| From                       | To                         | Kind   | Meaning                                              |
+| -------------------------- | -------------------------- | ------ | ---------------------------------------------------- |
+| EXT_USER_PO_FILE           | RESP_PRESENTATION          | normal | 利用者が選択した確認対象が WJTC の利用フローへ入る。 |
+| RESP_PRESENTATION          | RESP_CHECK_ORCHESTRATION   | normal | 確認要求が検証処理の調整責務へ進む。                 |
+| RESP_CHECK_ORCHESTRATION   | RESP_PO_INTERPRETATION     | normal | 確認対象の解釈処理へ進む。                           |
+| RESP_PO_INTERPRETATION     | RESP_LOCALE_RESOLUTION     | normal | 解釈済みメタデータからロケール判定へ進む。           |
+| RESP_LOCALE_RESOLUTION     | RESP_LOCALE_RULE_SELECTION | normal | 判定済みロケールから適用ルール集合の選択へ進む。     |
+| RESP_LOCALE_RULE_SELECTION | RESP_RULE_EVALUATION       | normal | 選択済みロケールルールによる評価へ進む。             |
+| RESP_RULE_EVALUATION       | RESP_FINDING_COORDINATION  | normal | 個別ルールの検出結果が指摘調整へ進む。               |
+| RESP_FINDING_COORDINATION  | RESP_CHECK_ORCHESTRATION   | normal | 調整済み Finding が確認全体の結果へ統合される。      |
+| RESP_CHECK_ORCHESTRATION   | RESP_PRESENTATION          | normal | 確認全体の結果が利用者向け表示へ進む。               |
 
 #### Validation Failure Boundaries {#PV_VALIDATION_FAILURE_BOUNDARIES kind=failure-recovery}
 
 解析不能、ロケール判定不能、未対応ロケールが正常結果と混同されず Presentation へ戻る境界を示す。
 
-| From | To | Kind | Meaning |
-| --- | --- | --- | --- |
-| RESP_PO_INTERPRETATION | RESP_CHECK_ORCHESTRATION | failure | 入力を確認可能な PO として解釈できない状態が確認全体の結果へ戻る。 |
-| RESP_LOCALE_RESOLUTION | RESP_CHECK_ORCHESTRATION | failure | 対象ロケールを判定できない状態が確認全体の結果へ戻る。 |
-| RESP_LOCALE_RULE_SELECTION | RESP_CHECK_ORCHESTRATION | failure | 判定済みロケールが未対応である状態が確認全体の結果へ戻る。 |
-| RESP_CHECK_ORCHESTRATION | RESP_PRESENTATION | recovery | 確認不能理由を利用者が理解できる安定した表示状態へ戻す。 |
+| From                       | To                       | Kind     | Meaning                                                            |
+| -------------------------- | ------------------------ | -------- | ------------------------------------------------------------------ |
+| RESP_PO_INTERPRETATION     | RESP_CHECK_ORCHESTRATION | failure  | 入力を確認可能な PO として解釈できない状態が確認全体の結果へ戻る。 |
+| RESP_LOCALE_RESOLUTION     | RESP_CHECK_ORCHESTRATION | failure  | 対象ロケールを判定できない状態が確認全体の結果へ戻る。             |
+| RESP_LOCALE_RULE_SELECTION | RESP_CHECK_ORCHESTRATION | failure  | 判定済みロケールが未対応である状態が確認全体の結果へ戻る。         |
+| RESP_CHECK_ORCHESTRATION   | RESP_PRESENTATION        | recovery | 確認不能理由を利用者が理解できる安定した表示状態へ戻す。           |
 
 ## 5. Building Block View
 
 ### Responsibility Inventory
 
-| ID | Responsibility | Summary |
-| --- | --- | --- |
-| RESP_PRESENTATION | Result Presentation | 確認入力、利用者向け状態、確認結果、重要なフィードバックを表示する。 |
-| RESP_CHECK_ORCHESTRATION | Check Orchestration | 1回の確認要求を開始し、入力から確認全体の結果までの処理を調整する。 |
-| RESP_PO_INTERPRETATION | PO Interpretation | 入力ファイルを検証可能な翻訳エントリとメタデータへ解釈する。 |
-| RESP_LOCALE_RESOLUTION | Locale Resolution | PO メタデータから対象ロケールを判定し、判定不能を区別する。 |
-| RESP_LOCALE_RULE_SELECTION | Locale Rule Selection | 判定済みロケールに対応するルール集合を選択し、未対応を区別する。 |
-| RESP_RULE_EVALUATION | Rule Evaluation | 選択されたロケールルールを翻訳エントリへ適用し、ルール固有の検出結果を生成する。 |
-| RESP_FINDING_COORDINATION | Finding Coordination | ルール固有の検出結果を重複・優先関係・集約・順序の規則に従って最終 Finding へ整える。 |
+| ID                         | Responsibility        | Summary                                                                               |
+| -------------------------- | --------------------- | ------------------------------------------------------------------------------------- |
+| RESP_PRESENTATION          | Result Presentation   | 確認入力、利用者向け状態、確認結果、重要なフィードバックを表示する。                  |
+| RESP_CHECK_ORCHESTRATION   | Check Orchestration   | 1回の確認要求を開始し、入力から確認全体の結果までの処理を調整する。                   |
+| RESP_PO_INTERPRETATION     | PO Interpretation     | 入力ファイルを検証可能な翻訳エントリとメタデータへ解釈する。                          |
+| RESP_LOCALE_RESOLUTION     | Locale Resolution     | PO メタデータから対象ロケールを判定し、判定不能を区別する。                           |
+| RESP_LOCALE_RULE_SELECTION | Locale Rule Selection | 判定済みロケールに対応するルール集合を選択し、未対応を区別する。                      |
+| RESP_RULE_EVALUATION       | Rule Evaluation       | 選択されたロケールルールを翻訳エントリへ適用し、ルール固有の検出結果を生成する。      |
+| RESP_FINDING_COORDINATION  | Finding Coordination  | ルール固有の検出結果を重複・優先関係・集約・順序の規則に従って最終 Finding へ整える。 |
 
 ### Ownership Boundaries
 
-| ID | Name | Includes |
-| --- | --- | --- |
-| BOUNDARY_PRESENTATION | Presentation | RESP_PRESENTATION |
-| BOUNDARY_VALIDATION_CORE | Validation Core | RESP_CHECK_ORCHESTRATION RESP_PO_INTERPRETATION RESP_LOCALE_RESOLUTION RESP_LOCALE_RULE_SELECTION RESP_RULE_EVALUATION RESP_FINDING_COORDINATION |
-| BOUNDARY_BROWSER_INPUT | Browser Input | EXT_USER_PO_FILE EXT_BROWSER_FILE_CAPABILITY |
-| BOUNDARY_REFERENCE | Reference Information | EXT_STYLE_GUIDE |
+| ID                       | Name                  | Includes                                                                                                                                         |
+| ------------------------ | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| BOUNDARY_PRESENTATION    | Presentation          | RESP_PRESENTATION                                                                                                                                |
+| BOUNDARY_VALIDATION_CORE | Validation Core       | RESP_CHECK_ORCHESTRATION RESP_PO_INTERPRETATION RESP_LOCALE_RESOLUTION RESP_LOCALE_RULE_SELECTION RESP_RULE_EVALUATION RESP_FINDING_COORDINATION |
+| BOUNDARY_BROWSER_INPUT   | Browser Input         | EXT_USER_PO_FILE EXT_BROWSER_FILE_CAPABILITY                                                                                                     |
+| BOUNDARY_REFERENCE       | Reference Information | EXT_STYLE_GUIDE                                                                                                                                  |
 
 ### Dependencies
 
-| Dependent | Depends on | Reason |
-| --- | --- | --- |
-| RESP_PRESENTATION | RESP_CHECK_ORCHESTRATION | 利用者向け確認結果と確認不能状態を得るために確認全体の処理境界を必要とする。 |
-| RESP_PRESENTATION | EXT_BROWSER_FILE_CAPABILITY | ローカルファイルを選択・読み取り可能な入力能力を利用するため。 |
-| RESP_CHECK_ORCHESTRATION | RESP_PO_INTERPRETATION | 確認対象を検証可能な翻訳エントリとメタデータへ解釈する必要があるため。 |
-| RESP_CHECK_ORCHESTRATION | RESP_LOCALE_RESOLUTION | 解釈済み入力の対象ロケールを判定する必要があるため。 |
-| RESP_CHECK_ORCHESTRATION | RESP_LOCALE_RULE_SELECTION | 判定済みロケールに適用可能なルール集合を決定する必要があるため。 |
-| RESP_CHECK_ORCHESTRATION | RESP_RULE_EVALUATION | 選択済みルール集合による検出結果を得る必要があるため。 |
-| RESP_CHECK_ORCHESTRATION | RESP_FINDING_COORDINATION | 個別検出結果を一貫した最終 Finding へ整える必要があるため。 |
-| RESP_PO_INTERPRETATION | EXT_USER_PO_FILE | 確認対象であるローカル PO 内容を解釈するため。 |
+| Dependent                | Depends on                  | Reason                                                                       |
+| ------------------------ | --------------------------- | ---------------------------------------------------------------------------- |
+| RESP_PRESENTATION        | RESP_CHECK_ORCHESTRATION    | 利用者向け確認結果と確認不能状態を得るために確認全体の処理境界を必要とする。 |
+| RESP_PRESENTATION        | EXT_BROWSER_FILE_CAPABILITY | ローカルファイルを選択・読み取り可能な入力能力を利用するため。               |
+| RESP_CHECK_ORCHESTRATION | RESP_PO_INTERPRETATION      | 確認対象を検証可能な翻訳エントリとメタデータへ解釈する必要があるため。       |
+| RESP_CHECK_ORCHESTRATION | RESP_LOCALE_RESOLUTION      | 解釈済み入力の対象ロケールを判定する必要があるため。                         |
+| RESP_CHECK_ORCHESTRATION | RESP_LOCALE_RULE_SELECTION  | 判定済みロケールに適用可能なルール集合を決定する必要があるため。             |
+| RESP_CHECK_ORCHESTRATION | RESP_RULE_EVALUATION        | 選択済みルール集合による検出結果を得る必要があるため。                       |
+| RESP_CHECK_ORCHESTRATION | RESP_FINDING_COORDINATION   | 個別検出結果を一貫した最終 Finding へ整える必要があるため。                  |
+| RESP_PO_INTERPRETATION   | EXT_USER_PO_FILE            | 確認対象であるローカル PO 内容を解釈するため。                               |
 
 ### Dependency Views
 
-| ID | Name | Includes |
-| --- | --- | --- |
-| DV_VALIDATION_CORE | Validation Core | RESP_CHECK_ORCHESTRATION RESP_PO_INTERPRETATION RESP_LOCALE_RESOLUTION RESP_LOCALE_RULE_SELECTION RESP_RULE_EVALUATION RESP_FINDING_COORDINATION EXT_USER_PO_FILE |
-| DV_PRESENTATION_BOUNDARY | Presentation Boundary | RESP_PRESENTATION RESP_CHECK_ORCHESTRATION EXT_BROWSER_FILE_CAPABILITY |
+| ID                       | Name                  | Includes                                                                                                                                                          |
+| ------------------------ | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| DV_VALIDATION_CORE       | Validation Core       | RESP_CHECK_ORCHESTRATION RESP_PO_INTERPRETATION RESP_LOCALE_RESOLUTION RESP_LOCALE_RULE_SELECTION RESP_RULE_EVALUATION RESP_FINDING_COORDINATION EXT_USER_PO_FILE |
+| DV_PRESENTATION_BOUNDARY | Presentation Boundary | RESP_PRESENTATION RESP_CHECK_ORCHESTRATION EXT_BROWSER_FILE_CAPABILITY                                                                                            |
 
 ### Responsibility Details
 
@@ -308,69 +308,69 @@ v1 では日本語（`ja`）のみを対応ロケールとして扱う。
 
 確認可能な日本語 PO に対して、1件以上の指摘を含む正常結果が得られる流れを示す。
 
-| Step | Source | Target | Interaction |
-| ---: | --- | --- | --- |
-| 1 | RESP_PRESENTATION | RESP_CHECK_ORCHESTRATION | 確認開始時点の選択入力を対象として確認を要求する。 |
-| 2 | RESP_CHECK_ORCHESTRATION | RESP_PO_INTERPRETATION | 入力を翻訳エントリとメタデータへ解釈するよう求める。 |
-| 3 | RESP_CHECK_ORCHESTRATION | RESP_LOCALE_RESOLUTION | 解釈済みメタデータから対象ロケールの判定を求める。 |
-| 4 | RESP_CHECK_ORCHESTRATION | RESP_LOCALE_RULE_SELECTION | 判定済みロケールに対応するルール集合の選択を求める。 |
-| 5 | RESP_CHECK_ORCHESTRATION | RESP_RULE_EVALUATION | 翻訳エントリへ選択済みルール集合を適用するよう求める。 |
-| 6 | RESP_CHECK_ORCHESTRATION | RESP_FINDING_COORDINATION | ルール固有の検出結果を最終 Finding 集合へ整えるよう求める。 |
-| 7 | RESP_CHECK_ORCHESTRATION | RESP_PRESENTATION | 指摘あり正常完了として確認全体の結果を通知する。 |
+| Step | Source                   | Target                     | Interaction                                                 |
+| ---: | ------------------------ | -------------------------- | ----------------------------------------------------------- |
+|    1 | RESP_PRESENTATION        | RESP_CHECK_ORCHESTRATION   | 確認開始時点の選択入力を対象として確認を要求する。          |
+|    2 | RESP_CHECK_ORCHESTRATION | RESP_PO_INTERPRETATION     | 入力を翻訳エントリとメタデータへ解釈するよう求める。        |
+|    3 | RESP_CHECK_ORCHESTRATION | RESP_LOCALE_RESOLUTION     | 解釈済みメタデータから対象ロケールの判定を求める。          |
+|    4 | RESP_CHECK_ORCHESTRATION | RESP_LOCALE_RULE_SELECTION | 判定済みロケールに対応するルール集合の選択を求める。        |
+|    5 | RESP_CHECK_ORCHESTRATION | RESP_RULE_EVALUATION       | 翻訳エントリへ選択済みルール集合を適用するよう求める。      |
+|    6 | RESP_CHECK_ORCHESTRATION | RESP_FINDING_COORDINATION  | ルール固有の検出結果を最終 Finding 集合へ整えるよう求める。 |
+|    7 | RESP_CHECK_ORCHESTRATION | RESP_PRESENTATION          | 指摘あり正常完了として確認全体の結果を通知する。            |
 
 ### Successful validation without findings {#RV_SUCCESS_WITHOUT_FINDINGS}
 
 確認が正常に完了し、v1 対象ルールで指摘がない場合を示す。
 
-| Step | Source | Target | Interaction |
-| ---: | --- | --- | --- |
-| 1 | RESP_PRESENTATION | RESP_CHECK_ORCHESTRATION | 確認開始時点の選択入力を対象として確認を要求する。 |
-| 2 | RESP_CHECK_ORCHESTRATION | RESP_PO_INTERPRETATION | 入力を翻訳エントリとメタデータへ解釈するよう求める。 |
-| 3 | RESP_CHECK_ORCHESTRATION | RESP_LOCALE_RESOLUTION | 解釈済みメタデータから対象ロケールの判定を求める。 |
-| 4 | RESP_CHECK_ORCHESTRATION | RESP_LOCALE_RULE_SELECTION | 判定済みロケールに対応するルール集合の選択を求める。 |
-| 5 | RESP_CHECK_ORCHESTRATION | RESP_RULE_EVALUATION | 翻訳エントリへ選択済みルール集合を適用するよう求める。 |
-| 6 | RESP_CHECK_ORCHESTRATION | RESP_FINDING_COORDINATION | 検出結果を空の最終 Finding 集合へ整えるよう求める。 |
-| 7 | RESP_CHECK_ORCHESTRATION | RESP_PRESENTATION | 指摘なし正常完了として確認全体の結果を通知する。 |
+| Step | Source                   | Target                     | Interaction                                            |
+| ---: | ------------------------ | -------------------------- | ------------------------------------------------------ |
+|    1 | RESP_PRESENTATION        | RESP_CHECK_ORCHESTRATION   | 確認開始時点の選択入力を対象として確認を要求する。     |
+|    2 | RESP_CHECK_ORCHESTRATION | RESP_PO_INTERPRETATION     | 入力を翻訳エントリとメタデータへ解釈するよう求める。   |
+|    3 | RESP_CHECK_ORCHESTRATION | RESP_LOCALE_RESOLUTION     | 解釈済みメタデータから対象ロケールの判定を求める。     |
+|    4 | RESP_CHECK_ORCHESTRATION | RESP_LOCALE_RULE_SELECTION | 判定済みロケールに対応するルール集合の選択を求める。   |
+|    5 | RESP_CHECK_ORCHESTRATION | RESP_RULE_EVALUATION       | 翻訳エントリへ選択済みルール集合を適用するよう求める。 |
+|    6 | RESP_CHECK_ORCHESTRATION | RESP_FINDING_COORDINATION  | 検出結果を空の最終 Finding 集合へ整えるよう求める。    |
+|    7 | RESP_CHECK_ORCHESTRATION | RESP_PRESENTATION          | 指摘なし正常完了として確認全体の結果を通知する。       |
 
 ### Invalid PO input {#RV_INVALID_PO_INPUT}
 
 入力を確認可能な PO として解釈できない場合を示す。
 
-| Step | Source | Target | Interaction |
-| ---: | --- | --- | --- |
-| 1 | RESP_PRESENTATION | RESP_CHECK_ORCHESTRATION | 選択入力の確認を要求する。 |
-| 2 | RESP_CHECK_ORCHESTRATION | RESP_PO_INTERPRETATION | 入力の解釈を求める。 |
-| 3 | RESP_PO_INTERPRETATION | RESP_CHECK_ORCHESTRATION | 確認可能な PO として解釈できないことを通知する。 |
-| 4 | RESP_CHECK_ORCHESTRATION | RESP_PRESENTATION | 入力解析不能として確認全体の結果を通知する。 |
+| Step | Source                   | Target                   | Interaction                                      |
+| ---: | ------------------------ | ------------------------ | ------------------------------------------------ |
+|    1 | RESP_PRESENTATION        | RESP_CHECK_ORCHESTRATION | 選択入力の確認を要求する。                       |
+|    2 | RESP_CHECK_ORCHESTRATION | RESP_PO_INTERPRETATION   | 入力の解釈を求める。                             |
+|    3 | RESP_PO_INTERPRETATION   | RESP_CHECK_ORCHESTRATION | 確認可能な PO として解釈できないことを通知する。 |
+|    4 | RESP_CHECK_ORCHESTRATION | RESP_PRESENTATION        | 入力解析不能として確認全体の結果を通知する。     |
 
 ### Unresolved locale {#RV_UNRESOLVED_LOCALE}
 
 PO は解釈できるが対象ロケールを判定できない場合を示す。
 
-| Step | Source | Target | Interaction |
-| ---: | --- | --- | --- |
-| 1 | RESP_CHECK_ORCHESTRATION | RESP_LOCALE_RESOLUTION | 解釈済みメタデータから対象ロケールの判定を求める。 |
-| 2 | RESP_LOCALE_RESOLUTION | RESP_CHECK_ORCHESTRATION | 対象ロケールを判定できないことを通知する。 |
-| 3 | RESP_CHECK_ORCHESTRATION | RESP_PRESENTATION | ロケール判定不能として確認全体の結果を通知する。 |
+| Step | Source                   | Target                   | Interaction                                        |
+| ---: | ------------------------ | ------------------------ | -------------------------------------------------- |
+|    1 | RESP_CHECK_ORCHESTRATION | RESP_LOCALE_RESOLUTION   | 解釈済みメタデータから対象ロケールの判定を求める。 |
+|    2 | RESP_LOCALE_RESOLUTION   | RESP_CHECK_ORCHESTRATION | 対象ロケールを判定できないことを通知する。         |
+|    3 | RESP_CHECK_ORCHESTRATION | RESP_PRESENTATION        | ロケール判定不能として確認全体の結果を通知する。   |
 
 ### Unsupported locale {#RV_UNSUPPORTED_LOCALE}
 
 対象ロケールは判定できるが v1 では未対応の場合を示す。
 
-| Step | Source | Target | Interaction |
-| ---: | --- | --- | --- |
-| 1 | RESP_CHECK_ORCHESTRATION | RESP_LOCALE_RULE_SELECTION | 判定済みロケールに対応するルール集合の選択を求める。 |
-| 2 | RESP_LOCALE_RULE_SELECTION | RESP_CHECK_ORCHESTRATION | 対応ルール集合が存在しない未対応ロケールであることを通知する。 |
-| 3 | RESP_CHECK_ORCHESTRATION | RESP_PRESENTATION | 未対応ロケールとして確認全体の結果を通知する。 |
+| Step | Source                     | Target                     | Interaction                                                    |
+| ---: | -------------------------- | -------------------------- | -------------------------------------------------------------- |
+|    1 | RESP_CHECK_ORCHESTRATION   | RESP_LOCALE_RULE_SELECTION | 判定済みロケールに対応するルール集合の選択を求める。           |
+|    2 | RESP_LOCALE_RULE_SELECTION | RESP_CHECK_ORCHESTRATION   | 対応ルール集合が存在しない未対応ロケールであることを通知する。 |
+|    3 | RESP_CHECK_ORCHESTRATION   | RESP_PRESENTATION          | 未対応ロケールとして確認全体の結果を通知する。                 |
 
 ### Input replaced during validation {#RV_INPUT_REPLACED}
 
 確認中に利用者が別のファイルを選択した場合でも、旧入力に対応付いた結果を現在の入力へ誤適用しないことを示す。利用者による現在入力の置き換えは Presentation 内の state transition であり、責務間 interaction としては扱わない。
 
-| Step | Source | Target | Interaction |
-| ---: | --- | --- | --- |
-| 1 | RESP_PRESENTATION | RESP_CHECK_ORCHESTRATION | 旧入力を対象とする確認を開始する。 |
-| 2 | RESP_CHECK_ORCHESTRATION | RESP_PRESENTATION | 旧入力に対応付いた確認結果を通知する。 |
+| Step | Source                   | Target                   | Interaction                            |
+| ---: | ------------------------ | ------------------------ | -------------------------------------- |
+|    1 | RESP_PRESENTATION        | RESP_CHECK_ORCHESTRATION | 旧入力を対象とする確認を開始する。     |
+|    2 | RESP_CHECK_ORCHESTRATION | RESP_PRESENTATION        | 旧入力に対応付いた確認結果を通知する。 |
 
 ## 8. Crosscutting Concepts
 
