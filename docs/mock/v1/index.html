@@ -339,6 +339,29 @@
       font-weight: 800;
     }
 
+    .problem-mark {
+      padding: 0 .12em;
+      border-bottom: 3px solid currentColor;
+      border-radius: 2px;
+      font-weight: 800;
+    }
+
+    .missing-space {
+      display: inline-block;
+      width: .65em;
+      margin: 0 .12em;
+      border-bottom: 3px solid var(--error);
+      vertical-align: baseline;
+    }
+
+    .problem-note {
+      display: block;
+      margin-top: 8px;
+      color: var(--error);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
     .reason {
       margin-top: 14px;
       padding-top: 14px;
@@ -494,22 +517,23 @@
             <span class="severity error">Error</span>
             <span class="number">#1</span>
           </div>
-          <h3>半角文字と全角文字の間に不要なスペースがあります</h3>
+          <h3>半角文字と全角文字の間に必要なスペースがありません</h3>
 
           <div class="compare-grid">
             <div class="compare-box">
               <span class="compare-label">原文</span>
-              <p class="compare-text">Activate plugin</p>
+              <p class="compare-text">WordPress plugin</p>
             </div>
             <div class="compare-box">
               <span class="compare-label">翻訳</span>
-              <p class="compare-text">プラグイン を有効化</p>
+              <p class="compare-text">WordPress<span class="missing-space" aria-hidden="true"></span>プラグイン</p>
+              <span class="problem-note">↑ ここに半角スペースが必要です</span>
             </div>
           </div>
 
           <div class="reason">
             <span class="reason-label">判定理由</span>
-            日本語と半角英数字の間には、原則としてスペースを入れません。
+            数字を除く半角文字と全角文字の間には、原則として半角スペースを1つ入れます。
           </div>
 
           <div class="guide">
@@ -536,13 +560,13 @@
             </div>
             <div class="compare-box">
               <span class="compare-label">翻訳</span>
-              <p class="compare-text">投稿を見る</p>
+              <p class="compare-text">投稿を<span class="problem-mark">見る</span></p>
             </div>
           </div>
 
           <div class="reason">
             <span class="reason-label">判定理由</span>
-            「〜を表示（する）」に統一するルールの対象になる可能性があります。文脈を確認してください。
+            動詞の「View XX」は「〜を表示（する）」に統一し、「閲覧」「見る」「開く」「参照」や「〜の表示」は使用しません。
           </div>
 
           <div class="guide">
