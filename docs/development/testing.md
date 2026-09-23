@@ -60,6 +60,17 @@ npm run preview
 
 They are long-running or interactive and should not be treated as handoff validation.
 
+The PO Interpretation performance validation POC has dedicated development commands:
+
+```bash
+npm run poc:po-interpretation-performance
+npm run poc:po-interpretation-performance:build
+```
+
+- `npm run poc:po-interpretation-performance` starts the browser POC that measures the production `interpretPo()` path with synthetic and representative PO input.
+- `npm run poc:po-interpretation-performance:build` checks that the isolated POC can be bundled for browser execution.
+- These commands support Issue #30 validation and are not repository-wide completion checks.
+
 ## Which checks to run
 
 - Documentation-only changes: `git diff --check origin/main...HEAD`.

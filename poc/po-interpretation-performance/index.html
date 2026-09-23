@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PO Interpretation performance validation POC</title>
+  </head>
+  <body>
+    <main>
+      <h1>PO Interpretation performance validation POC</h1>
+      <p>
+        production の <code>interpretPo(source)</code> 全体を main thread 上で計測します。
+        parser 単体ではなく、pre-scan、parse、正規化、<code>InterpretedPo</code>
+        生成までを対象にします。
+      </p>
+
+      <section>
+        <h2>Performance benchmark</h2>
+        <p>
+          realistic synthetic PO を 500 / 5,000 / 15,000 / 30,000 entries
+          で生成し、warm-up 後に各サイズを5回計測します。
+        </p>
+        <button id="run-benchmark" type="button">Benchmark を実行</button>
+        <p id="benchmark-status"></p>
+        <table>
+          <thead>
+            <tr>
+              <th>Entries</th>
+              <th>Input bytes</th>
+              <th>Min (ms)</th>
+              <th>Median (ms)</th>
+              <th>Max (ms)</th>
+            </tr>
+          </thead>
+          <tbody id="benchmark-results"></tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2>Representative real PO</h2>
+        <p>
+          実 PO はブラウザー内だけで読み込みます。WooCommerce stable ja などの
+          representative PO を選択して <code>interpretPo()</code> 全体を計測します。
+        </p>
+        <input id="po-file" type="file" accept=".po,text/x-gettext-translation" />
+        <p id="file-status"></p>
+        <dl id="file-results"></dl>
+      </section>
+
+      <section>
+        <h2>Memory validation</h2>
+        <p>
+          自動 heap 値は記録しません。DevTools の Memory recording / allocation profile
+          を開始してから対象サイズを1件ずつ実行し、pre-scan の一時 allocation を含む
+          <code>interpretPo()</code> 呼び出し全体の peak を確認してください。
+        </p>
+        <div id="memory-buttons"></div>
+        <p id="memory-status"></p>
+      </section>
+    </main>
+
+    <script src="/gettext-converter.js"></script>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

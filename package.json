@@ -11,7 +11,9 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "validate": "npm run format:check && npm run lint && npm test && npm run build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "poc:po-interpretation-performance": "vite --config poc/po-interpretation-performance/vite.config.ts",
+    "poc:po-interpretation-performance:build": "vite build --config poc/po-interpretation-performance/vite.config.ts"
   },
   "dependencies": {
     "react": "^19.2.8",
