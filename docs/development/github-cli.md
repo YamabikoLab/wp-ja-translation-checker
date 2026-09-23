@@ -49,4 +49,4 @@ gh pr view <pr-number>
 gh pr list
 ```
 
-必要な場合は`--repo YamabikoLab/wp-ja-translation-checker`を付けて対象リポジトリを明示します。
+必要な場合は`--repo YamabikoLab/wp-translation-checker`を付けて対象リポジトリを明示します。
