@@ -285,12 +285,14 @@ const createEntries = (parsed: ParsedPo): readonly TranslationEntry[] => {
  * @returns 正常時は正規化済み document、構文不正な PO の場合は `invalid-po`。
  */
 export function interpretPo(source: string): PoInterpretationResult {
-  // 途中で切れた引用文字列をパーサーが成功扱いする既知の境界を、入力不正として先に識別する。
+  // パーサーの構成異常は入力内容より先に確定し、入力不正へ読み替えない。
+  const parser = getParser()
+
+  // 途中で切れた引用文字列をパーサーが成功扱いする既知の境界を、入力不正として識別する。
   if (hasUnterminatedPoString(source)) {
     return { status: 'invalid-po' }
   }
 
-  const parser = getParser()
   let parsed: ParsedPo
 
   try {
