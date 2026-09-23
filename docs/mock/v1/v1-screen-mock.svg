@@ -34,10 +34,10 @@
     <text x="118" y="584" font-size="14" fill="#667085">Error は高い確度で問題と判断できる指摘、Warning は人による確認が必要な指摘です。</text>
     <rect x="890" y="519" width="82" height="68" rx="11" fill="#fef3f2"/>
     <text x="910" y="542" font-size="12" font-weight="800" fill="#b42318">Error</text>
-    <text x="923" y="572" font-size="26" font-weight="800" fill="#b42318">2</text>
+    <text x="923" y="572" font-size="26" font-weight="800" fill="#b42318">1</text>
     <rect x="983" y="519" width="92" height="68" rx="11" fill="#fffaeb"/>
     <text x="999" y="542" font-size="12" font-weight="800" fill="#9a6700">Warning</text>
-    <text x="1022" y="572" font-size="26" font-weight="800" fill="#9a6700">1</text>
+    <text x="1022" y="572" font-size="26" font-weight="800" fill="#9a6700">2</text>
 
     <rect x="95" y="625" width="1010" height="220" rx="12" fill="#fff" stroke="#dfe5ec"/>
     <rect x="118" y="646" width="54" height="28" rx="14" fill="#fef3f2"/>
