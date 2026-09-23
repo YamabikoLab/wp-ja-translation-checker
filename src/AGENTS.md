@@ -1,4 +1,4 @@
-# WP Japanese Translation Checker source guidelines
+# WP Translation Checker source guidelines
 
 These instructions apply to source files under `src/`.
 
