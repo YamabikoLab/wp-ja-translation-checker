@@ -1,0 +1,647 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WP Japanese Translation Checker - v1 Mock</title>
+  <style>
+    :root {
+      --bg: #f5f7fa;
+      --surface: #ffffff;
+      --surface-soft: #f8fafc;
+      --text: #17212b;
+      --muted: #667085;
+      --border: #dfe5ec;
+      --border-strong: #cbd5e1;
+      --brand: #3858e9;
+      --brand-dark: #2145c7;
+      --brand-soft: #eef2ff;
+      --error: #b42318;
+      --error-bg: #fef3f2;
+      --warning: #9a6700;
+      --warning-bg: #fffaeb;
+      --shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--text);
+      background: var(--bg);
+      font-family:
+        -apple-system, BlinkMacSystemFont, "Segoe UI",
+        "Hiragino Kaku Gothic ProN", "Hiragino Sans",
+        "Yu Gothic", Meiryo, sans-serif;
+      line-height: 1.65;
+    }
+
+    a { color: var(--brand-dark); }
+    button { font: inherit; }
+
+    .page {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 44px 0 60px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      align-items: flex-start;
+      margin-bottom: 28px;
+    }
+
+    .eyebrow {
+      margin: 0 0 6px;
+      color: var(--brand-dark);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(32px, 5vw, 52px);
+      line-height: 1.08;
+      letter-spacing: -.03em;
+    }
+
+    h2, h3, p { margin-top: 0; }
+
+    h2 {
+      margin-bottom: 0;
+      font-size: 22px;
+    }
+
+    h3 {
+      margin-bottom: 8px;
+      font-size: 18px;
+      line-height: 1.45;
+    }
+
+    .lead {
+      max-width: 760px;
+      margin-bottom: 0;
+      color: var(--muted);
+    }
+
+    .top-link {
+      flex: 0 0 auto;
+      padding: 10px 14px;
+      border: 1px solid var(--border-strong);
+      border-radius: 10px;
+      background: var(--surface);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .panel {
+      margin-top: 20px;
+      padding: 26px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .panel-heading {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .panel-title {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .step {
+      display: grid;
+      width: 30px;
+      height: 30px;
+      place-items: center;
+      border-radius: 999px;
+      background: var(--brand);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .upload-box {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      padding: 18px;
+      border: 1px dashed var(--border-strong);
+      border-radius: 12px;
+      background: var(--surface-soft);
+    }
+
+    .po-icon {
+      display: grid;
+      width: 48px;
+      height: 48px;
+      place-items: center;
+      border-radius: 10px;
+      background: var(--brand-soft);
+      color: var(--brand-dark);
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .file-info { flex: 1; }
+    .file-info strong,
+    .file-info span { display: block; }
+
+    .file-info span {
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .mock-button {
+      display: inline-block;
+      padding: 10px 13px;
+      border: 1px solid var(--border-strong);
+      border-radius: 9px;
+      background: #fff;
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .primary {
+      width: 100%;
+      margin-top: 16px;
+      padding: 13px 18px;
+      border: 0;
+      border-radius: 10px;
+      background: var(--brand);
+      color: #fff;
+      font-weight: 800;
+    }
+
+    .mock-note {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+    }
+
+    .summary {
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      align-items: center;
+      padding: 20px;
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      background: #fbfcfe;
+    }
+
+    .summary-kicker {
+      margin-bottom: 4px;
+      color: var(--brand-dark);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .counts {
+      display: flex;
+      gap: 10px;
+      flex: 0 0 auto;
+    }
+
+    .count {
+      min-width: 88px;
+      padding: 12px;
+      border-radius: 11px;
+      text-align: center;
+    }
+
+    .count span,
+    .count strong { display: block; }
+
+    .count strong {
+      margin-top: 3px;
+      font-size: 27px;
+      line-height: 1;
+    }
+
+    .count.error {
+      background: var(--error-bg);
+      color: var(--error);
+    }
+
+    .count.warning {
+      background: var(--warning-bg);
+      color: var(--warning);
+    }
+
+    .finding-list {
+      display: grid;
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .finding {
+      padding: 20px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+
+    .finding-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .severity {
+      display: inline-block;
+      padding: 5px 9px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .severity.error {
+      background: var(--error-bg);
+      color: var(--error);
+    }
+
+    .severity.warning {
+      background: var(--warning-bg);
+      color: var(--warning);
+    }
+
+    .number {
+      color: #94a3b8;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .compare-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .compare-box {
+      min-width: 0;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface-soft);
+    }
+
+    .compare-label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .compare-text {
+      margin: 0;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .clamp {
+      display: -webkit-box;
+      overflow: hidden;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 4;
+    }
+
+    .expand-button {
+      margin-top: 10px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: var(--brand-dark);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .problem-mark {
+      padding: 0 .12em;
+      border-bottom: 3px solid currentColor;
+      border-radius: 2px;
+      font-weight: 800;
+    }
+
+    .missing-space {
+      display: inline-block;
+      width: .65em;
+      margin: 0 .12em;
+      border-bottom: 3px solid var(--error);
+      vertical-align: baseline;
+    }
+
+    .problem-note {
+      display: block;
+      margin-top: 8px;
+      color: var(--error);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .reason {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid #edf1f5;
+    }
+
+    .reason-label {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .guide {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+      margin-top: 14px;
+      padding: 13px 15px;
+      border-radius: 10px;
+      background: var(--surface-soft);
+    }
+
+    .guide small,
+    .guide strong { display: block; }
+
+    .guide small {
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .guide a {
+      flex: 0 0 auto;
+      font-size: 13px;
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    footer {
+      padding-top: 26px;
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+    }
+
+    @media (max-width: 720px) {
+      .page {
+        width: min(100% - 20px, 1120px);
+        padding-top: 24px;
+      }
+
+      header,
+      .panel-heading,
+      .summary,
+      .guide {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .compare-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .top-link { align-self: flex-start; }
+
+      .panel { padding: 20px; }
+
+      .upload-box {
+        align-items: flex-start;
+        flex-wrap: wrap;
+      }
+
+      .mock-button {
+        width: 100%;
+        text-align: center;
+      }
+
+      .counts { width: 100%; }
+      .count { flex: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div>
+        <p class="eyebrow">HTML Mock / v1</p>
+        <h1>WP Japanese Translation Checker</h1>
+        <p class="lead">
+          原文と翻訳を横並びで比較し、長い内容は省略表示から全文を確認できる方針の画面モックです。
+        </p>
+      </div>
+      <a class="top-link"
+         href="https://ja.wordpress.org/team/handbook/translation/translation-style-guide/"
+         target="_blank" rel="noreferrer">スタイルガイドを開く</a>
+    </header>
+
+    <section class="panel">
+      <div class="panel-heading">
+        <div class="panel-title">
+          <span class="step">1</span>
+          <h2>.po ファイルを選択</h2>
+        </div>
+      </div>
+
+      <div class="upload-box">
+        <div class="po-icon">PO</div>
+        <div class="file-info">
+          <strong>sample-ja.po</strong>
+          <span>日本語翻訳ファイル</span>
+        </div>
+        <span class="mock-button">ファイルを選び直す</span>
+      </div>
+
+      <button class="primary" type="button">翻訳を確認する</button>
+      <div class="mock-note">※ 画面確認用モックのため、実際のファイル処理は行いません。</div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-heading">
+        <div class="panel-title">
+          <span class="step">2</span>
+          <h2>確認結果</h2>
+        </div>
+      </div>
+
+      <div class="summary">
+        <div>
+          <p class="summary-kicker">確認が完了しました</p>
+          <h3>3件の確認項目があります</h3>
+          <p>
+            Error は高い確度で問題と判断できる指摘、
+            Warning は人による確認が必要な指摘です。
+          </p>
+        </div>
+        <div class="counts">
+          <div class="count error">
+            <span>Error</span>
+            <strong>1</strong>
+          </div>
+          <div class="count warning">
+            <span>Warning</span>
+            <strong>2</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="finding-list">
+        <article class="finding">
+          <div class="finding-top">
+            <span class="severity error">Error</span>
+            <span class="number">#1</span>
+          </div>
+          <h3>半角文字と全角文字の間に必要なスペースがありません</h3>
+
+          <div class="compare-grid">
+            <div class="compare-box">
+              <span class="compare-label">原文</span>
+              <p class="compare-text">WordPress plugin</p>
+            </div>
+            <div class="compare-box">
+              <span class="compare-label">翻訳</span>
+              <p class="compare-text">WordPress<span class="missing-space" aria-hidden="true"></span>プラグイン</p>
+              <span class="problem-note">↑ ここに半角スペースが必要です</span>
+            </div>
+          </div>
+
+          <div class="reason">
+            <span class="reason-label">判定理由</span>
+            数字を除く半角文字と全角文字の間には、原則として半角スペースを1つ入れます。
+          </div>
+
+          <div class="guide">
+            <div>
+              <small>スタイルガイド</small>
+              <strong>1-4 半角文字と全角文字の間のスペース</strong>
+            </div>
+            <a href="https://ja.wordpress.org/team/handbook/translation/translation-style-guide/"
+               target="_blank" rel="noreferrer">根拠を確認</a>
+          </div>
+        </article>
+
+        <article class="finding">
+          <div class="finding-top">
+            <span class="severity warning">Warning</span>
+            <span class="number">#2</span>
+          </div>
+          <h3>「View XX」の訳し方を確認してください</h3>
+
+          <div class="compare-grid">
+            <div class="compare-box">
+              <span class="compare-label">原文</span>
+              <p class="compare-text">View posts</p>
+            </div>
+            <div class="compare-box">
+              <span class="compare-label">翻訳</span>
+              <p class="compare-text">投稿を<span class="problem-mark">見る</span></p>
+            </div>
+          </div>
+
+          <div class="reason">
+            <span class="reason-label">判定理由</span>
+            動詞の「View XX」は「〜を表示（する）」に統一し、「閲覧」「見る」「開く」「参照」や「〜の表示」は使用しません。
+          </div>
+
+          <div class="guide">
+            <div>
+              <small>スタイルガイド</small>
+              <strong>3-2 View XX の表現</strong>
+            </div>
+            <a href="https://ja.wordpress.org/team/handbook/translation/translation-style-guide/"
+               target="_blank" rel="noreferrer">根拠を確認</a>
+          </div>
+        </article>
+
+        <article class="finding">
+          <div class="finding-top">
+            <span class="severity warning">Warning</span>
+            <span class="number">#3</span>
+          </div>
+          <h3>長い原文を含む指摘の表示例</h3>
+
+          <div class="compare-grid">
+            <div class="compare-box">
+              <span class="compare-label">原文</span>
+              <p class="compare-text clamp" id="long-source">
+When you enable this option, WordPress will attempt to display all published posts that match the selected filters. Depending on the number of posts and the active plugins on your site, loading the complete list may take some time. You can change this setting later from the administration screen without affecting previously published content.
+              </p>
+              <button class="expand-button" type="button"
+                aria-expanded="false"
+                aria-controls="long-source"
+                onclick="
+                  const target=document.getElementById('long-source');
+                  const expanded=this.getAttribute('aria-expanded')==='true';
+                  target.classList.toggle('clamp', expanded);
+                  this.setAttribute('aria-expanded', String(!expanded));
+                  this.textContent=expanded?'全文を表示':'折りたたむ';
+                ">全文を表示</button>
+            </div>
+
+            <div class="compare-box">
+              <span class="compare-label">翻訳</span>
+              <p class="compare-text clamp" id="long-translation">
+このオプションを有効化すると、WordPress は選択されたフィルターに一致する公開済みの投稿をすべて表示しようとします。投稿数やサイト上で有効化されているプラグインによっては、一覧全体の読み込みに時間がかかる場合があります。この設定は後から管理画面で変更できます。
+              </p>
+              <button class="expand-button" type="button"
+                aria-expanded="false"
+                aria-controls="long-translation"
+                onclick="
+                  const target=document.getElementById('long-translation');
+                  const expanded=this.getAttribute('aria-expanded')==='true';
+                  target.classList.toggle('clamp', expanded);
+                  this.setAttribute('aria-expanded', String(!expanded));
+                  this.textContent=expanded?'全文を表示':'折りたたむ';
+                ">全文を表示</button>
+            </div>
+          </div>
+
+          <div class="reason">
+            <span class="reason-label">判定理由</span>
+            原文との対応を確認したうえで、訳し方がスタイルガイドに沿っているか確認してください。
+          </div>
+
+          <div class="guide">
+            <div>
+              <small>スタイルガイド</small>
+              <strong>3-2 View XX の表現</strong>
+            </div>
+            <a href="https://ja.wordpress.org/team/handbook/translation/translation-style-guide/"
+               target="_blank" rel="noreferrer">根拠を確認</a>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <footer>
+      WJTC v1 基本設計の確認用 HTML モック
+    </footer>
+  </div>
+</body>
+</html>
