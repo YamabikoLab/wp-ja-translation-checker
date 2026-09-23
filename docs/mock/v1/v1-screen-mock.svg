@@ -43,17 +43,19 @@
     <rect x="118" y="646" width="54" height="28" rx="14" fill="#fef3f2"/>
     <text x="129" y="665" font-size="12" font-weight="800" fill="#b42318">Error</text>
     <text x="1055" y="664" font-size="12" font-weight="700" fill="#94a3b8">#1</text>
-    <text x="118" y="704" font-size="18" font-weight="700">半角文字と全角文字の間に不要なスペースがあります</text>
+    <text x="118" y="704" font-size="18" font-weight="700">半角文字と全角文字の間に必要なスペースがありません</text>
 
     <rect x="118" y="725" width="462" height="70" rx="10" fill="#f8fafc" stroke="#dfe5ec"/>
     <text x="136" y="746" font-size="12" font-weight="800" fill="#667085">原文</text>
-    <text x="136" y="776" font-size="15">Activate plugin</text>
+    <text x="136" y="776" font-size="15">WordPress plugin</text>
     <rect x="594" y="725" width="488" height="70" rx="10" fill="#f8fafc" stroke="#dfe5ec"/>
     <text x="612" y="746" font-size="12" font-weight="800" fill="#667085">翻訳</text>
-    <text x="612" y="776" font-size="15">プラグイン を有効化</text>
+    <text x="612" y="776" font-size="15">WordPressプラグイン</text>
+    <line x1="684" y1="783" x2="693" y2="783" stroke="#b42318" stroke-width="3"/>
+    <text x="704" y="790" font-size="11" font-weight="700" fill="#b42318">ここに半角スペースが必要</text>
 
     <text x="118" y="820" font-size="12" font-weight="800" fill="#667085">判定理由</text>
-    <text x="205" y="820" font-size="14">日本語と半角英数字の間には、原則としてスペースを入れません。</text>
+    <text x="205" y="820" font-size="14">数字を除く半角文字と全角文字の間には、原則として半角スペースを1つ入れます。</text>
 
     <rect x="95" y="865" width="1010" height="215" rx="12" fill="#fff" stroke="#dfe5ec"/>
     <rect x="118" y="886" width="72" height="28" rx="14" fill="#fffaeb"/>
@@ -67,6 +69,7 @@
     <rect x="594" y="965" width="488" height="72" rx="10" fill="#f8fafc" stroke="#dfe5ec"/>
     <text x="612" y="986" font-size="12" font-weight="800" fill="#667085">翻訳</text>
     <text x="612" y="1017" font-size="15">投稿を見る</text>
+    <line x1="650" y1="1024" x2="681" y2="1024" stroke="#9a6700" stroke-width="3"/>
 
     <text x="118" y="1063" font-size="12" font-weight="800" fill="#667085">長文の場合</text>
     <text x="205" y="1063" font-size="14" fill="#2145c7">全文を表示</text>
