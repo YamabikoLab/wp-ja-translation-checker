@@ -28,8 +28,8 @@ msgstr ""
 "複数"
 "行"
 
-msgid "Quote: \\"x\\" and slash \\\\"
-msgstr "引用: \\"x\\" とスラッシュ \\\\"
+msgid "Quote: \"x\" and slash \\"
+msgstr "引用: \"x\" とスラッシュ \\"
 `
 
 const representativeMalformedPo = `msgidx "broken"
