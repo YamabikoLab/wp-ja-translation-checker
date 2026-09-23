@@ -4,7 +4,7 @@
  * 実装方法ではなく、後続フェーズが依存する責務間契約の成立条件をテスト対象とする。
  */
 
-import { describe, expect, it } from 'vitest'
+import { describe, expect, expectTypeOf, it } from 'vitest'
 import type {
   CheckResult,
   Finding,
@@ -65,6 +65,27 @@ describe('validation contracts', () => {
       kind: 'boundary',
       offset: 3,
     })
+  })
+
+  /**
+   * ルール固有の検出結果と最終指摘が、少なくとも1つの問題箇所を必要とすることを確認する。
+   *
+   * 事前条件:
+   * - 個別ルールの検出結果と最終指摘は、利用者が対象箇所を特定できる契約を持つ。
+   *
+   * 操作:
+   * - `RuleSpecificDetection` と `Finding` の問題箇所型を確認する。
+   *
+   * 期待結果:
+   * - どちらも先頭の問題箇所が必須で、追加の問題箇所を保持できる型になっている。
+   */
+  it('when a problem is represented, should require at least one problem location', () => {
+    expectTypeOf<RuleSpecificDetection['locations']>().toEqualTypeOf<
+      readonly [ProblemLocation, ...ProblemLocation[]]
+    >()
+    expectTypeOf<Finding['locations']>().toEqualTypeOf<
+      readonly [ProblemLocation, ...ProblemLocation[]]
+    >()
   })
 
   /**
