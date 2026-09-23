@@ -237,10 +237,10 @@ https://ja.wordpress.org/team/handbook/translation/translation-style-guide/
 
 本書の UI 仕様を視覚的に確認するため、代表的な画面イメージと HTML モックを補助資料として用意する。
 
-- 画面イメージ: [v1-screen-mock.png](../mock/v1/v1-screen-mock.png)
+- 画面イメージ: [v1-screen-mock.svg](../mock/v1/v1-screen-mock.svg)
 - HTML モック: [docs/mock/v1/index.html](../mock/v1/index.html)
 
-![WJTC v1 画面モック](../mock/v1/v1-screen-mock.png)
+![WJTC v1 画面モック](../mock/v1/v1-screen-mock.svg)
 
 HTML モックは、本書で定義した画面構成、原文・翻訳の比較、長文の省略表示と全文表示などを視覚的に確認するための補助資料とする。
 
