@@ -83,7 +83,9 @@ const getParser = (): GettextBrowserBundle => {
   ).gettext
 
   if (!gettext) {
-    throw new Error('gettext-converter の browser bundle を読み込めませんでした。')
+    throw new Error(
+      'gettext-converter の browser bundle を読み込めませんでした。',
+    )
   }
 
   return gettext
@@ -110,9 +112,7 @@ const toTranslationForms = (
     text === '' ? [] : [{ index, text }],
   )
 
-const createEntries = (
-  parsed: ParsedPo,
-): readonly TranslationEntry[] => {
+const createEntries = (parsed: ParsedPo): readonly TranslationEntry[] => {
   const entries: TranslationEntry[] = []
 
   /**
