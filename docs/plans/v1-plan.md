@@ -193,7 +193,7 @@ Presentation で lifecycle を自動検証する必要がある箇所だけ Reac
   - より具体的なルールを優先する。
   - 同じ翻訳内の同一ルールによる複数箇所を1 Finding に集約する。
   - 別原因または別ルールは独立した Finding として保持する。
-  - source entry order、rule set order、problem location を用いる明示的で安定した ordering rule を実装し、テストで固定する。
+  - PO Interpretation が提供する interpreted entry order / `entryIndex`、rule set order、problem location を用いる明示的で安定した ordering rule を実装し、テストで固定する。元 PO の物理 entry order は要求しない。
 - Validation:
   - 重複、優先、複数箇所集約、独立保持を個別にテストする。
   - 同じ detection 集合を繰り返し処理して同じ Finding 集合と順序になることを確認する。

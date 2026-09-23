@@ -40,10 +40,14 @@ export type StyleGuideReference = {
 /**
  * 個別ルールが Finding Coordination へ渡す検出結果を表す。
  *
- * 各ルールが所有する重要度、問題概要、判定理由、スタイルガイド根拠、1つ以上の問題箇所を保持し、
- * 後続責務が重複解消や集約を行うための意味情報を失わないことを目的とする。
+ * PO Interpretation が与えた entry / translation form の identity と、各ルールが所有する重要度、
+ * 問題概要、判定理由、スタイルガイド根拠、1つ以上の問題箇所を保持する。
+ *
+ * 後続責務が同じ文字列値を持つ別 entry や plural form を混同せず、重複解消や集約を行えることを目的とする。
  */
 export type RuleSpecificDetection = {
+  entryIndex: number
+  translationFormIndex: number
   ruleId: string
   severity: Severity
   summary: string
