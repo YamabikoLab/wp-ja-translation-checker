@@ -22,111 +22,78 @@ workspace "WP Translation Checker v1 Architecture" {
 			}
 		}
 
-		RESP_PRESENTATION = element "Result Presentation" "Responsibility" "確認入力、利用者向け状態、確認結果、重要なフィードバックを表示する。" {
+		RESP_PRESENTATION = element "Result Presentation" "Responsibility" "入力、利用者向け状態、確認結果、重要なフィードバックを表示する。" {
 			tags "Responsibility"
 			!script groovy {
 				element.setGroup("Presentation")
 			}
 		}
-		RESP_CHECK_ORCHESTRATION = element "Check Orchestration" "Responsibility" "1回の確認要求を開始し、入力から確認全体の結果までの処理を調整する。" {
+		RESP_CHECK_ORCHESTRATION = element "Check Orchestration" "Responsibility" "1回の確認要求を調整し、確認全体の結果を確定する。" {
 			tags "Responsibility"
 			!script groovy {
 				element.setGroup("Validation Core")
 			}
 		}
-		RESP_PO_INTERPRETATION = element "PO Interpretation" "Responsibility" "入力ファイルを検証可能な翻訳エントリとメタデータへ解釈する。" {
+		RESP_PO_INTERPRETATION = element "PO Interpretation" "Responsibility" "PO を翻訳 entry と metadata へ解釈する。" {
 			tags "Responsibility"
 			!script groovy {
 				element.setGroup("Validation Core")
 			}
 		}
-		RESP_LOCALE_RESOLUTION = element "Locale Resolution" "Responsibility" "PO メタデータから対象ロケールを判定し、判定不能を区別する。" {
+		RESP_LOCALE_RESOLUTION = element "Locale Resolution" "Responsibility" "metadata から対象 locale を解決し、判定不能を区別する。" {
 			tags "Responsibility"
 			!script groovy {
 				element.setGroup("Validation Core")
 			}
 		}
-		RESP_LOCALE_RULE_SELECTION = element "Locale Rule Selection" "Responsibility" "判定済みロケールに対応するルール集合を選択し、未対応を区別する。" {
-			tags "Responsibility"
-			!script groovy {
-				element.setGroup("Validation Core")
-			}
-		}
-		RESP_RULE_EVALUATION = element "Rule Evaluation" "Responsibility" "選択されたロケールルールを翻訳エントリへ適用し、ルール固有の検出結果を生成する。" {
-			tags "Responsibility"
-			!script groovy {
-				element.setGroup("Validation Core")
-			}
-		}
-		RESP_FINDING_COORDINATION = element "Finding Coordination" "Responsibility" "ルール固有の検出結果を重複・優先関係・集約・順序の規則に従って最終 Finding へ整える。" {
+		RESP_JAPANESE_CHECK = element "Japanese v1 Check" "Responsibility" "日本語 v1 の12ルールを実行し、entry ごとの Error / Warning を返す。" {
 			tags "Responsibility"
 			!script groovy {
 				element.setGroup("Validation Core")
 			}
 		}
 
-		DEP_001 = RESP_PRESENTATION -> RESP_CHECK_ORCHESTRATION "利用者向け確認結果と確認不能状態を得るために確認全体の処理境界を必要とする。" {
+		DEP_001 = RESP_PRESENTATION -> RESP_CHECK_ORCHESTRATION "確認要求を渡し、確認全体の結果を受け取る。" {
 			tags "Structural Dependency"
 		}
-		DEP_002 = RESP_PRESENTATION -> EXT_BROWSER_FILE_CAPABILITY "ローカルファイルを選択・読み取り可能な入力能力を利用するため。" {
+		DEP_002 = RESP_CHECK_ORCHESTRATION -> RESP_PO_INTERPRETATION "入力を Validation Core 用データへ解釈する。" {
 			tags "Structural Dependency"
 		}
-		DEP_003 = RESP_CHECK_ORCHESTRATION -> RESP_PO_INTERPRETATION "確認対象を検証可能な翻訳エントリとメタデータへ解釈する必要があるため。" {
+		DEP_003 = RESP_CHECK_ORCHESTRATION -> RESP_LOCALE_RESOLUTION "対象 locale を解決する。" {
 			tags "Structural Dependency"
 		}
-		DEP_004 = RESP_CHECK_ORCHESTRATION -> RESP_LOCALE_RESOLUTION "解釈済み入力の対象ロケールを判定する必要があるため。" {
+		DEP_004 = RESP_CHECK_ORCHESTRATION -> RESP_JAPANESE_CHECK "locale が ja の場合に日本語 v1 チェックを1回実行する。" {
 			tags "Structural Dependency"
 		}
-		DEP_005 = RESP_CHECK_ORCHESTRATION -> RESP_LOCALE_RULE_SELECTION "判定済みロケールに適用可能なルール集合を決定する必要があるため。" {
-			tags "Structural Dependency"
-		}
-		DEP_006 = RESP_CHECK_ORCHESTRATION -> RESP_RULE_EVALUATION "選択済みルール集合による検出結果を得る必要があるため。" {
-			tags "Structural Dependency"
-		}
-		DEP_007 = RESP_CHECK_ORCHESTRATION -> RESP_FINDING_COORDINATION "個別検出結果を一貫した最終 Finding へ整える必要があるため。" {
-			tags "Structural Dependency"
-		}
-		DEP_008 = RESP_PO_INTERPRETATION -> EXT_USER_PO_FILE "確認対象であるローカル PO 内容を解釈するため。" {
+		DEP_005 = RESP_PRESENTATION -> EXT_STYLE_GUIDE "利用者が一次情報を確認できるリンクを提示する。" {
 			tags "Structural Dependency"
 		}
 
-		PF_001 = EXT_USER_PO_FILE -> RESP_PRESENTATION "利用者が選択した確認対象が WTC の利用フローへ入る。" {
+		PF_001 = EXT_USER_PO_FILE -> RESP_PRESENTATION "利用者が確認対象の .po ファイルを選択する。" {
 			tags "Process Flow,ProcessFlow_PV_VALIDATION_END_TO_END,normal"
 		}
-		PF_002 = RESP_PRESENTATION -> RESP_CHECK_ORCHESTRATION "確認要求が検証処理の調整責務へ進む。" {
+		PF_002 = RESP_PRESENTATION -> RESP_CHECK_ORCHESTRATION "確認要求を Validation Core へ渡す。" {
 			tags "Process Flow,ProcessFlow_PV_VALIDATION_END_TO_END,normal"
 		}
-		PF_003 = RESP_CHECK_ORCHESTRATION -> RESP_PO_INTERPRETATION "確認対象の解釈処理へ進む。" {
+		PF_003 = RESP_CHECK_ORCHESTRATION -> RESP_PO_INTERPRETATION "PO を翻訳 entry と metadata へ解釈する。" {
 			tags "Process Flow,ProcessFlow_PV_VALIDATION_END_TO_END,normal"
 		}
-		PF_004 = RESP_PO_INTERPRETATION -> RESP_LOCALE_RESOLUTION "解釈済みメタデータからロケール判定へ進む。" {
+		PF_004 = RESP_CHECK_ORCHESTRATION -> RESP_LOCALE_RESOLUTION "metadata から locale を解決する。" {
 			tags "Process Flow,ProcessFlow_PV_VALIDATION_END_TO_END,normal"
 		}
-		PF_005 = RESP_LOCALE_RESOLUTION -> RESP_LOCALE_RULE_SELECTION "判定済みロケールから適用ルール集合の選択へ進む。" {
+		PF_005 = RESP_CHECK_ORCHESTRATION -> RESP_JAPANESE_CHECK "locale が ja の場合、日本語 check(entries) を呼ぶ。" {
 			tags "Process Flow,ProcessFlow_PV_VALIDATION_END_TO_END,normal"
 		}
-		PF_006 = RESP_LOCALE_RULE_SELECTION -> RESP_RULE_EVALUATION "選択済みロケールルールによる評価へ進む。" {
+		PF_006 = RESP_CHECK_ORCHESTRATION -> RESP_PRESENTATION "正常結果または確認不能理由を Presentation へ返す。" {
 			tags "Process Flow,ProcessFlow_PV_VALIDATION_END_TO_END,normal"
 		}
-		PF_007 = RESP_RULE_EVALUATION -> RESP_FINDING_COORDINATION "個別ルールの検出結果が指摘調整へ進む。" {
-			tags "Process Flow,ProcessFlow_PV_VALIDATION_END_TO_END,normal"
-		}
-		PF_008 = RESP_FINDING_COORDINATION -> RESP_CHECK_ORCHESTRATION "調整済み Finding が確認全体の結果へ統合される。" {
-			tags "Process Flow,ProcessFlow_PV_VALIDATION_END_TO_END,normal"
-		}
-		PF_009 = RESP_CHECK_ORCHESTRATION -> RESP_PRESENTATION "確認全体の結果が利用者向け表示へ進む。" {
-			tags "Process Flow,ProcessFlow_PV_VALIDATION_END_TO_END,normal"
-		}
-		PF_010 = RESP_PO_INTERPRETATION -> RESP_CHECK_ORCHESTRATION "[failure] 入力を確認可能な PO として解釈できない状態が確認全体の結果へ戻る。" {
+		PF_007 = RESP_PO_INTERPRETATION -> RESP_CHECK_ORCHESTRATION "[failure] PO を確認可能な入力として解釈できない。" {
 			tags "Process Flow,ProcessFlow_PV_VALIDATION_FAILURE_BOUNDARIES,failure"
 		}
-		PF_011 = RESP_LOCALE_RESOLUTION -> RESP_CHECK_ORCHESTRATION "[failure] 対象ロケールを判定できない状態が確認全体の結果へ戻る。" {
+		PF_008 = RESP_LOCALE_RESOLUTION -> RESP_CHECK_ORCHESTRATION "[failure] 対象 locale を判定できない。" {
 			tags "Process Flow,ProcessFlow_PV_VALIDATION_FAILURE_BOUNDARIES,failure"
 		}
-		PF_012 = RESP_LOCALE_RULE_SELECTION -> RESP_CHECK_ORCHESTRATION "[failure] 判定済みロケールが未対応である状態が確認全体の結果へ戻る。" {
-			tags "Process Flow,ProcessFlow_PV_VALIDATION_FAILURE_BOUNDARIES,failure"
-		}
-		PF_013 = RESP_CHECK_ORCHESTRATION -> RESP_PRESENTATION "[recovery] 確認不能理由を利用者が理解できる安定した表示状態へ戻す。" {
+		PF_009 = RESP_CHECK_ORCHESTRATION -> RESP_PRESENTATION "[recovery] 解決済み locale が未対応、またはその他の確認不能理由を表示へ返す。" {
 			tags "Process Flow,ProcessFlow_PV_VALIDATION_FAILURE_BOUNDARIES,recovery"
 		}
 
@@ -137,115 +104,108 @@ workspace "WP Translation Checker v1 Architecture" {
 				"runtime.RV_SUCCESS_WITHOUT_FINDINGS.step.1" "確認開始時点の選択入力を対象として確認を要求する。"
 			}
 		}
-		RT_002 = RESP_CHECK_ORCHESTRATION -> RESP_PO_INTERPRETATION "入力を翻訳エントリとメタデータへ解釈するよう求める。" {
+		RT_002 = RESP_CHECK_ORCHESTRATION -> RESP_PO_INTERPRETATION "入力を翻訳 entry と metadata へ解釈するよう求める。" {
 			tags "Runtime Interaction,Runtime_RV_SUCCESS_WITH_FINDINGS,Runtime_RV_SUCCESS_WITHOUT_FINDINGS"
 			properties {
-				"runtime.RV_SUCCESS_WITH_FINDINGS.step.2" "入力を翻訳エントリとメタデータへ解釈するよう求める。"
-				"runtime.RV_SUCCESS_WITHOUT_FINDINGS.step.2" "入力を翻訳エントリとメタデータへ解釈するよう求める。"
+				"runtime.RV_SUCCESS_WITH_FINDINGS.step.2" "入力を翻訳 entry と metadata へ解釈するよう求める。"
+				"runtime.RV_SUCCESS_WITHOUT_FINDINGS.step.2" "入力を翻訳 entry と metadata へ解釈するよう求める。"
 			}
 		}
-		RT_003 = RESP_CHECK_ORCHESTRATION -> RESP_LOCALE_RESOLUTION "解釈済みメタデータから対象ロケールの判定を求める。" {
-			tags "Runtime Interaction,Runtime_RV_SUCCESS_WITH_FINDINGS,Runtime_RV_SUCCESS_WITHOUT_FINDINGS,Runtime_RV_UNRESOLVED_LOCALE"
+		RT_003 = RESP_CHECK_ORCHESTRATION -> RESP_LOCALE_RESOLUTION "解釈済み metadata から対象 locale の判定を求める。" {
+			tags "Runtime Interaction,Runtime_RV_SUCCESS_WITH_FINDINGS,Runtime_RV_SUCCESS_WITHOUT_FINDINGS,Runtime_RV_UNRESOLVED_LOCALE,Runtime_RV_UNSUPPORTED_LOCALE"
 			properties {
-				"runtime.RV_SUCCESS_WITH_FINDINGS.step.3" "解釈済みメタデータから対象ロケールの判定を求める。"
-				"runtime.RV_SUCCESS_WITHOUT_FINDINGS.step.3" "解釈済みメタデータから対象ロケールの判定を求める。"
-				"runtime.RV_UNRESOLVED_LOCALE.step.1" "解釈済みメタデータから対象ロケールの判定を求める。"
+				"runtime.RV_SUCCESS_WITH_FINDINGS.step.3" "解釈済み metadata から対象 locale の判定を求める。"
+				"runtime.RV_SUCCESS_WITHOUT_FINDINGS.step.3" "解釈済み metadata から対象 locale の判定を求める。"
+				"runtime.RV_UNRESOLVED_LOCALE.step.1" "解釈済み metadata から対象 locale の判定を求める。"
+				"runtime.RV_UNSUPPORTED_LOCALE.step.1" "解釈済み metadata から対象 locale の判定を求める。"
 			}
 		}
-		RT_004 = RESP_CHECK_ORCHESTRATION -> RESP_LOCALE_RULE_SELECTION "判定済みロケールに対応するルール集合の選択を求める。" {
-			tags "Runtime Interaction,Runtime_RV_SUCCESS_WITH_FINDINGS,Runtime_RV_SUCCESS_WITHOUT_FINDINGS,Runtime_RV_UNSUPPORTED_LOCALE"
-			properties {
-				"runtime.RV_SUCCESS_WITH_FINDINGS.step.4" "判定済みロケールに対応するルール集合の選択を求める。"
-				"runtime.RV_SUCCESS_WITHOUT_FINDINGS.step.4" "判定済みロケールに対応するルール集合の選択を求める。"
-				"runtime.RV_UNSUPPORTED_LOCALE.step.1" "判定済みロケールに対応するルール集合の選択を求める。"
-			}
-		}
-		RT_005 = RESP_CHECK_ORCHESTRATION -> RESP_RULE_EVALUATION "翻訳エントリへ選択済みルール集合を適用するよう求める。" {
+		RT_004 = RESP_CHECK_ORCHESTRATION -> RESP_JAPANESE_CHECK "locale が ja のため、日本語 check(entries) を実行する。" {
 			tags "Runtime Interaction,Runtime_RV_SUCCESS_WITH_FINDINGS,Runtime_RV_SUCCESS_WITHOUT_FINDINGS"
 			properties {
-				"runtime.RV_SUCCESS_WITH_FINDINGS.step.5" "翻訳エントリへ選択済みルール集合を適用するよう求める。"
-				"runtime.RV_SUCCESS_WITHOUT_FINDINGS.step.5" "翻訳エントリへ選択済みルール集合を適用するよう求める。"
+				"runtime.RV_SUCCESS_WITH_FINDINGS.step.4" "locale が ja のため、日本語 check(entries) を実行する。"
+				"runtime.RV_SUCCESS_WITHOUT_FINDINGS.step.4" "locale が ja のため、日本語 check(entries) を実行する。"
 			}
 		}
-		RT_006 = RESP_CHECK_ORCHESTRATION -> RESP_FINDING_COORDINATION "ルール固有の検出結果を最終 Finding 集合へ整えるよう求める。" {
+		RT_005 = RESP_JAPANESE_CHECK -> RESP_CHECK_ORCHESTRATION "Error / Warning を含む日本語チェック結果を返す。" {
 			tags "Runtime Interaction,Runtime_RV_SUCCESS_WITH_FINDINGS"
 			properties {
-				"runtime.RV_SUCCESS_WITH_FINDINGS.step.6" "ルール固有の検出結果を最終 Finding 集合へ整えるよう求める。"
+				"runtime.RV_SUCCESS_WITH_FINDINGS.step.5" "Error / Warning を含む日本語チェック結果を返す。"
 			}
 		}
-		RT_007 = RESP_CHECK_ORCHESTRATION -> RESP_PRESENTATION "指摘あり正常完了として確認全体の結果を通知する。" {
+		RT_006 = RESP_CHECK_ORCHESTRATION -> RESP_PRESENTATION "指摘あり正常完了として確認全体の結果を通知する。" {
 			tags "Runtime Interaction,Runtime_RV_SUCCESS_WITH_FINDINGS"
 			properties {
-				"runtime.RV_SUCCESS_WITH_FINDINGS.step.7" "指摘あり正常完了として確認全体の結果を通知する。"
+				"runtime.RV_SUCCESS_WITH_FINDINGS.step.6" "指摘あり正常完了として確認全体の結果を通知する。"
 			}
 		}
-		RT_008 = RESP_CHECK_ORCHESTRATION -> RESP_FINDING_COORDINATION "検出結果を空の最終 Finding 集合へ整えるよう求める。" {
+		RT_007 = RESP_JAPANESE_CHECK -> RESP_CHECK_ORCHESTRATION "指摘がないため空配列を返す。" {
 			tags "Runtime Interaction,Runtime_RV_SUCCESS_WITHOUT_FINDINGS"
 			properties {
-				"runtime.RV_SUCCESS_WITHOUT_FINDINGS.step.6" "検出結果を空の最終 Finding 集合へ整えるよう求める。"
+				"runtime.RV_SUCCESS_WITHOUT_FINDINGS.step.5" "指摘がないため空配列を返す。"
 			}
 		}
-		RT_009 = RESP_CHECK_ORCHESTRATION -> RESP_PRESENTATION "指摘なし正常完了として確認全体の結果を通知する。" {
+		RT_008 = RESP_CHECK_ORCHESTRATION -> RESP_PRESENTATION "指摘なし正常完了として確認全体の結果を通知する。" {
 			tags "Runtime Interaction,Runtime_RV_SUCCESS_WITHOUT_FINDINGS"
 			properties {
-				"runtime.RV_SUCCESS_WITHOUT_FINDINGS.step.7" "指摘なし正常完了として確認全体の結果を通知する。"
+				"runtime.RV_SUCCESS_WITHOUT_FINDINGS.step.6" "指摘なし正常完了として確認全体の結果を通知する。"
 			}
 		}
-		RT_010 = RESP_PRESENTATION -> RESP_CHECK_ORCHESTRATION "選択入力の確認を要求する。" {
+		RT_009 = RESP_PRESENTATION -> RESP_CHECK_ORCHESTRATION "選択入力の確認を要求する。" {
 			tags "Runtime Interaction,Runtime_RV_INVALID_PO_INPUT"
 			properties {
 				"runtime.RV_INVALID_PO_INPUT.step.1" "選択入力の確認を要求する。"
 			}
 		}
-		RT_011 = RESP_CHECK_ORCHESTRATION -> RESP_PO_INTERPRETATION "入力の解釈を求める。" {
+		RT_010 = RESP_CHECK_ORCHESTRATION -> RESP_PO_INTERPRETATION "入力の解釈を求める。" {
 			tags "Runtime Interaction,Runtime_RV_INVALID_PO_INPUT"
 			properties {
 				"runtime.RV_INVALID_PO_INPUT.step.2" "入力の解釈を求める。"
 			}
 		}
-		RT_012 = RESP_PO_INTERPRETATION -> RESP_CHECK_ORCHESTRATION "確認可能な PO として解釈できないことを通知する。" {
+		RT_011 = RESP_PO_INTERPRETATION -> RESP_CHECK_ORCHESTRATION "確認可能な PO として解釈できないことを通知する。" {
 			tags "Runtime Interaction,Runtime_RV_INVALID_PO_INPUT"
 			properties {
 				"runtime.RV_INVALID_PO_INPUT.step.3" "確認可能な PO として解釈できないことを通知する。"
 			}
 		}
-		RT_013 = RESP_CHECK_ORCHESTRATION -> RESP_PRESENTATION "入力解析不能として確認全体の結果を通知する。" {
+		RT_012 = RESP_CHECK_ORCHESTRATION -> RESP_PRESENTATION "入力解析不能として確認全体の結果を通知する。" {
 			tags "Runtime Interaction,Runtime_RV_INVALID_PO_INPUT"
 			properties {
 				"runtime.RV_INVALID_PO_INPUT.step.4" "入力解析不能として確認全体の結果を通知する。"
 			}
 		}
-		RT_014 = RESP_LOCALE_RESOLUTION -> RESP_CHECK_ORCHESTRATION "対象ロケールを判定できないことを通知する。" {
+		RT_013 = RESP_LOCALE_RESOLUTION -> RESP_CHECK_ORCHESTRATION "対象 locale を判定できないことを通知する。" {
 			tags "Runtime Interaction,Runtime_RV_UNRESOLVED_LOCALE"
 			properties {
-				"runtime.RV_UNRESOLVED_LOCALE.step.2" "対象ロケールを判定できないことを通知する。"
+				"runtime.RV_UNRESOLVED_LOCALE.step.2" "対象 locale を判定できないことを通知する。"
 			}
 		}
-		RT_015 = RESP_CHECK_ORCHESTRATION -> RESP_PRESENTATION "ロケール判定不能として確認全体の結果を通知する。" {
+		RT_014 = RESP_CHECK_ORCHESTRATION -> RESP_PRESENTATION "locale 判定不能として確認全体の結果を通知する。" {
 			tags "Runtime Interaction,Runtime_RV_UNRESOLVED_LOCALE"
 			properties {
-				"runtime.RV_UNRESOLVED_LOCALE.step.3" "ロケール判定不能として確認全体の結果を通知する。"
+				"runtime.RV_UNRESOLVED_LOCALE.step.3" "locale 判定不能として確認全体の結果を通知する。"
 			}
 		}
-		RT_016 = RESP_LOCALE_RULE_SELECTION -> RESP_CHECK_ORCHESTRATION "対応ルール集合が存在しない未対応ロケールであることを通知する。" {
+		RT_015 = RESP_LOCALE_RESOLUTION -> RESP_CHECK_ORCHESTRATION "ja 以外の解決済み locale を返す。" {
 			tags "Runtime Interaction,Runtime_RV_UNSUPPORTED_LOCALE"
 			properties {
-				"runtime.RV_UNSUPPORTED_LOCALE.step.2" "対応ルール集合が存在しない未対応ロケールであることを通知する。"
+				"runtime.RV_UNSUPPORTED_LOCALE.step.2" "ja 以外の解決済み locale を返す。"
 			}
 		}
-		RT_017 = RESP_CHECK_ORCHESTRATION -> RESP_PRESENTATION "未対応ロケールとして確認全体の結果を通知する。" {
+		RT_016 = RESP_CHECK_ORCHESTRATION -> RESP_PRESENTATION "日本語チェックを実行せず、未対応 locale として結果を通知する。" {
 			tags "Runtime Interaction,Runtime_RV_UNSUPPORTED_LOCALE"
 			properties {
-				"runtime.RV_UNSUPPORTED_LOCALE.step.3" "未対応ロケールとして確認全体の結果を通知する。"
+				"runtime.RV_UNSUPPORTED_LOCALE.step.3" "日本語チェックを実行せず、未対応 locale として結果を通知する。"
 			}
 		}
-		RT_018 = RESP_PRESENTATION -> RESP_CHECK_ORCHESTRATION "旧入力を対象とする確認を開始する。" {
+		RT_017 = RESP_PRESENTATION -> RESP_CHECK_ORCHESTRATION "旧入力を対象とする確認を開始する。" {
 			tags "Runtime Interaction,Runtime_RV_INPUT_REPLACED"
 			properties {
 				"runtime.RV_INPUT_REPLACED.step.1" "旧入力を対象とする確認を開始する。"
 			}
 		}
-		RT_019 = RESP_CHECK_ORCHESTRATION -> RESP_PRESENTATION "旧入力に対応付いた確認結果を通知する。" {
+		RT_018 = RESP_CHECK_ORCHESTRATION -> RESP_PRESENTATION "旧入力に対応付いた確認結果を通知する。" {
 			tags "Runtime Interaction,Runtime_RV_INPUT_REPLACED"
 			properties {
 				"runtime.RV_INPUT_REPLACED.step.2" "旧入力に対応付いた確認結果を通知する。"
@@ -254,57 +214,36 @@ workspace "WP Translation Checker v1 Architecture" {
 	}
 
 	views {
-		systemLandscape "DV_WTC_OVERVIEW" {
-			title "Structural Dependencies - WTC Overview"
-			include RESP_PRESENTATION RESP_CHECK_ORCHESTRATION RESP_PO_INTERPRETATION RESP_LOCALE_RESOLUTION RESP_LOCALE_RULE_SELECTION RESP_RULE_EVALUATION RESP_FINDING_COORDINATION EXT_USER_PO_FILE EXT_BROWSER_FILE_CAPABILITY
-			exclude "relationship.tag!=Structural Dependency"
-			autoLayout lr
-		}
-
-		systemLandscape "DV_VALIDATION_CORE" {
-			title "Structural Dependencies - Validation Core"
-			include RESP_CHECK_ORCHESTRATION RESP_PO_INTERPRETATION RESP_LOCALE_RESOLUTION RESP_LOCALE_RULE_SELECTION RESP_RULE_EVALUATION RESP_FINDING_COORDINATION EXT_USER_PO_FILE
-			exclude "relationship.tag!=Structural Dependency"
-			autoLayout lr
-		}
-
-		systemLandscape "DV_PRESENTATION_BOUNDARY" {
-			title "Structural Dependencies - Presentation Boundary"
-			include RESP_PRESENTATION RESP_CHECK_ORCHESTRATION EXT_BROWSER_FILE_CAPABILITY
-			exclude "relationship.tag!=Structural Dependency"
-			autoLayout lr
-		}
-
 		custom "PV_VALIDATION_END_TO_END" {
 			title "Process Flow - Validation End-to-End"
-			include EXT_USER_PO_FILE RESP_PRESENTATION RESP_CHECK_ORCHESTRATION RESP_PO_INTERPRETATION RESP_LOCALE_RESOLUTION RESP_LOCALE_RULE_SELECTION RESP_RULE_EVALUATION RESP_FINDING_COORDINATION
+			include EXT_USER_PO_FILE RESP_PRESENTATION RESP_CHECK_ORCHESTRATION RESP_PO_INTERPRETATION RESP_LOCALE_RESOLUTION RESP_JAPANESE_CHECK
 			exclude "relationship.tag!=ProcessFlow_PV_VALIDATION_END_TO_END"
 			autoLayout lr
 		}
 
 		custom "PV_VALIDATION_FAILURE_BOUNDARIES" {
 			title "Process Flow [Failure / Recovery] - Validation Failure Boundaries"
-			include RESP_PO_INTERPRETATION RESP_CHECK_ORCHESTRATION RESP_LOCALE_RESOLUTION RESP_LOCALE_RULE_SELECTION RESP_PRESENTATION
+			include RESP_PO_INTERPRETATION RESP_CHECK_ORCHESTRATION RESP_LOCALE_RESOLUTION RESP_PRESENTATION
 			exclude "relationship.tag!=ProcessFlow_PV_VALIDATION_FAILURE_BOUNDARIES"
 			autoLayout lr
 		}
 
 		custom "RV_SUCCESS_WITH_FINDINGS" {
 			title "Runtime - Successful validation with findings"
-			include RESP_PRESENTATION RESP_CHECK_ORCHESTRATION RESP_PO_INTERPRETATION RESP_LOCALE_RESOLUTION RESP_LOCALE_RULE_SELECTION RESP_RULE_EVALUATION RESP_FINDING_COORDINATION
+			include RESP_PRESENTATION RESP_CHECK_ORCHESTRATION RESP_PO_INTERPRETATION RESP_LOCALE_RESOLUTION RESP_JAPANESE_CHECK
 			exclude "relationship.tag!=Runtime_RV_SUCCESS_WITH_FINDINGS"
 			properties {
-				"runtime.steps" "1=RT_001;2=RT_002;3=RT_003;4=RT_004;5=RT_005;6=RT_006;7=RT_007"
+				"runtime.steps" "1=RT_001;2=RT_002;3=RT_003;4=RT_004;5=RT_005;6=RT_006"
 			}
 			autoLayout lr
 		}
 
 		custom "RV_SUCCESS_WITHOUT_FINDINGS" {
 			title "Runtime - Successful validation without findings"
-			include RESP_PRESENTATION RESP_CHECK_ORCHESTRATION RESP_PO_INTERPRETATION RESP_LOCALE_RESOLUTION RESP_LOCALE_RULE_SELECTION RESP_RULE_EVALUATION RESP_FINDING_COORDINATION
+			include RESP_PRESENTATION RESP_CHECK_ORCHESTRATION RESP_PO_INTERPRETATION RESP_LOCALE_RESOLUTION RESP_JAPANESE_CHECK
 			exclude "relationship.tag!=Runtime_RV_SUCCESS_WITHOUT_FINDINGS"
 			properties {
-				"runtime.steps" "1=RT_001;2=RT_002;3=RT_003;4=RT_004;5=RT_005;6=RT_008;7=RT_009"
+				"runtime.steps" "1=RT_001;2=RT_002;3=RT_003;4=RT_004;5=RT_007;6=RT_008"
 			}
 			autoLayout lr
 		}
@@ -314,7 +253,7 @@ workspace "WP Translation Checker v1 Architecture" {
 			include RESP_PRESENTATION RESP_CHECK_ORCHESTRATION RESP_PO_INTERPRETATION
 			exclude "relationship.tag!=Runtime_RV_INVALID_PO_INPUT"
 			properties {
-				"runtime.steps" "1=RT_010;2=RT_011;3=RT_012;4=RT_013"
+				"runtime.steps" "1=RT_009;2=RT_010;3=RT_011;4=RT_012"
 			}
 			autoLayout lr
 		}
@@ -324,17 +263,17 @@ workspace "WP Translation Checker v1 Architecture" {
 			include RESP_CHECK_ORCHESTRATION RESP_LOCALE_RESOLUTION RESP_PRESENTATION
 			exclude "relationship.tag!=Runtime_RV_UNRESOLVED_LOCALE"
 			properties {
-				"runtime.steps" "1=RT_003;2=RT_014;3=RT_015"
+				"runtime.steps" "1=RT_003;2=RT_013;3=RT_014"
 			}
 			autoLayout lr
 		}
 
 		custom "RV_UNSUPPORTED_LOCALE" {
 			title "Runtime - Unsupported locale"
-			include RESP_CHECK_ORCHESTRATION RESP_LOCALE_RULE_SELECTION RESP_PRESENTATION
+			include RESP_CHECK_ORCHESTRATION RESP_LOCALE_RESOLUTION RESP_PRESENTATION
 			exclude "relationship.tag!=Runtime_RV_UNSUPPORTED_LOCALE"
 			properties {
-				"runtime.steps" "1=RT_004;2=RT_016;3=RT_017"
+				"runtime.steps" "1=RT_003;2=RT_015;3=RT_016"
 			}
 			autoLayout lr
 		}
@@ -344,7 +283,7 @@ workspace "WP Translation Checker v1 Architecture" {
 			include RESP_PRESENTATION RESP_CHECK_ORCHESTRATION
 			exclude "relationship.tag!=Runtime_RV_INPUT_REPLACED"
 			properties {
-				"runtime.steps" "1=RT_018;2=RT_019"
+				"runtime.steps" "1=RT_017;2=RT_018"
 			}
 			autoLayout lr
 		}

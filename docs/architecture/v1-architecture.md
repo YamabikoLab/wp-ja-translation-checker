@@ -45,84 +45,65 @@ WordPress 日本語翻訳スタイルガイドは指摘根拠を利用者が確�
 
 ## 4. Solution Strategy
 
-WTC v1 は、確認要求を調整する責務と、意味解釈・ロケール判定・ルール評価・指摘調整を分離する。
+WTC v1 は、確認要求を調整する責務と、PO Interpretation、Locale Resolution、日本語 v1 Check、Presentation を分離する。
 
-PO Interpretation は入力を検証可能な翻訳エントリとメタデータへ変換し、Locale Resolution はその結果から対象ロケールを解決する。Locale Rule Selection は解決済みロケールに対応するルール集合だけを選択し、Rule Evaluation はそのルール集合を翻訳エントリへ適用する。Finding Coordination は個別ルールの検出結果を、重複や優先関係を解決した利用者向け Finding へ整える。
+PO Interpretation は入力を翻訳 entry と metadata へ変換し、Locale Resolution は対象 locale を解決する。Check Orchestration は解決済み locale が `ja` の場合だけ日本語 v1 Check の `check(entries)` を呼ぶ。日本語 v1 Check は12ルールを内部で実行し、問題のある entry だけを Error / Warning として返す。
 
-Presentation は利用者向け interaction state と表示を所有するが、検証コアの判断を再計算しない。
+Locale Rule Selection / RuleSet / Rule は設けない。Finding Coordination も独立責務として設けず、同一原因の重複回避や具体的ルール優先は日本語 v1 Check 内の各判定条件で扱う。
+
+Presentation は利用者向け interaction state と表示を所有し、個別ルールの判定を再実行しない。
 
 ### Process Flow Views
 
 #### Validation End-to-End {#PV_VALIDATION_END_TO_END kind=normal}
 
-通常の確認処理が、利用者の入力から表示可能な結果へ進む主要方向を示す。
-
-| From                       | To                         | Kind   | Meaning                                             |
-| -------------------------- | -------------------------- | ------ | --------------------------------------------------- |
-| EXT_USER_PO_FILE           | RESP_PRESENTATION          | normal | 利用者が選択した確認対象が WTC の利用フローへ入る。 |
-| RESP_PRESENTATION          | RESP_CHECK_ORCHESTRATION   | normal | 確認要求が検証処理の調整責務へ進む。                |
-| RESP_CHECK_ORCHESTRATION   | RESP_PO_INTERPRETATION     | normal | 確認対象の解釈処理へ進む。                          |
-| RESP_PO_INTERPRETATION     | RESP_LOCALE_RESOLUTION     | normal | 解釈済みメタデータからロケール判定へ進む。          |
-| RESP_LOCALE_RESOLUTION     | RESP_LOCALE_RULE_SELECTION | normal | 判定済みロケールから適用ルール集合の選択へ進む。    |
-| RESP_LOCALE_RULE_SELECTION | RESP_RULE_EVALUATION       | normal | 選択済みロケールルールによる評価へ進む。            |
-| RESP_RULE_EVALUATION       | RESP_FINDING_COORDINATION  | normal | 個別ルールの検出結果が指摘調整へ進む。              |
-| RESP_FINDING_COORDINATION  | RESP_CHECK_ORCHESTRATION   | normal | 調整済み Finding が確認全体の結果へ統合される。     |
-| RESP_CHECK_ORCHESTRATION   | RESP_PRESENTATION          | normal | 確認全体の結果が利用者向け表示へ進む。              |
+| From                     | To                       | Kind   | Meaning                                                 |
+| ------------------------ | ------------------------ | ------ | ------------------------------------------------------- |
+| EXT_USER_PO_FILE         | RESP_PRESENTATION        | normal | 利用者が確認対象の `.po` ファイルを選択する。           |
+| RESP_PRESENTATION        | RESP_CHECK_ORCHESTRATION | normal | 確認要求を Validation Core へ渡す。                     |
+| RESP_CHECK_ORCHESTRATION | RESP_PO_INTERPRETATION   | normal | PO を翻訳 entry と metadata へ解釈する。                |
+| RESP_CHECK_ORCHESTRATION | RESP_LOCALE_RESOLUTION   | normal | metadata から locale を解決する。                       |
+| RESP_CHECK_ORCHESTRATION | RESP_JAPANESE_CHECK      | normal | locale が `ja` の場合、日本語 `check(entries)` を呼ぶ。 |
+| RESP_CHECK_ORCHESTRATION | RESP_PRESENTATION        | normal | 正常結果または確認不能理由を Presentation へ返す。      |
 
 #### Validation Failure Boundaries {#PV_VALIDATION_FAILURE_BOUNDARIES kind=failure-recovery}
 
-解析不能、ロケール判定不能、未対応ロケールが正常結果と混同されず Presentation へ戻る境界を示す。
-
-| From                       | To                       | Kind     | Meaning                                                            |
-| -------------------------- | ------------------------ | -------- | ------------------------------------------------------------------ |
-| RESP_PO_INTERPRETATION     | RESP_CHECK_ORCHESTRATION | failure  | 入力を確認可能な PO として解釈できない状態が確認全体の結果へ戻る。 |
-| RESP_LOCALE_RESOLUTION     | RESP_CHECK_ORCHESTRATION | failure  | 対象ロケールを判定できない状態が確認全体の結果へ戻る。             |
-| RESP_LOCALE_RULE_SELECTION | RESP_CHECK_ORCHESTRATION | failure  | 判定済みロケールが未対応である状態が確認全体の結果へ戻る。         |
-| RESP_CHECK_ORCHESTRATION   | RESP_PRESENTATION        | recovery | 確認不能理由を利用者が理解できる安定した表示状態へ戻す。           |
+| From                     | To                       | Kind     | Meaning                                                            |
+| ------------------------ | ------------------------ | -------- | ------------------------------------------------------------------ |
+| RESP_PO_INTERPRETATION   | RESP_CHECK_ORCHESTRATION | failure  | PO を確認可能な入力として解釈できない。                            |
+| RESP_LOCALE_RESOLUTION   | RESP_CHECK_ORCHESTRATION | failure  | 対象 locale を判定できない。                                       |
+| RESP_CHECK_ORCHESTRATION | RESP_PRESENTATION        | recovery | 解決済み locale が未対応、またはその他の確認不能理由を表示へ返す。 |
 
 ## 5. Building Block View
 
 ### Responsibility Inventory
 
-| ID                         | Responsibility        | Summary                                                                               |
-| -------------------------- | --------------------- | ------------------------------------------------------------------------------------- |
-| RESP_PRESENTATION          | Result Presentation   | 確認入力、利用者向け状態、確認結果、重要なフィードバックを表示する。                  |
-| RESP_CHECK_ORCHESTRATION   | Check Orchestration   | 1回の確認要求を開始し、入力から確認全体の結果までの処理を調整する。                   |
-| RESP_PO_INTERPRETATION     | PO Interpretation     | 入力ファイルを検証可能な翻訳エントリとメタデータへ解釈する。                          |
-| RESP_LOCALE_RESOLUTION     | Locale Resolution     | PO メタデータから対象ロケールを判定し、判定不能を区別する。                           |
-| RESP_LOCALE_RULE_SELECTION | Locale Rule Selection | 判定済みロケールに対応するルール集合を選択し、未対応を区別する。                      |
-| RESP_RULE_EVALUATION       | Rule Evaluation       | 選択されたロケールルールを翻訳エントリへ適用し、ルール固有の検出結果を生成する。      |
-| RESP_FINDING_COORDINATION  | Finding Coordination  | ルール固有の検出結果を重複・優先関係・集約・順序の規則に従って最終 Finding へ整える。 |
+| ID                       | Responsibility      | Summary                                                             |
+| ------------------------ | ------------------- | ------------------------------------------------------------------- |
+| RESP_PRESENTATION        | Result Presentation | 入力、利用者向け状態、確認結果、重要なフィードバックを表示する。    |
+| RESP_CHECK_ORCHESTRATION | Check Orchestration | 1回の確認要求を調整し、確認全体の結果を確定する。                   |
+| RESP_PO_INTERPRETATION   | PO Interpretation   | PO を翻訳 entry と metadata へ解釈する。                            |
+| RESP_LOCALE_RESOLUTION   | Locale Resolution   | metadata から対象 locale を解決し、判定不能を区別する。             |
+| RESP_JAPANESE_CHECK      | Japanese v1 Check   | 日本語 v1 の12ルールを実行し、entry ごとの Error / Warning を返す。 |
 
 ### Ownership Boundaries
 
-| ID                       | Name                  | Includes                                                                                                                                         |
-| ------------------------ | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| BOUNDARY_PRESENTATION    | Presentation          | RESP_PRESENTATION                                                                                                                                |
-| BOUNDARY_VALIDATION_CORE | Validation Core       | RESP_CHECK_ORCHESTRATION RESP_PO_INTERPRETATION RESP_LOCALE_RESOLUTION RESP_LOCALE_RULE_SELECTION RESP_RULE_EVALUATION RESP_FINDING_COORDINATION |
-| BOUNDARY_BROWSER_INPUT   | Browser Input         | EXT_USER_PO_FILE EXT_BROWSER_FILE_CAPABILITY                                                                                                     |
-| BOUNDARY_REFERENCE       | Reference Information | EXT_STYLE_GUIDE                                                                                                                                  |
+| ID                       | Name                  | Includes                                                                                   |
+| ------------------------ | --------------------- | ------------------------------------------------------------------------------------------ |
+| BOUNDARY_PRESENTATION    | Presentation          | RESP_PRESENTATION                                                                          |
+| BOUNDARY_VALIDATION_CORE | Validation Core       | RESP_CHECK_ORCHESTRATION RESP_PO_INTERPRETATION RESP_LOCALE_RESOLUTION RESP_JAPANESE_CHECK |
+| BOUNDARY_BROWSER_INPUT   | Browser Input         | EXT_USER_PO_FILE EXT_BROWSER_FILE_CAPABILITY                                               |
+| BOUNDARY_REFERENCE       | Reference Information | EXT_STYLE_GUIDE                                                                            |
 
 ### Dependencies
 
-| Dependent                | Depends on                  | Reason                                                                       |
-| ------------------------ | --------------------------- | ---------------------------------------------------------------------------- |
-| RESP_PRESENTATION        | RESP_CHECK_ORCHESTRATION    | 利用者向け確認結果と確認不能状態を得るために確認全体の処理境界を必要とする。 |
-| RESP_PRESENTATION        | EXT_BROWSER_FILE_CAPABILITY | ローカルファイルを選択・読み取り可能な入力能力を利用するため。               |
-| RESP_CHECK_ORCHESTRATION | RESP_PO_INTERPRETATION      | 確認対象を検証可能な翻訳エントリとメタデータへ解釈する必要があるため。       |
-| RESP_CHECK_ORCHESTRATION | RESP_LOCALE_RESOLUTION      | 解釈済み入力の対象ロケールを判定する必要があるため。                         |
-| RESP_CHECK_ORCHESTRATION | RESP_LOCALE_RULE_SELECTION  | 判定済みロケールに適用可能なルール集合を決定する必要があるため。             |
-| RESP_CHECK_ORCHESTRATION | RESP_RULE_EVALUATION        | 選択済みルール集合による検出結果を得る必要があるため。                       |
-| RESP_CHECK_ORCHESTRATION | RESP_FINDING_COORDINATION   | 個別検出結果を一貫した最終 Finding へ整える必要があるため。                  |
-| RESP_PO_INTERPRETATION   | EXT_USER_PO_FILE            | 確認対象であるローカル PO 内容を解釈するため。                               |
-
-### Dependency Views
-
-| ID                       | Name                  | Includes                                                                                                                                                                                                        |
-| ------------------------ | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| DV_WTC_OVERVIEW          | WTC Overview          | RESP_PRESENTATION RESP_CHECK_ORCHESTRATION RESP_PO_INTERPRETATION RESP_LOCALE_RESOLUTION RESP_LOCALE_RULE_SELECTION RESP_RULE_EVALUATION RESP_FINDING_COORDINATION EXT_USER_PO_FILE EXT_BROWSER_FILE_CAPABILITY |
-| DV_VALIDATION_CORE       | Validation Core       | RESP_CHECK_ORCHESTRATION RESP_PO_INTERPRETATION RESP_LOCALE_RESOLUTION RESP_LOCALE_RULE_SELECTION RESP_RULE_EVALUATION RESP_FINDING_COORDINATION EXT_USER_PO_FILE                                               |
-| DV_PRESENTATION_BOUNDARY | Presentation Boundary | RESP_PRESENTATION RESP_CHECK_ORCHESTRATION EXT_BROWSER_FILE_CAPABILITY                                                                                                                                          |
+| Dependent                | Depends on               | Reason                                                   |
+| ------------------------ | ------------------------ | -------------------------------------------------------- |
+| RESP_PRESENTATION        | RESP_CHECK_ORCHESTRATION | 確認要求を渡し、確認全体の結果を受け取る。               |
+| RESP_CHECK_ORCHESTRATION | RESP_PO_INTERPRETATION   | 入力を Validation Core 用データへ解釈する。              |
+| RESP_CHECK_ORCHESTRATION | RESP_LOCALE_RESOLUTION   | 対象 locale を解決する。                                 |
+| RESP_CHECK_ORCHESTRATION | RESP_JAPANESE_CHECK      | locale が `ja` の場合に日本語 v1 チェックを1回実行する。 |
+| RESP_PRESENTATION        | EXT_STYLE_GUIDE          | 利用者が一次情報を確認できるリンクを提示する。           |
 
 ### Responsibility Details
 
@@ -132,176 +113,88 @@ Presentation は利用者向け interaction state と表示を所有するが、
 
 利用者が確認対象を選択し、確認を開始し、確認中・正常完了・確認不能を理解できるように表示する。
 
-確認結果では、Error / Warning、問題概要、原文、翻訳、問題箇所、判定理由、スタイルガイド根拠を、検証コアから受け取った意味情報に基づいて表示する。
-
-##### State ownership
-
-利用者が現在選択している入力、確認中かどうか、現在の入力へ適用可能な確認全体の結果など、利用者向け interaction state を所有する。
-
-個別ルールの判定状態、ロケールルール集合、重複指摘解消状態は所有しない。
-
-##### Contract
-
-確認対象を Check Orchestration へ渡し、確認全体の結果を受け取る。
-
-成功結果では、最終 Finding が保持する Severity、問題概要、原文、翻訳、問題箇所、判定理由、スタイルガイド参照情報を表示できる。
-
-確認不能結果では、解析不能、ロケール判定不能、未対応ロケールを区別して表示できる。
-
-##### Lifecycle
-
-ファイル選択から確認開始、結果表示まで利用者向け状態を維持する。別のファイルが選択された場合、以前の結果を新しい入力へ適用可能な現在結果として扱わない。
-
-##### Invariants
-
-- 原文・翻訳を再解析して問題箇所を推測しない。
-- Severity やルール優先順位を再決定しない。
-- 正常結果と確認不能結果を見た目上も意味上も混同しない。
-- 検証コアへ React、DOM、focus API の責務を要求しない。
+個別ルールの条件、優先関係、Severity を再計算しない。
 
 #### Check Orchestration {#RESP_CHECK_ORCHESTRATION}
 
 ##### Responsibility
 
-1回の確認要求について、PO Interpretation、Locale Resolution、Locale Rule Selection、Rule Evaluation、Finding Coordination の処理を調整し、確認全体の結果を確定する。
-
-個々のルール条件や UI 表示方法は所有しない。
-
-##### State ownership
-
-確認開始時点の入力に対応する処理コンテキストを所有する。
-
-実現方法として request ID、queue、cancel token などを要求しないが、どの入力に対する処理かを区別できる意味上の対応関係を保持する。
+1回の確認要求について PO Interpretation と Locale Resolution を実行し、解決済み locale が `ja` の場合だけ日本語 v1 Check を呼ぶ。
 
 ##### Contract
 
-確認対象を受け取り、以下のいずれかを意味として区別した確認全体の結果を返す。
-
-- 入力解析不能
-- ロケール判定不能
-- 未対応ロケール
-- 指摘あり正常完了
-- 指摘なし正常完了
-
-##### Lifecycle
-
-利用者の確認要求で開始し、確認全体の結果が確定した時点で終了する。
-
-入力変更後に古い処理が完了しても、その結果を新しい入力の結果として採用しない。
+確認対象を受け取り、正常完了、入力解析不能、locale 判定不能、未対応 locale を意味上区別した確認全体の結果を返す。具体的な TypeScript contract は、この責務を実装する Phase で定義する。
 
 ##### Invariants
 
-- 解析不能時はロケール判定以降を開始しない。
-- ロケール判定不能時はロケール固有ルールを適用しない。
-- 未対応ロケール時は別ロケールのルールを代替適用しない。
-- 正常完了と確認不能を空配列の有無だけで区別しない。
-- 日本語固有の項目番号や判定文言を所有しない。
+- 日本語の個別チェック構造を知らず、`check(entries)` を1回呼ぶだけとする。
+- `ja` 以外へ日本語チェックを適用しない。
+- 確認不能を「指摘0件」として扱わない。
 
 #### PO Interpretation {#RESP_PO_INTERPRETATION}
 
 ##### Responsibility
 
-選択された PO 内容を、検証対象となる翻訳エントリとロケール判定に必要なメタデータへ解釈する。
-
-##### State ownership
-
-1回の解釈処理に必要な一時的な解釈状態のみを所有する。確認結果や UI state は所有しない。
-
-##### Contract
-
-入力 PO を受け取り、解釈済み翻訳エントリとメタデータ、または解析不能を返す。
-
-翻訳エントリは後続責務が原文・翻訳・必要な補助情報を参照できる意味を持つ。
+選択された PO 内容を、検証対象となる翻訳 entry と locale 判定に必要な metadata へ解釈する。
 
 ##### Invariants
 
-- 入力 PO の内容を変更しない。
-- 不正入力を成功した空の翻訳集合として扱わない。
-- 特定の parser ライブラリ API を後続責務へ露出することを前提としない。
+- 入力 PO を変更しない。
+- 不正入力を成功した空 entry 集合として扱わない。
+- parser 固有 API を後続責務へ露出しない。
+- raw source / parser result を解釈結果へ保持し続けない。
 
 #### Locale Resolution {#RESP_LOCALE_RESOLUTION}
 
 ##### Responsibility
 
-PO Interpretation が提供したメタデータから対象ロケールを判定する。
+PO Interpretation が提供した metadata から対象 locale を判定する。
 
 ##### Contract
 
-解釈済みメタデータを受け取り、判定済みロケールまたはロケール判定不能を返す。
+metadata を受け取り、解決済み locale または locale 判定不能を返す。
 
 ##### Invariants
 
-- 「判定できない」と「判定できたが未対応」を同じ状態として扱わない。
-- ルール集合の存在有無は判断しない。
+- 既知の WordPress 日本語表現は `ja` へ解決する。
+- その他の非空値を先回りして汎用正規化しない。
+- 対応ルールの有無は判断しない。
 
-#### Locale Rule Selection {#RESP_LOCALE_RULE_SELECTION}
+#### Japanese v1 Check {#RESP_JAPANESE_CHECK}
 
 ##### Responsibility
 
-判定済みロケールに対応するルール集合を選択する。
-
-v1 では日本語（`ja`）のみを対応ロケールとして扱う。
+PO Interpretation が生成した entry 一覧をまとめて受け取り、各 entry の日本語訳へ Requirements の v1 対象12ルールを適用する。
 
 ##### Contract
 
-判定済みロケールを受け取り、そのロケールに対応するルール集合、または未対応ロケールを返す。
+```ts
+export type CheckMessage = {
+  styleGuideItem: string
+  message: string
+}
+
+export type TranslationCheckResult = {
+  entryIndex: number
+  errors: readonly CheckMessage[]
+  warnings: readonly CheckMessage[]
+}
+
+export function check(
+  entries: readonly TranslationEntry[],
+): readonly TranslationCheckResult[]
+```
 
 ##### Invariants
 
-- 日本語以外へ日本語ルールを適用しない。
-- 検証フロー本体へ日本語固有条件を流出させない。
-- 将来ロケール追加時に既存日本語ルールへ他ロケール条件を積み重ねることを前提としない。
-
-#### Rule Evaluation {#RESP_RULE_EVALUATION}
-
-##### Responsibility
-
-選択されたロケールルール集合を翻訳エントリへ適用し、ルール固有の検出結果を生成する。
-
-各ルールは、自身の判定条件、Severity、問題概要、判定理由、スタイルガイド根拠、問題箇所の意味情報に責任を持つ。
-
-##### State ownership
-
-1回のルール評価に必要な一時状態のみを所有する。最終 Finding の重複解消や表示順序は所有しない。
-
-##### Contract
-
-翻訳エントリと選択済みルール集合を受け取り、ルール固有の検出結果を返す。
-
-検出結果は、必要に応じて複数の問題箇所を保持でき、各問題箇所について原文側・翻訳側の識別、および既存文字範囲または文字間境界を表現できる意味を持つ。
-
-##### Invariants
-
-- 各ルールは他ルールの内部判定結果へ依存しない。
-- 技術的文字列、数値プレースホルダー、問題箇所表現など複数ルールに共通する概念は、一貫した共有契約として扱う。
-- 共有契約はロケール固有ルールの判定を置き換えない。
-- 正規表現、文字走査、tokenizer などの具体的アルゴリズムをアーキテクチャ契約としない。
-
-#### Finding Coordination {#RESP_FINDING_COORDINATION}
-
-##### Responsibility
-
-ルール固有の検出結果を、利用者へ提示可能な最終 Finding 集合へ整える。
-
-以下を所有する。
-
-- 同じ文字位置・同じ原因の重複指摘抑制
-- より具体的なルールの優先
-- 同じ翻訳内で同じルールに複数箇所ある場合の1 Finding への集約
-- 別原因または別ルールの独立保持
-- 決定論的な結果順序
-
-##### Contract
-
-ルール固有の検出結果を受け取り、Presentation が再解釈せず表示できる最終 Finding 集合を返す。
-
-1つの Finding は1つ以上の問題箇所を保持できる。問題箇所は原文側・翻訳側を識別でき、文字範囲だけでなく不足スペースなどの文字間境界も表現できる。
-
-##### Invariants
-
-- 同じ入力と同じルール条件では、同じ Finding 集合と順序を返す。
-- 同一原因の重複解消を Presentation に委ねない。
-- 問題箇所を表示するために Presentation 側の再解析を必要としない。
+- 問題のない entry は結果に含めない。
+- 指摘が1件もなければ `[]` を返す。
+- `entryIndex` は PO Interpretation の identity を使用する。
+- 日本語 v1 の公開結果に `translationFormIndex` を含めない。
+- 個別チェックを外部 export しない。
+- Finding Coordination を設けない。
+- Design の優先関係と重複回避は各チェックの判定条件として扱う。
+- React、DOM、parser 固有表現へ依存しない。
 
 ## 6. Runtime View
 
@@ -309,29 +202,27 @@ v1 では日本語（`ja`）のみを対応ロケールとして扱う。
 
 確認可能な日本語 PO に対して、1件以上の指摘を含む正常結果が得られる流れを示す。
 
-| Step | Source                   | Target                     | Interaction                                                 |
-| ---: | ------------------------ | -------------------------- | ----------------------------------------------------------- |
-|    1 | RESP_PRESENTATION        | RESP_CHECK_ORCHESTRATION   | 確認開始時点の選択入力を対象として確認を要求する。          |
-|    2 | RESP_CHECK_ORCHESTRATION | RESP_PO_INTERPRETATION     | 入力を翻訳エントリとメタデータへ解釈するよう求める。        |
-|    3 | RESP_CHECK_ORCHESTRATION | RESP_LOCALE_RESOLUTION     | 解釈済みメタデータから対象ロケールの判定を求める。          |
-|    4 | RESP_CHECK_ORCHESTRATION | RESP_LOCALE_RULE_SELECTION | 判定済みロケールに対応するルール集合の選択を求める。        |
-|    5 | RESP_CHECK_ORCHESTRATION | RESP_RULE_EVALUATION       | 翻訳エントリへ選択済みルール集合を適用するよう求める。      |
-|    6 | RESP_CHECK_ORCHESTRATION | RESP_FINDING_COORDINATION  | ルール固有の検出結果を最終 Finding 集合へ整えるよう求める。 |
-|    7 | RESP_CHECK_ORCHESTRATION | RESP_PRESENTATION          | 指摘あり正常完了として確認全体の結果を通知する。            |
+| Step | Source                   | Target                   | Interaction                                                 |
+| ---: | ------------------------ | ------------------------ | ----------------------------------------------------------- |
+|    1 | RESP_PRESENTATION        | RESP_CHECK_ORCHESTRATION | 確認開始時点の選択入力を対象として確認を要求する。          |
+|    2 | RESP_CHECK_ORCHESTRATION | RESP_PO_INTERPRETATION   | 入力を翻訳 entry と metadata へ解釈するよう求める。         |
+|    3 | RESP_CHECK_ORCHESTRATION | RESP_LOCALE_RESOLUTION   | 解釈済み metadata から対象 locale の判定を求める。          |
+|    4 | RESP_CHECK_ORCHESTRATION | RESP_JAPANESE_CHECK      | locale が `ja` のため、日本語 `check(entries)` を実行する。 |
+|    5 | RESP_JAPANESE_CHECK      | RESP_CHECK_ORCHESTRATION | Error / Warning を含む日本語チェック結果を返す。            |
+|    6 | RESP_CHECK_ORCHESTRATION | RESP_PRESENTATION        | 指摘あり正常完了として確認全体の結果を通知する。            |
 
 ### Successful validation without findings {#RV_SUCCESS_WITHOUT_FINDINGS}
 
-確認が正常に完了し、v1 対象ルールで指摘がない場合を示す。
+確認が正常に完了し、日本語 v1 対象ルールで指摘がない場合を示す。
 
-| Step | Source                   | Target                     | Interaction                                            |
-| ---: | ------------------------ | -------------------------- | ------------------------------------------------------ |
-|    1 | RESP_PRESENTATION        | RESP_CHECK_ORCHESTRATION   | 確認開始時点の選択入力を対象として確認を要求する。     |
-|    2 | RESP_CHECK_ORCHESTRATION | RESP_PO_INTERPRETATION     | 入力を翻訳エントリとメタデータへ解釈するよう求める。   |
-|    3 | RESP_CHECK_ORCHESTRATION | RESP_LOCALE_RESOLUTION     | 解釈済みメタデータから対象ロケールの判定を求める。     |
-|    4 | RESP_CHECK_ORCHESTRATION | RESP_LOCALE_RULE_SELECTION | 判定済みロケールに対応するルール集合の選択を求める。   |
-|    5 | RESP_CHECK_ORCHESTRATION | RESP_RULE_EVALUATION       | 翻訳エントリへ選択済みルール集合を適用するよう求める。 |
-|    6 | RESP_CHECK_ORCHESTRATION | RESP_FINDING_COORDINATION  | 検出結果を空の最終 Finding 集合へ整えるよう求める。    |
-|    7 | RESP_CHECK_ORCHESTRATION | RESP_PRESENTATION          | 指摘なし正常完了として確認全体の結果を通知する。       |
+| Step | Source                   | Target                   | Interaction                                                 |
+| ---: | ------------------------ | ------------------------ | ----------------------------------------------------------- |
+|    1 | RESP_PRESENTATION        | RESP_CHECK_ORCHESTRATION | 確認開始時点の選択入力を対象として確認を要求する。          |
+|    2 | RESP_CHECK_ORCHESTRATION | RESP_PO_INTERPRETATION   | 入力を翻訳 entry と metadata へ解釈するよう求める。         |
+|    3 | RESP_CHECK_ORCHESTRATION | RESP_LOCALE_RESOLUTION   | 解釈済み metadata から対象 locale の判定を求める。          |
+|    4 | RESP_CHECK_ORCHESTRATION | RESP_JAPANESE_CHECK      | locale が `ja` のため、日本語 `check(entries)` を実行する。 |
+|    5 | RESP_JAPANESE_CHECK      | RESP_CHECK_ORCHESTRATION | 指摘がないため空配列を返す。                                |
+|    6 | RESP_CHECK_ORCHESTRATION | RESP_PRESENTATION        | 指摘なし正常完了として確認全体の結果を通知する。            |
 
 ### Invalid PO input {#RV_INVALID_PO_INPUT}
 
@@ -346,23 +237,23 @@ v1 では日本語（`ja`）のみを対応ロケールとして扱う。
 
 ### Unresolved locale {#RV_UNRESOLVED_LOCALE}
 
-PO は解釈できるが対象ロケールを判定できない場合を示す。
+PO は解釈できるが対象 locale を判定できない場合を示す。
 
 | Step | Source                   | Target                   | Interaction                                        |
 | ---: | ------------------------ | ------------------------ | -------------------------------------------------- |
-|    1 | RESP_CHECK_ORCHESTRATION | RESP_LOCALE_RESOLUTION   | 解釈済みメタデータから対象ロケールの判定を求める。 |
-|    2 | RESP_LOCALE_RESOLUTION   | RESP_CHECK_ORCHESTRATION | 対象ロケールを判定できないことを通知する。         |
-|    3 | RESP_CHECK_ORCHESTRATION | RESP_PRESENTATION        | ロケール判定不能として確認全体の結果を通知する。   |
+|    1 | RESP_CHECK_ORCHESTRATION | RESP_LOCALE_RESOLUTION   | 解釈済み metadata から対象 locale の判定を求める。 |
+|    2 | RESP_LOCALE_RESOLUTION   | RESP_CHECK_ORCHESTRATION | 対象 locale を判定できないことを通知する。         |
+|    3 | RESP_CHECK_ORCHESTRATION | RESP_PRESENTATION        | locale 判定不能として確認全体の結果を通知する。    |
 
 ### Unsupported locale {#RV_UNSUPPORTED_LOCALE}
 
-対象ロケールは判定できるが v1 では未対応の場合を示す。
+対象 locale は判定できるが v1 では未対応の場合を示す。
 
-| Step | Source                     | Target                     | Interaction                                                    |
-| ---: | -------------------------- | -------------------------- | -------------------------------------------------------------- |
-|    1 | RESP_CHECK_ORCHESTRATION   | RESP_LOCALE_RULE_SELECTION | 判定済みロケールに対応するルール集合の選択を求める。           |
-|    2 | RESP_LOCALE_RULE_SELECTION | RESP_CHECK_ORCHESTRATION   | 対応ルール集合が存在しない未対応ロケールであることを通知する。 |
-|    3 | RESP_CHECK_ORCHESTRATION   | RESP_PRESENTATION          | 未対応ロケールとして確認全体の結果を通知する。                 |
+| Step | Source                   | Target                   | Interaction                                                    |
+| ---: | ------------------------ | ------------------------ | -------------------------------------------------------------- |
+|    1 | RESP_CHECK_ORCHESTRATION | RESP_LOCALE_RESOLUTION   | 解釈済み metadata から対象 locale の判定を求める。             |
+|    2 | RESP_LOCALE_RESOLUTION   | RESP_CHECK_ORCHESTRATION | `ja` 以外の解決済み locale を返す。                            |
+|    3 | RESP_CHECK_ORCHESTRATION | RESP_PRESENTATION        | 日本語チェックを実行せず、未対応 locale として結果を通知する。 |
 
 ### Input replaced during validation {#RV_INPUT_REPLACED}
 
@@ -377,253 +268,106 @@ PO は解釈できるが対象ロケールを判定できない場合を示す�
 
 ### Validation data boundaries
 
-責務間では、少なくとも以下の概念データを区別する。
+責務間では少なくとも次を区別する。
 
-- 選択された入力ファイル
-- PO 解釈後の翻訳エントリとメタデータ
-- 判定されたロケール
-- 選択されたロケール固有ルール集合
-- ルール固有の検出結果
-- UI に提示する最終 Finding
-- 確認全体の結果
+- 選択された入力。
+- PO 解釈後の翻訳 entry と metadata。
+- 解決済み locale。
+- 日本語 v1 の `TranslationCheckResult[]`。
+- Check Orchestration が返す確認全体の結果。
 
-これらは実装上の具体的な TypeScript 型名を意味しない。
+### Japanese rule common logic
 
-### Finding location model
+技術的文字列の誤検出抑制や numeric placeholder の扱いなど、複数ルールで実際に同じ意味の処理が必要になった場合だけ、日本語 v1 Check 内で必要最小限に共有する。
 
-最終 Finding は1つ以上の問題箇所を保持できる。
+独立した Shared rule concepts subsystem、汎用 tokenizer、rule engine、plugin system、DI、dynamic registry は要求しない。
 
-各問題箇所は少なくとも以下の意味を表現できる。
+### Deterministic validation
 
-- 原文側または翻訳側
-- 既存文字の範囲
-- 不足しているスペースなどの文字間境界
-
-これにより、同一ルールの複数箇所を1 Finding にまとめる場合や、Warning で原文側と翻訳側の双方を示す場合でも、Presentation に再解析を要求しない。
-
-### Shared rule concepts
-
-複数の日本語ルールに横断する概念は、Rule Evaluation 内で一貫して扱う。
-
-代表例は以下とする。
-
-- URL、メールアドレス、ファイルパス、コード、識別子などの技術的文字列
-- 数値プレースホルダーと文字列プレースホルダーの区別
-- 文字範囲と文字間境界
-- ルール固有検出結果から Finding へ渡す問題箇所の意味
-
-これらは共有概念であり、独立した将来用途の subsystem や plugin 機構を要求しない。
-
-### Deterministic result coordination
-
-結果の再現性は Rule Evaluation と Finding Coordination の境界全体で維持する。
-
-- 個別ルールの Severity、説明、根拠は同じ条件で変化しない。
-- Finding Coordination の重複解消、集約、優先関係、順序は同じ条件で変化しない。
-- 過去の確認結果、実行時刻、今回の確認と無関係な以前の操作へ依存しない。
+- 同じ入力に対する日本語 `check(entries)` は同じ結果順序を返す。
+- 個別チェックの Severity とメッセージは同じ条件で変化しない。
+- 過去の確認結果や実行時刻へ依存しない。
 
 ### Input-result identity
 
-1回の確認結果は、確認開始時点の入力に対応する。
-
-Presentation が新しい入力を現在対象として採用した後、古い確認結果を新しい入力の結果として表示してはならない。
-
-この不変条件は特定の識別子方式、取消方式、queue 方式を要求しない。
+1回の確認結果は、確認開始時点の入力に対応する。Presentation が新しい入力を採用した後、古い確認結果を新しい入力の結果として表示してはならない。
 
 ## 9. Architecture Decisions
 
 ### AD-01 Browser-local validation
 
-**Context**
-
-QR-01 は翻訳内容を、明示された別要件がない限り外部サービスへ送信しないことを求める。
-
-**Decision**
-
-PO 解釈と検証をブラウザー内で完結させる。WordPress 日本語翻訳スタイルガイドは利用者向け参照先とし、確認実行時の remote dependency としない。
-
-**Rationale**
-
-未公開翻訳を含む入力内容を外部確認サービスへ送信せずに確認できる。
-
-**Consequence**
-
-外部 API、telemetry、remote processing を検証フローの前提にできない。
+PO 解釈と検証をブラウザー内で完結させる。翻訳内容を外部検証 API、telemetry、remote processing へ送信する前提を持たない。
 
 ### AD-02 Validation core independent from Presentation
 
-**Context**
+Validation Core を React / DOM から分離する。Presentation は日本語ルールを再実行しない。
 
-UI の変更がルール判定へ波及したり、検証ロジックが React / DOM lifecycle に依存すると責務境界が不安定になる。
+### AD-03 Keep Locale Resolution, remove Locale Rule Selection
 
-**Decision**
+「locale を判定できない」と「判定できるが未対応」は区別する必要があるため Locale Resolution は独立責務として維持する。
 
-検証コアを React / DOM から分離し、Presentation は意味の確定した確認結果を受け取る。
+一方、v1 の対応 locale は `ja` だけであり、日本語チェックの公開入口も `check(entries)` 1つであるため、Locale Rule Selection / RuleSet / Rule は設けない。未対応 locale の分岐は Check Orchestration が所有する。
 
-**Rationale**
+### AD-04 Japanese v1 check owns rule execution
 
-ルール判定と利用者向け表示を独立して保てる。
+日本語固有の12ルールと、そのルール間優先関係・重複回避を `src/validation/rules/ja/check.ts` の責務内に閉じる。
 
-**Consequence**
+個別ルール構造を公開せず、Check Orchestration は `check(entries)` だけを利用する。
 
-Presentation は問題箇所や Severity を再計算しない。
+### AD-05 No Finding Coordination responsibility
 
-### AD-03 Separate locale resolution and rule selection
+日本語 v1 の公開結果は entry ごとの `errors` / `warnings` と最小 `CheckMessage` で十分なため、独立した Finding Coordination を設けない。
 
-**Context**
+同一原因の重複回避は Design で決めた優先関係を各チェック条件へ反映する。
 
-「ロケールを判定できない」と「判定できるが未対応」は利用者向けにも異なる状態である。
+### AD-06 Define contracts at their owner
 
-**Decision**
+責務が存在する前に共有 contract を先行定義しない。必要な型は PO Interpretation、日本語 v1 Check、Check Orchestration 等、それぞれの所有責務で定義する。
 
-Locale Resolution と Locale Rule Selection を別責務とする。
-
-**Rationale**
-
-判定不能と未対応を明確に区別し、日本語ルールの誤適用を防げる。
-
-**Consequence**
-
-未対応ロケールへ `ja` ルールを fallback 適用しない。
-
-### AD-04 Keep Japanese rules inside locale boundary
-
-**Context**
-
-v1 は日本語のみだが、将来別ロケールを追加する可能性がある。
-
-**Decision**
-
-日本語固有ルールを Locale Rule Selection が選択するロケール境界の内側へ閉じ込める。
-
-**Rationale**
-
-異なるロケールのルール混在を防ぐ。
-
-**Consequence**
-
-将来ロケール追加のためだけの plugin system や DI container は導入しない。
-
-### AD-05 Distinguish successful and non-executable results
-
-**Context**
-
-指摘0件と、解析不能・ロケール判定不能・未対応を空配列だけで表現すると UI が意味を推測する必要がある。
-
-**Decision**
-
-確認全体の結果として、確認不能の理由と正常完了を意味上別の結果として扱う。
-
-**Rationale**
-
-「問題なし」と「確認できなかった」を混同しない。
-
-**Consequence**
-
-Presentation は確認結果の意味を独自推測しない。
-
-### AD-06 Findings carry displayable semantics
-
-**Context**
-
-基本設計は問題概要、Severity、原文、翻訳、問題箇所、判定理由、スタイルガイド根拠の表示を求める。
-
-**Decision**
-
-最終 Finding に、Presentation が再解析せず表示できる意味情報を保持する。
-
-**Rationale**
-
-UI へルールロジックが漏れるのを防ぐ。
-
-**Consequence**
-
-問題箇所は複数保持でき、原文側・翻訳側と文字間境界を表現できる。
-
-### AD-07 Deterministic finding coordination
-
-**Context**
-
-複数ルールが同一原因を指摘でき、同一ルールが1翻訳内で複数箇所へ一致する。
-
-**Decision**
-
-重複解消、具体的ルール優先、同一ルール内集約、最終順序を Finding Coordination が所有する。
-
-**Rationale**
-
-Presentation や個別ルールへ競合解決を分散させず、QR-02 を維持する。
-
-**Consequence**
-
-同じ入力と同じルール条件では同じ Finding 集合と順序を得る。
-
-### AD-08 Preserve input and bind results to validation input
-
-**Context**
-
-WTC は確認ツールであり、入力修正は v1 対象外である。また、確認中に入力が変更される可能性がある。
-
-**Decision**
+### AD-07 Preserve input and bind results to validation input
 
 確認処理は入力 PO を変更しない。各確認結果は確認開始時点の入力に対応付け、入力変更後に古い結果を現在入力へ適用しない。
-
-**Rationale**
-
-入力破壊と結果の取り違えを防ぐ。
-
-**Consequence**
-
-実装は結果と対象入力の対応関係を維持する必要があるが、具体的な同期機構はアーキテクチャでは固定しない。
 
 ## 10. Quality Requirements
 
 ### QR-01 Translation privacy
 
 - 検証処理をブラウザー内に閉じる。
-- 翻訳内容を外部検証 API、telemetry、remote processing へ送信する前提を持たない。
-- スタイルガイドは実行時データ取得先ではなく利用者向け参照先とする。
+- 翻訳内容を外部検証 API、telemetry、remote processing へ送信しない。
+- スタイルガイドは利用者向け参照先とする。
 
 ### QR-02 Deterministic validation
 
-- 同じ入力と同じルール条件から、同じ指摘集合、Severity、説明、根拠、問題箇所、順序を得る。
+- 同じ入力から同じ日本語チェック結果と順序を得る。
 - 過去の確認結果や実行時刻へ依存しない。
-- 重複解消と順序決定を Presentation へ分散しない。
+- 結果順序のためだけの独立 coordination layer を追加しない。
 
 ### QR-03 Result comprehensibility
 
-- Finding は問題概要、Severity、原文、翻訳、問題箇所、判定理由、スタイルガイド根拠を表示可能な意味として保持する。
-- 問題箇所は複数、原文側・翻訳側、文字範囲・文字間境界を表現できる。
-- Presentation は利用者が内部ルール名を知らなくても結果を理解できる表示を構成できる。
+- 日本語チェックは各指摘に `styleGuideItem` と利用者向け `message` を返す。
+- 原文・翻訳等の表示に必要な追加情報は、Presentation / Check Orchestration を実装する時点で責務に沿って定義する。
+- 日本語ルールの内部構造を Presentation へ漏らさない。
 
 ## 11. Risks and Technical Debt
 
-- PO メタデータにはロケール表現のばらつきがあり得るため、Locale Resolution の実装時に対応範囲を設計と整合させる必要がある。
-- 技術的文字列の除外やプレースホルダー解釈をルールごとに独自実装すると判定不整合が生じるため、共有概念の意味を維持する必要がある。
-- Finding の問題箇所モデルを文字範囲だけに狭めると、不足スペースや原文・翻訳両側の Warning を Presentation へ正しく渡せなくなる。
+- 技術的文字列の除外を過剰に一般化すると、本来の日本語本文を確認しなくなるため、明確に判定できる範囲を優先する。
+- Warning は原文パターンを条件として扱い、翻訳だけを見て断定しない。
+- 将来 locale が増えた場合は、その時点の具体的な要件から境界を再検討し、v1 のために先行抽象化しない。
 
 ## 12. Glossary
 
 **Check Result**
 
-1回の確認要求全体の結果。正常完了と確認不能を意味として区別する。
+Check Orchestration が1回の確認要求について返す全体結果。正常完了と確認不能を区別する。具体的な型は Check Orchestration 実装時に定義する。
 
-**Finding**
+**Japanese v1 check result**
 
-利用者へ提示する1件の最終指摘。Severity、問題内容、原文・翻訳、1つ以上の問題箇所、判定理由、スタイルガイド根拠を表示可能な意味として保持する。
+日本語 `check(entries)` が返す entry 単位の結果。問題のある entry だけを含み、Error / Warning の `CheckMessage` を保持する。
 
-**Rule-specific detection**
+**CheckMessage**
 
-個別ルールが生成する、Finding Coordination 前の検出結果。
-
-**Problem location**
-
-Finding 内で問題箇所を示す意味情報。原文側・翻訳側を識別し、既存文字の範囲または文字間境界を表現できる。
+日本語 v1 の1指摘が返す最小情報。`styleGuideItem` と `message` を持つ。
 
 **Locale**
 
 翻訳対象の言語・地域を識別する値。v1 の対応対象は日本語（`ja`）。
-
-**Supported locale**
-
-Locale Rule Selection が対応するルール集合を提供できるロケール。v1 では日本語（`ja`）のみ。
