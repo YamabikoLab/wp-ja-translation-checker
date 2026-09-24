@@ -384,14 +384,17 @@ describe('Presentation result model', () => {
       'Warning message 1',
     ])
     expect(
-      findings.every((finding) => finding.source === 'Save all settings'),
+      findings.every(
+        (finding) => finding.entry.source.singular === 'Save all settings',
+      ),
     ).toBe(true)
     expect(
       findings.every(
-        (finding) => finding.translation === '全ての設定を保存して下さい',
+        (finding) =>
+          finding.entry.translations[0]?.text === '全ての設定を保存して下さい',
       ),
     ).toBe(true)
-    expect(findings[0]?.pluralSource).toBe('Save all setting groups')
+    expect(findings[0]?.entry.source.plural).toBe('Save all setting groups')
   })
 
   /**
