@@ -16,7 +16,9 @@ const validationSourcePath = fileURLToPath(
 const gettextBrowserBundlePath = fileURLToPath(
   new URL('./node_modules/gettext-converter/gettext.min.js', import.meta.url),
 )
-const packageJsonPath = fileURLToPath(new URL('./package.json', import.meta.url))
+const packageJsonPath = fileURLToPath(
+  new URL('./package.json', import.meta.url),
+)
 const gettextBrowserBundle = readFileSync(gettextBrowserBundlePath, 'utf8')
 const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8')) as {
   version: string
