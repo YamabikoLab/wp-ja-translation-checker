@@ -708,7 +708,9 @@ export function checkSentenceEndingParentheses(
  * @param entry 確認対象 entry。
  * @returns 1-9 に該当する指摘。
  */
-export function checkNumberSpacing(entry: TranslationEntry): readonly CheckMessage[] {
+export function checkNumberSpacing(
+  entry: TranslationEntry,
+): readonly CheckMessage[] {
   const translation = getTranslation(entry)
   // 日本語訳が存在しない entry は、1-9 の判定対象にできないため指摘しない。
   if (translation === undefined) {
@@ -773,7 +775,9 @@ export function checkNumberSpacing(entry: TranslationEntry): readonly CheckMessa
  * @param entry 確認対象 entry。
  * @returns 3-2 に該当する指摘。
  */
-export function checkViewExpression(entry: TranslationEntry): readonly CheckMessage[] {
+export function checkViewExpression(
+  entry: TranslationEntry,
+): readonly CheckMessage[] {
   const translation = getTranslation(entry)
   // 3-2 は、日本語訳が存在し、原文が動詞の「View XX」と明確に判断できる場合だけ確認する。
   if (
@@ -833,7 +837,9 @@ export function checkNotAllowedExpression(
  * @param entry 確認対象 entry。
  * @returns 3-4 に該当する指摘。
  */
-export function checkSorryPrefix(entry: TranslationEntry): readonly CheckMessage[] {
+export function checkSorryPrefix(
+  entry: TranslationEntry,
+): readonly CheckMessage[] {
   const translation = getTranslation(entry)
   // 3-4 は、原文が「Sorry, ...」で始まり、翻訳先頭に v1 対象の謝罪表現が残る場合だけ Warning とする。
   if (
