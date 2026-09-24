@@ -530,16 +530,37 @@ function checkInnerParenthesesSpacing(
   entry: TranslationEntry,
 ): readonly CheckMessage[] {
   const translation = getTranslation(entry)
-  if (translation === undefined || !/(\(\s+|\s+\))/u.test(translation)) {
+  if (translation === undefined) {
     return []
   }
 
-  return [
-    {
-      styleGuideItem: STYLE_GUIDE.innerParenthesesSpacing,
-      message: '丸括弧の内側のスペースは削除してください',
-    },
-  ]
+  const { protectedIndexes } = protectTechnicalText(translation)
+
+  // 技術文字列を除く本文で、丸括弧の直後・直前に空白がないか確認する。
+  for (let index = 0; index < translation.length; index += 1) {
+    if (protectedIndexes.has(index)) {
+      continue
+    }
+
+    const character = translation[index]
+    if (
+      (character === '(' &&
+        !protectedIndexes.has(index + 1) &&
+        /\s/u.test(translation[index + 1] ?? '')) ||
+      (character === ')' &&
+        !protectedIndexes.has(index - 1) &&
+        /\s/u.test(translation[index - 1] ?? ''))
+    ) {
+      return [
+        {
+          styleGuideItem: STYLE_GUIDE.innerParenthesesSpacing,
+          message: '丸括弧の内側のスペースは削除してください',
+        },
+      ]
+    }
+  }
+
+  return []
 }
 
 /**
@@ -552,20 +573,31 @@ function checkPeriodInsideParentheses(
   entry: TranslationEntry,
 ): readonly CheckMessage[] {
   const translation = getTranslation(entry)
-  if (
-    translation === undefined ||
-    !/。\)/u.test(translation) ||
-    /。\)$/u.test(translation)
-  ) {
+  if (translation === undefined) {
     return []
   }
 
-  return [
-    {
-      styleGuideItem: STYLE_GUIDE.periodInsideParentheses,
-      message: '丸括弧内の末尾の句点は削除してください',
-    },
-  ]
+  const { protectedIndexes } = protectTechnicalText(translation)
+
+  // 文末全体の「。)」は 1-8 に委ね、それ以外の括弧直前句点だけを確認する。
+  for (let index = 0; index < translation.length - 1; index += 1) {
+    if (
+      translation[index] === '。' &&
+      translation[index + 1] === ')' &&
+      !protectedIndexes.has(index) &&
+      !protectedIndexes.has(index + 1) &&
+      index + 1 !== translation.length - 1
+    ) {
+      return [
+        {
+          styleGuideItem: STYLE_GUIDE.periodInsideParentheses,
+          message: '丸括弧内の末尾の句点は削除してください',
+        },
+      ]
+    }
+  }
+
+  return []
 }
 
 /**
@@ -579,6 +611,17 @@ function checkSentenceEndingParentheses(
 ): readonly CheckMessage[] {
   const translation = getTranslation(entry)
   if (translation === undefined || !/。\)$/u.test(translation)) {
+    return []
+  }
+
+  const { protectedIndexes } = protectTechnicalText(translation)
+  const periodIndex = translation.length - 2
+  const closingParenthesisIndex = translation.length - 1
+
+  if (
+    protectedIndexes.has(periodIndex) ||
+    protectedIndexes.has(closingParenthesisIndex)
+  ) {
     return []
   }
 
