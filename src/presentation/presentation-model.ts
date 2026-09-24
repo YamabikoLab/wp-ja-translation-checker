@@ -52,9 +52,7 @@ export type Finding = {
   severity: 'Error' | 'Warning'
   message: string
   styleGuideItem: string
-  source: string
-  pluralSource?: string
-  translation: string
+  entry: SuccessfulCheckResult['entries'][number]
 }
 
 /**
@@ -157,8 +155,6 @@ export function createFindings(
       )
     }
 
-    const translation = entry.translations[0]?.text ?? ''
-
     // 1つの Error CheckMessage を利用者向けの1指摘として、元 entry の内容と結び付ける。
     for (const [messageIndex, message] of checkedEntry.errors.entries()) {
       findings.push({
@@ -166,11 +162,7 @@ export function createFindings(
         severity: 'Error',
         message: message.message,
         styleGuideItem: message.styleGuideItem,
-        source: entry.source.singular,
-        ...(entry.source.plural === undefined
-          ? {}
-          : { pluralSource: entry.source.plural }),
-        translation,
+        entry,
       })
     }
 
@@ -181,11 +173,7 @@ export function createFindings(
         severity: 'Warning',
         message: message.message,
         styleGuideItem: message.styleGuideItem,
-        source: entry.source.singular,
-        ...(entry.source.plural === undefined
-          ? {}
-          : { pluralSource: entry.source.plural }),
-        translation,
+        entry,
       })
     }
   }
