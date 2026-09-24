@@ -280,6 +280,25 @@ describe('Japanese v1 error rules', () => {
     })
   })
 
+
+  /**
+   * 数字以外の半角文字と日本語文字の間に全角スペースがある場合の 1-4 判定を確認する。
+   *
+   * 操作:
+   * - 半角英字と日本語文字の間に全角スペースを含む翻訳を確認する。
+   *
+   * 期待結果:
+   * - 1-4 の Error が返り、境界を半角スペース1つにするよう案内される。
+   */
+  it('when a full-width space separates half-width and Japanese text, should report rule 1-4', () => {
+    expect(
+      getOnlyResult('WordPress setting', 'WordPress　設定').errors,
+    ).toContainEqual({
+      styleGuideItem: '1-4 半角文字と全角文字の間のスペース',
+      message: '「s」と「設」の間の半角スペースは1つにしてください',
+    })
+  })
+
   /**
    * 数字以外の半角文字と日本語文字の間が半角スペース1つなら 1-4 を満たすことを確認する。
    *
