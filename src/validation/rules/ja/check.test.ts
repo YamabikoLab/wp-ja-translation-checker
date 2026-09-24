@@ -191,9 +191,9 @@ describe('Japanese v1 error rules', () => {
    * コードとして明示された技術文字列内部の丸括弧は、日本語本文の規則として扱わない。
    */
   it('when parentheses appear inside a protected technical string, should not report rule 1-5', () => {
-    expect(
-      check([createEntry(0, 'Code', 'コード `foo(bar)` を確認')]),
-    ).toEqual([])
+    expect(check([createEntry(0, 'Code', 'コード `foo(bar)` を確認')])).toEqual(
+      [],
+    )
   })
 
   it('when spaces exist just inside parentheses, should report rule 1-6', () => {
@@ -241,9 +241,9 @@ describe('Japanese v1 error rules', () => {
    * 技術文字列内部の括弧直前句点は 1-7 の対象にしない。
    */
   it('when a period before a closing parenthesis appears inside a protected technical string, should not report rule 1-7', () => {
-    expect(
-      check([createEntry(0, 'Code', 'コード `foo(。)` を確認')]),
-    ).toEqual([])
+    expect(check([createEntry(0, 'Code', 'コード `foo(。)` を確認')])).toEqual(
+      [],
+    )
   })
 
   /**
