@@ -228,6 +228,31 @@ describe('Japanese v1 error rules', () => {
     expect(check([createEntry(0, 'Label', '(詳細)')])).toEqual([])
   })
 
+  /**
+   * 技術文字列内部の丸括弧内側スペースは 1-6 の対象にしない。
+   */
+  it('when inner parentheses spacing appears inside a protected technical string, should not report rule 1-6', () => {
+    expect(
+      check([createEntry(0, 'Code', 'コード `foo( bar )` を確認')]),
+    ).toEqual([])
+  })
+
+  /**
+   * 技術文字列内部の括弧直前句点は 1-7 の対象にしない。
+   */
+  it('when a period before a closing parenthesis appears inside a protected technical string, should not report rule 1-7', () => {
+    expect(
+      check([createEntry(0, 'Code', 'コード `foo(。)` を確認')]),
+    ).toEqual([])
+  })
+
+  /**
+   * 技術文字列内部で文末が「。)」になっていても 1-8 の対象にしない。
+   */
+  it('when a protected technical string ends with period then closing parenthesis, should not report rule 1-8', () => {
+    expect(check([createEntry(0, 'Code', '`foo(。)`')])).toEqual([])
+  })
+
   it('when a half-width number is separated from Japanese by a space, should report rule 1-9', () => {
     expect(getOnlyResult('Count', '3 件').errors).toContainEqual({
       styleGuideItem: '1-9 半角数字前後の不要スペース',
