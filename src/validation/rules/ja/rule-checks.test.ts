@@ -268,6 +268,29 @@ describe('Japanese v1 rule 1-4', () => {
     ).toEqual([])
   })
 
+
+  /**
+   * NBSP は通常の半角・全角境界で正しい半角スペースとして扱わないことを確認する。
+   *
+   * 操作:
+   * - 半角英字と日本語文字の間に NBSP を含む翻訳を確認する。
+   *
+   * 期待結果:
+   * - 1-4 の Error が返り、境界を半角スペース1つにするよう案内される。
+   */
+  it('when NBSP separates half-width and Japanese text, should report rule 1-4', () => {
+    expect(
+      getRuleMessages(
+        checkSpacingBetweenHalfAndFullWidth,
+        'WordPress setting',
+        'WordPress\u00a0設定',
+      ),
+    ).toContainEqual({
+      styleGuideItem: '1-4 半角文字と全角文字の間のスペース',
+      message: '「s」と「設」の間の半角スペースは1つにしてください',
+    })
+  })
+
   /**
    * 文字列プレースホルダーと日本語の境界を 1-4 として断定しないことを確認する。
    *
