@@ -332,7 +332,13 @@ function checkSpacingBetweenHalfAndFullWidth(
   )
   const messages: CheckMessage[] = []
   let invalidBoundary:
-    { left: string; right: string; spaceCount: number } | undefined
+    {
+      left: string
+      right: string
+      spaceCount: number
+      hasFullWidthSpace: boolean
+    }
+    | undefined
   let unnecessarySymbol: string | undefined
 
   // 数字以外の半角文字と日本語文字の境界が、半角スペース1つで区切られているか確認する。
@@ -345,10 +351,15 @@ function checkSpacingBetweenHalfAndFullWidth(
     const left = spacingText[index] ?? ''
     let rightIndex = index + 1
     let spaceCount = 0
+    let hasFullWidthSpace = false
 
-    // 境界に存在する半角スペースを数え、次の本文文字との組み合わせで過不足を判断する。
-    while (spacingText[rightIndex] === ' ') {
+    // 境界に存在するスペースを確認し、半角スペース1つ以外は 1-4 の不適合として扱う。
+    while (
+      spacingText[rightIndex] === ' ' ||
+      spacingText[rightIndex] === '　'
+    ) {
       spaceCount += 1
+      hasFullWidthSpace ||= spacingText[rightIndex] === '　'
       rightIndex += 1
     }
 
@@ -380,12 +391,12 @@ function checkSpacingBetweenHalfAndFullWidth(
     const leftJapanese = JAPANESE_CHARACTER.test(left)
     const rightJapanese = JAPANESE_CHARACTER.test(right)
 
-    // 数字を除く半角文字と日本語文字の境界は、スペースがちょうど1つの場合だけ正常とする。
+    // 数字を除く半角文字と日本語文字の境界は、半角スペースがちょうど1つの場合だけ正常とする。
     if (
       ((leftHalf && rightJapanese) || (leftJapanese && rightHalf)) &&
-      spaceCount !== 1
+      (spaceCount !== 1 || hasFullWidthSpace)
     ) {
-      invalidBoundary = { left, right, spaceCount }
+      invalidBoundary = { left, right, spaceCount, hasFullWidthSpace }
       break
     }
   }
