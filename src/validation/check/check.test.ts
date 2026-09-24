@@ -100,7 +100,7 @@ describe('Check Orchestration', () => {
     const source = [
       'msgid ""',
       'msgstr ""',
-      '"Language: en_US\\\\n"',
+      '"Language: en_US\\n"',
       '',
       'msgid "Save settings"',
       'msgstr "Save settings"',
@@ -130,7 +130,7 @@ describe('Check Orchestration', () => {
     const source = [
       'msgid ""',
       'msgstr ""',
-      '"Language: ja\\\\n"',
+      '"Language: ja\\n"',
       '',
       'msgid "Save settings"',
       'msgstr "設定を保存"',
@@ -166,7 +166,7 @@ describe('Check Orchestration', () => {
     const source = [
       'msgid ""',
       'msgstr ""',
-      '"Language: ja\\\\n"',
+      '"Language: ja\\n"',
       '',
       'msgid "Save settings"',
       'msgstr "設定を保存して下さい"',
@@ -210,7 +210,7 @@ describe('Check Orchestration', () => {
     const source = [
       'msgid ""',
       'msgstr ""',
-      '"Language: ja_JP\\\\n"',
+      '"Language: ja_JP\\n"',
       '',
       'msgid "Save settings"',
       'msgstr "設定を保存"',
@@ -236,7 +236,7 @@ describe('Check Orchestration', () => {
     const source = [
       'msgid ""',
       'msgstr ""',
-      '"Language: ja\\\\n"',
+      '"Language: ja\\n"',
       '',
       'msgid "Clean"',
       'msgstr "正常"',
@@ -277,7 +277,7 @@ describe('Check Orchestration', () => {
     const source = [
       'msgid ""',
       'msgstr ""',
-      '"Language: ja\\\\n"',
+      '"Language: ja\\n"',
       '',
       'msgid "Save settings"',
       'msgstr "全て保存して下さい"',
@@ -300,7 +300,7 @@ describe('Check Orchestration', () => {
     const source = [
       'msgid ""',
       'msgstr ""',
-      '"Language: ja\\\\n"',
+      '"Language: ja\\n"',
       '',
       'msgid "Save settings"',
       'msgstr "設定を保存"',
