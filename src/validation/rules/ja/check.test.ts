@@ -86,6 +86,21 @@ describe('Japanese v1 check public interface', () => {
   })
 
   /**
+   * 公開チェックは PO Interpretation の入力データを読み取り専用として扱う。
+   */
+  it('when entries are checked, should not modify the input entries', () => {
+    const entries = [
+      createEntry(4, 'Save settings', '全て保存して下さい'),
+      createEntry(5, 'View posts', '投稿を表示する'),
+    ]
+    const before = structuredClone(entries)
+
+    check(entries)
+
+    expect(entries).toEqual(before)
+  })
+
+  /**
    * 複数の Error と Warning が同じ entry に共存できることを確認する。
    */
   it('when one entry violates multiple rules, should keep multiple errors and warnings together', () => {
@@ -331,6 +346,12 @@ describe('Japanese v1 error rules', () => {
     ).toEqual([])
   })
 
+  it('when number spacing appears inside protected code, should not report rule 1-9', () => {
+    expect(check([createEntry(0, 'Code', 'コード `3 件` を確認')])).toEqual(
+      [],
+    )
+  })
+
   it('when recommended expressions are used, should report each rule 3-6 message', () => {
     const result = getOnlyResult('Message', '全て既に確認して下さい')
 
@@ -350,6 +371,28 @@ describe('Japanese v1 error rules', () => {
         },
       ]),
     )
+  })
+
+  it('when a recommended expression appears only inside protected code, should not report rule 3-6', () => {
+    expect(
+      check([createEntry(0, 'Code', 'コード `全て` をそのまま使用')]),
+    ).toEqual([])
+  })
+
+  it('when a recommended expression appears both inside protected code and normal text, should report rule 3-6 once', () => {
+    const result = getOnlyResult(
+      'Message',
+      'コード `全て` はそのままにして、全ての設定を保存',
+    )
+
+    expect(
+      result.errors.filter(
+        (item) =>
+          item.styleGuideItem ===
+            '3-6 「下さい / 全て / 既に」などの推奨表記' &&
+          item.message === '「全て」は「すべて」と表記してください',
+      ),
+    ).toHaveLength(1)
   })
 })
 
