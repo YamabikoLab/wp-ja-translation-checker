@@ -38,7 +38,7 @@ function createSuccessResult(
     status: 'success',
     entries: [
       {
-        entryIndex: 7,
+        entryIndex: 0,
         source: {
           singular: 'Save all settings',
           plural: 'Save all setting groups',
@@ -51,7 +51,7 @@ function createSuccessResult(
         ? []
         : [
             {
-              entryIndex: 7,
+              entryIndex: 0,
               errors: Array.from({ length: errorCount }, (_, index) => ({
                 styleGuideItem: `Error guide ${index + 1}`,
                 message: `Error message ${index + 1}`,
@@ -395,6 +395,30 @@ describe('Presentation result model', () => {
       ),
     ).toBe(true)
     expect(findings[0]?.entry.source.plural).toBe('Save all setting groups')
+  })
+
+  /**
+   * entryIndex と配列位置の契約が崩れた結果を誤表示しないことを確認する。
+   *
+   * 事前条件:
+   * - 確認結果の entryIndex と entries の配列位置が一致していない。
+   *
+   * 操作:
+   * - 正常完了結果を表示用の指摘一覧へ変換する。
+   *
+   * 期待結果:
+   * - 対応しない entry を指摘へ結び付けず、契約不整合として失敗する。
+   */
+  it('when entry index does not match the entries position, should reject the inconsistent result', () => {
+    const result = createSuccessResult()
+    const inconsistentResult = {
+      ...result,
+      entries: [{ ...result.entries[0]!, entryIndex: 1 }],
+    }
+
+    expect(() => createFindings(inconsistentResult)).toThrow(
+      '確認結果の entryIndex 0 に対応する翻訳 entry がありません。',
+    )
   })
 
   /**
