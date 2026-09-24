@@ -1,7 +1,7 @@
 /**
- * Locale Resolution が PO メタデータから locale を解決し、判定不能と区別できることを確認する。
+ * Locale Resolution が PO メタデータからロケールを解決し、判定不能と区別できることを確認する。
  *
- * v1 の既知の日本語対応だけを正規化し、その他の locale を先回りして一般化しないことをテスト対象とする。
+ * 既知の日本語表現だけを解決し、その他の値を先回りして検証・一般化しない責務境界をテスト対象とする。
  */
 
 import { describe, expect, it } from 'vitest'
@@ -9,16 +9,16 @@ import { resolveLocale } from './resolve-locale'
 
 describe('Locale Resolution', () => {
   /**
-   * WordPress の日本語 locale がそのまま渡された場合に、日本語 locale として解決できることを確認する。
+   * WordPress の日本語ロケールがそのまま渡された場合に、日本語ロケールとして解決できることを確認する。
    *
    * 事前条件:
    * - PO メタデータの language が `ja` である。
    *
    * 操作:
-   * - locale を解決する。
+   * - ロケールを解決する。
    *
    * 期待結果:
-   * - resolved として `ja` が返る。
+   * - `resolved` として `ja` が返る。
    */
   it('when language is ja, should resolve it as ja', () => {
     expect(resolveLocale({ language: 'ja' })).toEqual({
@@ -28,16 +28,16 @@ describe('Locale Resolution', () => {
   })
 
   /**
-   * GlotPress 由来で現れ得る日本語 locale が渡された場合に、WordPress の日本語 locale へ解決できることを確認する。
+   * GlotPress 由来で現れ得る日本語表現が渡された場合に、WordPress の日本語ロケールへ解決できることを確認する。
    *
    * 事前条件:
    * - PO メタデータの language が `ja_JP` である。
    *
    * 操作:
-   * - locale を解決する。
+   * - ロケールを解決する。
    *
    * 期待結果:
-   * - resolved として `ja` が返る。
+   * - `resolved` として `ja` が返る。
    */
   it('when language is ja_JP, should resolve it as ja', () => {
     expect(resolveLocale({ language: 'ja_JP' })).toEqual({
@@ -47,67 +47,51 @@ describe('Locale Resolution', () => {
   })
 
   /**
-   * 日本語以外の地域付き locale が渡された場合に、language-only へ縮約しないことを確認する。
+   * 既知の日本語表現以外の非空値が渡された場合に、汎用的な正規化や形式検証を行わないことを確認する。
    *
    * 事前条件:
-   * - PO メタデータの language が `de_DE` である。
+   * - language が地域付きロケール、別表記の日本語ロケール、またはロケール形式ではない非空値である。
    *
    * 操作:
-   * - locale を解決する。
+   * - ロケールを解決する。
    *
    * 期待結果:
-   * - `de_DE` のまま resolved として返る。
+   * - 入力値が変更されず `resolved` として返る。
    */
-  it('when language is a non-ja regional locale, should preserve the locale value', () => {
-    expect(resolveLocale({ language: 'de_DE' })).toEqual({
-      status: 'resolved',
-      locale: 'de_DE',
-    })
-  })
+  it.each(['de_DE', 'ja-JP', '???'])(
+    'when language is outside the known mapping, should preserve it without generic locale validation',
+    (language) => {
+      expect(resolveLocale({ language })).toEqual({
+        status: 'resolved',
+        locale: language,
+      })
+    },
+  )
 
   /**
-   * 日本語以外の非空 locale が渡された場合に、Locale Resolution 側で unsupported と判断しないことを確認する。
-   *
-   * 事前条件:
-   * - PO メタデータの language が `fr` である。
+   * language が存在しない場合に、ロケール判定不能として扱うことを確認する。
    *
    * 操作:
-   * - locale を解決する。
+   * - language を持たないメタデータからロケールを解決する。
    *
    * 期待結果:
-   * - `fr` のまま resolved として返る。
-   */
-  it('when language is another non-empty locale, should resolve it without checking support', () => {
-    expect(resolveLocale({ language: 'fr' })).toEqual({
-      status: 'resolved',
-      locale: 'fr',
-    })
-  })
-
-  /**
-   * language が存在しない場合に、locale 判定不能として扱うことを確認する。
-   *
-   * 操作:
-   * - language を持たないメタデータから locale を解決する。
-   *
-   * 期待結果:
-   * - unresolved が返る。
+   * - `unresolved` が返る。
    */
   it('when language is missing, should return unresolved', () => {
     expect(resolveLocale({})).toEqual({ status: 'unresolved' })
   })
 
   /**
-   * language に利用可能な値がない場合に、locale 判定不能として扱うことを確認する。
+   * language に利用可能な値がない場合に、ロケール判定不能として扱うことを確認する。
    *
    * 事前条件:
    * - language が空文字列または空白だけである。
    *
    * 操作:
-   * - locale を解決する。
+   * - ロケールを解決する。
    *
    * 期待結果:
-   * - unresolved が返る。
+   * - `unresolved` が返る。
    */
   it.each(['', '   '])(
     'when language has no usable locale value, should return unresolved',
