@@ -217,6 +217,51 @@ export function summarizeFindings(
 }
 
 /**
+ * 現在の確認結果に存在するルールを、最初に現れた順で重複なく集計する。
+ *
+ * @param findings 正常完了結果から導出した全指摘。
+ * @returns ルール名と CheckMessage 単位の指摘件数。
+ */
+export function createRuleFilterOptions(
+  findings: readonly Finding[],
+): readonly RuleFilterOption[] {
+  const counts = new Map<string, number>()
+
+  // 画面で選択可能なルールと件数だけを導出し、元の指摘一覧は変更しない。
+  for (const finding of findings) {
+    counts.set(
+      finding.styleGuideItem,
+      (counts.get(finding.styleGuideItem) ?? 0) + 1,
+    )
+  }
+
+  return Array.from(counts, ([styleGuideItem, count]) => ({
+    styleGuideItem,
+    count,
+  }))
+}
+
+/**
+ * 選択された1ルールに一致する指摘だけを画面表示用として導出する。
+ *
+ * @param findings 正常完了結果から導出した全指摘。
+ * @param selectedStyleGuideItem 選択中のスタイルガイド項目。null は「すべてのルール」を表す。
+ * @returns 選択ルールに一致する指摘一覧。元の指摘一覧は変更しない。
+ */
+export function filterFindingsByRule(
+  findings: readonly Finding[],
+  selectedStyleGuideItem: string | null,
+): readonly Finding[] {
+  if (selectedStyleGuideItem === null) {
+    return findings
+  }
+
+  return findings.filter(
+    (finding) => finding.styleGuideItem === selectedStyleGuideItem,
+  )
+}
+
+/**
  * 長文表示に利用する文字数判定と省略文字列を返す。
  *
  * DOM の overflow は計測せず、Unicode code point の数が200文字を超える場合だけ省略する。
