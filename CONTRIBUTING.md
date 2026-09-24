@@ -8,7 +8,17 @@ WTC welcomes bug reports, specification discussions, improvement proposals, and 
 
 Use GitHub Issues to report bugs, discuss translation-rule behavior, or propose improvements.
 
-Before opening a new Issue, check whether the same topic is already being discussed. When reporting a problem, include the smallest useful example and explain the expected and actual behavior.
+Before opening a new Issue, check whether the same topic is already being discussed.
+
+For bug reports, please include:
+
+- **Observed behavior**: what happened, including the expected behavior when it helps explain the problem.
+- **Cause**: the known or suspected cause. If it is not known yet, say so.
+- **Proposed fix**: the suggested response or implementation approach. If there is no proposal yet, say so.
+- **Reproduction steps**: the steps needed to reproduce the problem as reliably as possible.
+- **Screenshots or recordings**: screenshots, screen recordings, or other visual evidence when they help show the problem.
+
+Include the smallest useful example where possible.
 
 Translation-rule decisions should be grounded in the relevant WordPress translation guidance and the agreement recorded in the related Issue. Do not introduce a locale rule based only on implementation convenience.
 
