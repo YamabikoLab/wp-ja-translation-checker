@@ -8,6 +8,19 @@ import type { CheckResult } from '@/check/check'
 
 type SuccessfulCheckResult = Extract<CheckResult, { status: 'success' }>
 
+type FeedbackState =
+  | {
+      status: 'feedback'
+      file: File
+      reason: 'file-read-failure' | 'invalid-po' | 'unresolved-locale'
+    }
+  | {
+      status: 'feedback'
+      file: File
+      reason: 'unsupported-locale'
+      locale: string
+    }
+
 /**
  * Presentation が保持する、利用者から見た現在の確認状態を表す。
  */
@@ -15,16 +28,7 @@ export type PresentationState =
   | { status: 'no-file' }
   | { status: 'selected'; file: File }
   | { status: 'checking'; file: File }
-  | {
-      status: 'feedback'
-      file: File
-      reason:
-        | 'file-read-failure'
-        | 'invalid-po'
-        | 'unresolved-locale'
-        | 'unsupported-locale'
-      locale?: string
-    }
+  | FeedbackState
   | {
       status: 'success'
       file: File
@@ -137,7 +141,9 @@ export function presentationReducer(
  * @param result Check Orchestration が返した正常完了結果。
  * @returns entryIndex から原文・翻訳を参照した指摘一覧。
  */
-export function createFindings(result: SuccessfulCheckResult): readonly Finding[] {
+export function createFindings(
+  result: SuccessfulCheckResult,
+): readonly Finding[] {
   const findings: Finding[] = []
 
   for (const checkedEntry of result.results) {
@@ -153,6 +159,7 @@ export function createFindings(result: SuccessfulCheckResult): readonly Finding[
 
     const translation = entry.translations[0]?.text ?? ''
 
+    // 1つの Error CheckMessage を利用者向けの1指摘として、元 entry の内容と結び付ける。
     for (const [messageIndex, message] of checkedEntry.errors.entries()) {
       findings.push({
         key: `${checkedEntry.entryIndex}-error-${messageIndex}`,
@@ -167,6 +174,7 @@ export function createFindings(result: SuccessfulCheckResult): readonly Finding[
       })
     }
 
+    // 1つの Warning CheckMessage を利用者向けの1指摘として、元 entry の内容と結び付ける。
     for (const [messageIndex, message] of checkedEntry.warnings.entries()) {
       findings.push({
         key: `${checkedEntry.entryIndex}-warning-${messageIndex}`,
@@ -197,6 +205,7 @@ export function summarizeFindings(
   let errorCount = 0
   let warningCount = 0
 
+  // 利用者向けの1指摘を単位として Severity ごとの件数を集計する。
   for (const finding of findings) {
     if (finding.severity === 'Error') {
       errorCount += 1
