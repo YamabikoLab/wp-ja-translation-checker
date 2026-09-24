@@ -25,6 +25,7 @@ import styles from './TranslationChecker.module.css'
 
 const STYLE_GUIDE_URL =
   'https://ja.wordpress.org/team/handbook/translation/translation-style-guide/'
+const STYLE_GUIDE_LAST_UPDATED = '2026年8月28日'
 
 /**
  * 重要な確認不能状態を利用者へ説明する。
@@ -75,8 +76,7 @@ function Feedback({
         <>
           <h2>このロケールには対応していません</h2>
           <p>
-            判定されたロケールは「{state.locale}」です。WTC v1
-            は日本語（ja）のみ対応しています。
+            判定されたロケールは「{state.locale}」です。現在は日本語（ja）のみ対応しています。
           </p>
         </>
       )
@@ -256,10 +256,10 @@ export function TranslationChecker() {
     <main className={styles.page}>
       <header className={styles.intro}>
         <p className={styles.eyebrow}>YamabikoLab</p>
-        <h1>WP Translation Checker</h1>
+        <h1>WP 翻訳チェッカー</h1>
         <p className={styles.lead}>
-          WordPress 日本語翻訳スタイルガイドの v1
-          対象ルールを、ブラウザー内で確認します。
+          WordPress 日本語翻訳スタイルガイド（{STYLE_GUIDE_LAST_UPDATED}
+          最終更新）の対象ルールを、ブラウザー内で確認します。
         </p>
         <p className={styles.privacy}>
           選択した翻訳内容は外部の確認サービスへ送信しません。
@@ -342,7 +342,8 @@ export function TranslationChecker() {
 
             {summary.totalCount === 0 && (
               <p className={styles.noFindings}>
-                v1 の対象ルールでは問題が検出されませんでした。
+                {STYLE_GUIDE_LAST_UPDATED}
+                最終更新版の対象ルールでは問題が検出されませんでした。
               </p>
             )}
           </section>
