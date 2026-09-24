@@ -177,6 +177,25 @@ describe('Japanese v1 error rules', () => {
     expect(check([createEntry(0, 'Label', '(詳細)、設定。')])).toEqual([])
   })
 
+  /**
+   * 1-5 は日本語文字の有無ではなく、本文中の丸括弧そのものを対象にする。
+   */
+  it('when half-width parentheses touch non-Japanese text, should report rule 1-5', () => {
+    expect(getOnlyResult('Version', 'WordPress(6.0)').errors).toContainEqual({
+      styleGuideItem: '1-5 半角丸括弧と前後スペース',
+      message: '丸括弧の外側は半角スペース1つにしてください',
+    })
+  })
+
+  /**
+   * コードとして明示された技術文字列内部の丸括弧は、日本語本文の規則として扱わない。
+   */
+  it('when parentheses appear inside a protected technical string, should not report rule 1-5', () => {
+    expect(
+      check([createEntry(0, 'Code', 'コード `foo(bar)` を確認')]),
+    ).toEqual([])
+  })
+
   it('when spaces exist just inside parentheses, should report rule 1-6', () => {
     expect(getOnlyResult('Label', '設定 ( 詳細 )').errors).toContainEqual({
       styleGuideItem: '1-6 丸括弧内側の不要スペース',
