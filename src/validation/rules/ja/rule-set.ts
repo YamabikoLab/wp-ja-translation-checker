@@ -1,14 +1,15 @@
 /**
- * WordPress 日本語 locale に適用する rule set の登録点を所有する。
+ * WordPress 日本語ロケールに適用するルールセットの登録点を所有する。
  *
- * Phase 3 では選択経路だけを成立させ、日本語固有の判定ルールは後続フェーズでこの配列へ追加する。
+ * 日本語固有の各ルールはこの責務で順序付けて構成し、
+ * Locale Rule Selection には個別ルールの条件や説明を持ち込まない。
  */
 
 import type { RuleSet } from '../rule-set'
 
 /**
- * WordPress 日本語 locale に適用する、順序付きのルール集合。
+ * WordPress 日本語ロケールに適用する、読み取り専用の順序付きルール集合。
  *
- * Phase 3 ではルール本体をまだ実装しないため空配列を許容する。
+ * ルール本体が未登録の状態でも、日本語ロケールに対応するルールセットの存在を表せるため空集合を許容する。
  */
 export const japaneseRuleSet: RuleSet = []
