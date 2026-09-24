@@ -37,12 +37,12 @@ WordPress 日本語翻訳スタイルガイドは指摘根拠を利用者が確�
 
 ### External Context
 
-| ID                          | Name                                       | Type                | Summary                                                                  |
-| --------------------------- | ------------------------------------------ | ------------------- | ------------------------------------------------------------------------ |
-| EXT_USER_PO_FILE            | Local PO File                              | External System     | 利用者が確認対象として選択するローカルの `.po` ファイル。                |
-| EXT_BROWSER_FILE_CAPABILITY   | Browser File Capability                    | External Capability | 選択されたローカルファイルの内容をブラウザー内で読み取る能力を提供する。 |
+| ID                            | Name                                       | Type                | Summary                                                                          |
+| ----------------------------- | ------------------------------------------ | ------------------- | -------------------------------------------------------------------------------- |
+| EXT_USER_PO_FILE              | Local PO File                              | External System     | 利用者が確認対象として選択するローカルの `.po` ファイル。                        |
+| EXT_BROWSER_FILE_CAPABILITY   | Browser File Capability                    | External Capability | 選択されたローカルファイルの内容をブラウザー内で読み取る能力を提供する。         |
 | EXT_BROWSER_EXPORT_CAPABILITY | Browser Export Capability                  | External Capability | 確認結果をローカルファイルとして保存し、クリップボードへ書き込む能力を提供する。 |
-| EXT_STYLE_GUIDE               | WordPress Japanese Translation Style Guide | External System     | 各指摘の根拠として利用者が任意に参照する一次情報。                       |
+| EXT_STYLE_GUIDE               | WordPress Japanese Translation Style Guide | External System     | 各指摘の根拠として利用者が任意に参照する一次情報。                               |
 
 ## 4. Solution Strategy
 
@@ -79,13 +79,13 @@ Presentation は利用者向け interaction state と表示を所有し、個別
 
 ### Responsibility Inventory
 
-| ID                       | Responsibility      | Summary                                                             |
-| ------------------------ | ------------------- | ------------------------------------------------------------------- |
+| ID                       | Responsibility      | Summary                                                                              |
+| ------------------------ | ------------------- | ------------------------------------------------------------------------------------ |
 | RESP_PRESENTATION        | Result Presentation | 入力、利用者向け状態、確認結果、重要なフィードバック、結果の保存・コピーを提供する。 |
-| RESP_CHECK_ORCHESTRATION | Check Orchestration | 1回の確認要求を調整し、確認全体の結果を確定する。                   |
-| RESP_PO_INTERPRETATION   | PO Interpretation   | PO を翻訳 entry と metadata へ解釈する。                            |
-| RESP_LOCALE_RESOLUTION   | Locale Resolution   | metadata から対象 locale を解決し、判定不能を区別する。             |
-| RESP_JAPANESE_CHECK      | Japanese v1 Check   | 日本語 v1 の12ルールを実行し、entry ごとの Error / Warning を返す。 |
+| RESP_CHECK_ORCHESTRATION | Check Orchestration | 1回の確認要求を調整し、確認全体の結果を確定する。                                    |
+| RESP_PO_INTERPRETATION   | PO Interpretation   | PO を翻訳 entry と metadata へ解釈する。                                             |
+| RESP_LOCALE_RESOLUTION   | Locale Resolution   | metadata から対象 locale を解決し、判定不能を区別する。                              |
+| RESP_JAPANESE_CHECK      | Japanese v1 Check   | 日本語 v1 の12ルールを実行し、entry ごとの Error / Warning を返す。                  |
 
 ### Ownership Boundaries
 
@@ -94,24 +94,24 @@ Presentation は利用者向け interaction state と表示を所有し、個別
 | BOUNDARY_PRESENTATION    | Presentation          | RESP_PRESENTATION                                                                          |
 | BOUNDARY_VALIDATION_CORE | Validation Core       | RESP_CHECK_ORCHESTRATION RESP_PO_INTERPRETATION RESP_LOCALE_RESOLUTION RESP_JAPANESE_CHECK |
 | BOUNDARY_BROWSER_INPUT   | Browser Input         | EXT_USER_PO_FILE EXT_BROWSER_FILE_CAPABILITY                                               |
-| BOUNDARY_BROWSER_OUTPUT  | Browser Output        | EXT_BROWSER_EXPORT_CAPABILITY                                                               |
+| BOUNDARY_BROWSER_OUTPUT  | Browser Output        | EXT_BROWSER_EXPORT_CAPABILITY                                                              |
 | BOUNDARY_REFERENCE       | Reference Information | EXT_STYLE_GUIDE                                                                            |
 
 ### Dependencies
 
-| Dependent                | Depends on               | Reason                                                   |
-| ------------------------ | ------------------------ | -------------------------------------------------------- |
-| RESP_PRESENTATION        | RESP_CHECK_ORCHESTRATION | 確認要求を渡し、確認全体の結果を受け取る。               |
-| RESP_CHECK_ORCHESTRATION | RESP_PO_INTERPRETATION   | 入力を Validation Core 用データへ解釈する。              |
-| RESP_CHECK_ORCHESTRATION | RESP_LOCALE_RESOLUTION   | 対象 locale を解決する。                                 |
-| RESP_CHECK_ORCHESTRATION | RESP_JAPANESE_CHECK      | locale が `ja` の場合に日本語 v1 チェックを1回実行する。 |
-| RESP_PRESENTATION        | EXT_STYLE_GUIDE               | 利用者が一次情報を確認できるリンクを提示する。           |
+| Dependent                | Depends on                    | Reason                                                             |
+| ------------------------ | ----------------------------- | ------------------------------------------------------------------ |
+| RESP_PRESENTATION        | RESP_CHECK_ORCHESTRATION      | 確認要求を渡し、確認全体の結果を受け取る。                         |
+| RESP_CHECK_ORCHESTRATION | RESP_PO_INTERPRETATION        | 入力を Validation Core 用データへ解釈する。                        |
+| RESP_CHECK_ORCHESTRATION | RESP_LOCALE_RESOLUTION        | 対象 locale を解決する。                                           |
+| RESP_CHECK_ORCHESTRATION | RESP_JAPANESE_CHECK           | locale が `ja` の場合に日本語 v1 チェックを1回実行する。           |
+| RESP_PRESENTATION        | EXT_STYLE_GUIDE               | 利用者が一次情報を確認できるリンクを提示する。                     |
 | RESP_PRESENTATION        | EXT_BROWSER_EXPORT_CAPABILITY | 正常完了した確認結果をローカル保存またはクリップボードへ書き込む。 |
 
 ### Dependency Views
 
-| ID              | Name         | Includes                                                                                                                     |
-| --------------- | ------------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| ID              | Name         | Includes                                                                                                                                                   |
+| --------------- | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | DV_WTC_OVERVIEW | WTC Overview | RESP_PRESENTATION RESP_CHECK_ORCHESTRATION RESP_PO_INTERPRETATION RESP_LOCALE_RESOLUTION RESP_JAPANESE_CHECK EXT_STYLE_GUIDE EXT_BROWSER_EXPORT_CAPABILITY |
 
 ### Responsibility Details
@@ -244,8 +244,8 @@ export function check(
 
 正常完了した現在の確認結果を利用者が保存またはコピーする流れを示す。
 
-| Step | Source            | Target                        | Interaction                                                   |
-| ---: | ----------------- | ----------------------------- | ------------------------------------------------------------- |
+| Step | Source            | Target                        | Interaction                                                           |
+| ---: | ----------------- | ----------------------------- | --------------------------------------------------------------------- |
 |    1 | RESP_PRESENTATION | EXT_BROWSER_EXPORT_CAPABILITY | 現在の確認結果全体を選択された CSV / JSON / Markdown 表現として渡す。 |
 
 ### Invalid PO input {#RV_INVALID_PO_INPUT}

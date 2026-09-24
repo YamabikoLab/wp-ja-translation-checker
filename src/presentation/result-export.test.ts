@@ -4,11 +4,7 @@
 
 import { describe, expect, it } from 'vitest'
 import type { Finding } from './presentation-model'
-import {
-  serializeCsv,
-  serializeJson,
-  serializeMarkdown,
-} from './result-export'
+import { serializeCsv, serializeJson, serializeMarkdown } from './result-export'
 
 /**
  * 出力テスト用の1指摘を生成する。

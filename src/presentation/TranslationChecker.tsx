@@ -21,11 +21,7 @@ import {
   type Finding,
   type PresentationState,
 } from './presentation-model'
-import {
-  serializeCsv,
-  serializeJson,
-  serializeMarkdown,
-} from './result-export'
+import { serializeCsv, serializeJson, serializeMarkdown } from './result-export'
 import styles from './TranslationChecker.module.css'
 
 const STYLE_GUIDE_URL =
@@ -438,7 +434,8 @@ export function TranslationChecker() {
               <div>
                 <h3>確認結果を共有・保存</h3>
                 <p>
-                  CSV / JSON はファイルとして保存し、Markdown はクリップボードへコピーします。
+                  CSV / JSON はファイルとして保存し、Markdown
+                  はクリップボードへコピーします。
                 </p>
               </div>
               <div className={styles.exportActions}>
@@ -471,7 +468,8 @@ export function TranslationChecker() {
               )}
               {copyFeedback === 'failure' && (
                 <p className={styles.copyFailure} role="alert">
-                  Markdown をコピーできませんでした。ブラウザーのクリップボード利用設定を確認してください。
+                  Markdown
+                  をコピーできませんでした。ブラウザーのクリップボード利用設定を確認してください。
                 </p>
               )}
             </div>
