@@ -105,6 +105,12 @@ Presentation は利用者向け interaction state と表示を所有し、個別
 | RESP_CHECK_ORCHESTRATION | RESP_JAPANESE_CHECK      | locale が `ja` の場合に日本語 v1 チェックを1回実行する。 |
 | RESP_PRESENTATION        | EXT_STYLE_GUIDE          | 利用者が一次情報を確認できるリンクを提示する。           |
 
+### Dependency Views
+
+| ID              | Name         | Includes                                                                                                                              |
+| --------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| DV_WTC_OVERVIEW | WTC Overview | RESP_PRESENTATION RESP_CHECK_ORCHESTRATION RESP_PO_INTERPRETATION RESP_LOCALE_RESOLUTION RESP_JAPANESE_CHECK EXT_STYLE_GUIDE         |
+
 ### Responsibility Details
 
 #### Result Presentation {#RESP_PRESENTATION}
