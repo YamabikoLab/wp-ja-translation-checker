@@ -127,62 +127,11 @@ describe('Japanese v1 rule 1-1', () => {
     ).toEqual([])
   })
 
-  /**
-   * 日本語の句読点前後に不要なスペースがある場合の 1-4 判定を確認する。
-   *
-   * 操作:
-   * - 読点の前に半角スペースを含む翻訳を確認する。
-   *
-   * 期待結果:
-   * - 1-4 の Error が返り、句読点前後のスペース不要が案内される。
-   */
-  it('when a Japanese punctuation mark has an adjacent space, should report rule 1-4', () => {
-    expect(
-      getRuleMessages(checkJapanesePunctuation, 'Message', '設定 、保存'),
-    ).toContainEqual({
-      styleGuideItem: '1-4 半角文字と全角文字の間のスペース',
-      message: '「、」の前後のスペースは不要です',
-    })
-  })
+  
 
-  /**
-   * 日本語の句読点前後では全角スペースも不要なスペースとして扱うことを確認する。
-   *
-   * 操作:
-   * - 読点の直後に全角スペースを含む翻訳を確認する。
-   *
-   * 期待結果:
-   * - 1-4 の Error が返り、句読点前後のスペース不要が案内される。
-   */
-  it('when Japanese punctuation has an adjacent full-width space, should report rule 1-4', () => {
-    expect(
-      getRuleMessages(
-        checkJapanesePunctuation,
-        'Message',
-        'こんにちは、　username さん。',
-      ),
-    ).toContainEqual({
-      styleGuideItem: '1-4 半角文字と全角文字の間のスペース',
-      message: '「、」の前後のスペースは不要です',
-    })
-  })
+  
 
-  /**
-   * 丸括弧外側スペースの文字列境界・日本語句読点例外を確認する。
-   *
-   * 操作:
-   * - 文字列先頭の開き括弧と、日本語句読点へ接する閉じ括弧を含む翻訳を確認する。
-   *
-   * 期待結果:
-   * - 例外位置へ外側スペースを要求せず、1-5 の指摘は返らない。
-   */
-  it('when parentheses are at string boundaries or next to Japanese punctuation, should not require outside spaces', () => {
-    expect(
-      checkEntries(checkJapanesePunctuation, [
-        createEntry(0, 'Label', '(詳細)、設定。'),
-      ]),
-    ).toEqual([])
-  })
+  
 
   /**
    * URL やメールアドレス内部の句読点記号を日本語本文の 1-1 対象として扱わないことを確認する。
@@ -343,15 +292,15 @@ describe('Japanese v1 rule 1-4', () => {
   })
 
   /**
-   * 名前付き文字列プレースホルダーを本文の半角文字や丸括弧として誤検出しないことを確認する。
+   * 名前付き文字列プレースホルダーを本文の半角文字として誤検出しないことを確認する。
    *
    * 操作:
    * - 名前付きプレースホルダーが日本語へ接する翻訳を確認する。
    *
    * 期待結果:
-   * - 1-4 と 1-5 の指摘は返らない。
+   * - 1-4 の指摘は返らない。
    */
-  it('when a named string placeholder touches Japanese text, should not infer rule 1-4 spacing or rule 1-5 parentheses', () => {
+  it('when a named string placeholder touches Japanese text, should not infer rule 1-4 spacing', () => {
     expect(
       checkEntries(checkSpacingBetweenHalfAndFullWidth, [
         createEntry(0, 'Field', '%(field)sの範囲'),
@@ -446,6 +395,46 @@ describe('Japanese v1 rule 1-4', () => {
         createEntry(0, 'User ID', 'ユーザー ID:　username'),
       ]),
     ).toEqual([])
+  })
+
+/**
+   * 日本語の句読点前後に不要なスペースがある場合の 1-4 判定を確認する。
+   *
+   * 操作:
+   * - 読点の前に半角スペースを含む翻訳を確認する。
+   *
+   * 期待結果:
+   * - 1-4 の Error が返り、句読点前後のスペース不要が案内される。
+   */
+  it('when a Japanese punctuation mark has an adjacent space, should report rule 1-4', () => {
+    expect(
+      getRuleMessages(checkSpacingBetweenHalfAndFullWidth, 'Message', '設定 、保存'),
+    ).toContainEqual({
+      styleGuideItem: '1-4 半角文字と全角文字の間のスペース',
+      message: '「、」の前後のスペースは不要です',
+    })
+  })
+
+/**
+   * 日本語の句読点前後では全角スペースも不要なスペースとして扱うことを確認する。
+   *
+   * 操作:
+   * - 読点の直後に全角スペースを含む翻訳を確認する。
+   *
+   * 期待結果:
+   * - 1-4 の Error が返り、句読点前後のスペース不要が案内される。
+   */
+  it('when Japanese punctuation has an adjacent full-width space, should report rule 1-4', () => {
+    expect(
+      getRuleMessages(
+        checkSpacingBetweenHalfAndFullWidth,
+        'Message',
+        'こんにちは、　username さん。',
+      ),
+    ).toContainEqual({
+      styleGuideItem: '1-4 半角文字と全角文字の間のスペース',
+      message: '「、」の前後のスペースは不要です',
+    })
   })
 })
 
@@ -557,6 +546,23 @@ describe('Japanese v1 rule 1-5', () => {
   it('when a named string placeholder is checked by rule 1-5, should not report its parentheses', () => {
     expect(
       checkParenthesesSpacing(createEntry(0, 'Field', '%(field)sの範囲')),
+    ).toEqual([])
+  })
+
+/**
+   * 丸括弧外側スペースの文字列境界・日本語句読点例外を確認する。
+   *
+   * 操作:
+   * - 文字列先頭の開き括弧と、日本語句読点へ接する閉じ括弧を含む翻訳を確認する。
+   *
+   * 期待結果:
+   * - 例外位置へ外側スペースを要求せず、1-5 の指摘は返らない。
+   */
+  it('when parentheses are at string boundaries or next to Japanese punctuation, should not require outside spaces', () => {
+    expect(
+      checkEntries(checkParenthesesSpacing, [
+        createEntry(0, 'Label', '(詳細)、設定。'),
+      ]),
     ).toEqual([])
   })
 })
