@@ -15,6 +15,12 @@ workspace "WP Translation Checker v1 Architecture" {
 				element.setGroup("Browser Input")
 			}
 		}
+		EXT_BROWSER_EXPORT_CAPABILITY = element "Browser Export Capability" "External Capability" "確認結果をローカルファイルとして保存し、クリップボードへ書き込む能力を提供する。" {
+			tags "External Context,External Capability"
+			!script groovy {
+				element.setGroup("Browser Output")
+			}
+		}
 		EXT_STYLE_GUIDE = element "WordPress Japanese Translation Style Guide" "External System" "各指摘の根拠として利用者が任意に参照する一次情報。" {
 			tags "External Context,External System"
 			!script groovy {
@@ -22,7 +28,7 @@ workspace "WP Translation Checker v1 Architecture" {
 			}
 		}
 
-		RESP_PRESENTATION = element "Result Presentation" "Responsibility" "入力、利用者向け状態、確認結果、重要なフィードバックを表示する。" {
+		RESP_PRESENTATION = element "Result Presentation" "Responsibility" "入力、利用者向け状態、確認結果、重要なフィードバック、結果の保存・コピーを提供する。" {
 			tags "Responsibility"
 			!script groovy {
 				element.setGroup("Presentation")
@@ -66,6 +72,9 @@ workspace "WP Translation Checker v1 Architecture" {
 			tags "Structural Dependency"
 		}
 		DEP_005 = RESP_PRESENTATION -> EXT_STYLE_GUIDE "利用者が一次情報を確認できるリンクを提示する。" {
+			tags "Structural Dependency"
+		}
+		DEP_006 = RESP_PRESENTATION -> EXT_BROWSER_EXPORT_CAPABILITY "正常完了した確認結果をローカル保存またはクリップボードへ書き込む。" {
 			tags "Structural Dependency"
 		}
 
@@ -151,61 +160,67 @@ workspace "WP Translation Checker v1 Architecture" {
 				"runtime.RV_SUCCESS_WITHOUT_FINDINGS.step.6" "指摘なし正常完了として確認全体の結果を通知する。"
 			}
 		}
-		RT_009 = RESP_PRESENTATION -> RESP_CHECK_ORCHESTRATION "選択入力の確認を要求する。" {
+		RT_009 = RESP_PRESENTATION -> EXT_BROWSER_EXPORT_CAPABILITY "現在の確認結果全体を選択された CSV / JSON / Markdown 表現として渡す。" {
+			tags "Runtime Interaction,Runtime_RV_EXPORT_SUCCESS_RESULT"
+			properties {
+				"runtime.RV_EXPORT_SUCCESS_RESULT.step.1" "現在の確認結果全体を選択された CSV / JSON / Markdown 表現として渡す。"
+			}
+		}
+		RT_010 = RESP_PRESENTATION -> RESP_CHECK_ORCHESTRATION "選択入力の確認を要求する。" {
 			tags "Runtime Interaction,Runtime_RV_INVALID_PO_INPUT"
 			properties {
 				"runtime.RV_INVALID_PO_INPUT.step.1" "選択入力の確認を要求する。"
 			}
 		}
-		RT_010 = RESP_CHECK_ORCHESTRATION -> RESP_PO_INTERPRETATION "入力の解釈を求める。" {
+		RT_011 = RESP_CHECK_ORCHESTRATION -> RESP_PO_INTERPRETATION "入力の解釈を求める。" {
 			tags "Runtime Interaction,Runtime_RV_INVALID_PO_INPUT"
 			properties {
 				"runtime.RV_INVALID_PO_INPUT.step.2" "入力の解釈を求める。"
 			}
 		}
-		RT_011 = RESP_PO_INTERPRETATION -> RESP_CHECK_ORCHESTRATION "確認可能な PO として解釈できないことを通知する。" {
+		RT_012 = RESP_PO_INTERPRETATION -> RESP_CHECK_ORCHESTRATION "確認可能な PO として解釈できないことを通知する。" {
 			tags "Runtime Interaction,Runtime_RV_INVALID_PO_INPUT"
 			properties {
 				"runtime.RV_INVALID_PO_INPUT.step.3" "確認可能な PO として解釈できないことを通知する。"
 			}
 		}
-		RT_012 = RESP_CHECK_ORCHESTRATION -> RESP_PRESENTATION "入力解析不能として確認全体の結果を通知する。" {
+		RT_013 = RESP_CHECK_ORCHESTRATION -> RESP_PRESENTATION "入力解析不能として確認全体の結果を通知する。" {
 			tags "Runtime Interaction,Runtime_RV_INVALID_PO_INPUT"
 			properties {
 				"runtime.RV_INVALID_PO_INPUT.step.4" "入力解析不能として確認全体の結果を通知する。"
 			}
 		}
-		RT_013 = RESP_LOCALE_RESOLUTION -> RESP_CHECK_ORCHESTRATION "対象 locale を判定できないことを通知する。" {
+		RT_014 = RESP_LOCALE_RESOLUTION -> RESP_CHECK_ORCHESTRATION "対象 locale を判定できないことを通知する。" {
 			tags "Runtime Interaction,Runtime_RV_UNRESOLVED_LOCALE"
 			properties {
 				"runtime.RV_UNRESOLVED_LOCALE.step.2" "対象 locale を判定できないことを通知する。"
 			}
 		}
-		RT_014 = RESP_CHECK_ORCHESTRATION -> RESP_PRESENTATION "locale 判定不能として確認全体の結果を通知する。" {
+		RT_015 = RESP_CHECK_ORCHESTRATION -> RESP_PRESENTATION "locale 判定不能として確認全体の結果を通知する。" {
 			tags "Runtime Interaction,Runtime_RV_UNRESOLVED_LOCALE"
 			properties {
 				"runtime.RV_UNRESOLVED_LOCALE.step.3" "locale 判定不能として確認全体の結果を通知する。"
 			}
 		}
-		RT_015 = RESP_LOCALE_RESOLUTION -> RESP_CHECK_ORCHESTRATION "ja 以外の解決済み locale を返す。" {
+		RT_016 = RESP_LOCALE_RESOLUTION -> RESP_CHECK_ORCHESTRATION "ja 以外の解決済み locale を返す。" {
 			tags "Runtime Interaction,Runtime_RV_UNSUPPORTED_LOCALE"
 			properties {
 				"runtime.RV_UNSUPPORTED_LOCALE.step.2" "ja 以外の解決済み locale を返す。"
 			}
 		}
-		RT_016 = RESP_CHECK_ORCHESTRATION -> RESP_PRESENTATION "日本語チェックを実行せず、未対応 locale として結果を通知する。" {
+		RT_017 = RESP_CHECK_ORCHESTRATION -> RESP_PRESENTATION "日本語チェックを実行せず、未対応 locale として結果を通知する。" {
 			tags "Runtime Interaction,Runtime_RV_UNSUPPORTED_LOCALE"
 			properties {
 				"runtime.RV_UNSUPPORTED_LOCALE.step.3" "日本語チェックを実行せず、未対応 locale として結果を通知する。"
 			}
 		}
-		RT_017 = RESP_PRESENTATION -> RESP_CHECK_ORCHESTRATION "旧入力を対象とする確認を開始する。" {
+		RT_018 = RESP_PRESENTATION -> RESP_CHECK_ORCHESTRATION "旧入力を対象とする確認を開始する。" {
 			tags "Runtime Interaction,Runtime_RV_INPUT_REPLACED"
 			properties {
 				"runtime.RV_INPUT_REPLACED.step.1" "旧入力を対象とする確認を開始する。"
 			}
 		}
-		RT_018 = RESP_CHECK_ORCHESTRATION -> RESP_PRESENTATION "旧入力に対応付いた確認結果を通知する。" {
+		RT_019 = RESP_CHECK_ORCHESTRATION -> RESP_PRESENTATION "旧入力に対応付いた確認結果を通知する。" {
 			tags "Runtime Interaction,Runtime_RV_INPUT_REPLACED"
 			properties {
 				"runtime.RV_INPUT_REPLACED.step.2" "旧入力に対応付いた確認結果を通知する。"
@@ -216,7 +231,7 @@ workspace "WP Translation Checker v1 Architecture" {
 	views {
 		systemLandscape "DV_WTC_OVERVIEW" {
 			title "Structural Dependencies - WTC Overview"
-			include RESP_PRESENTATION RESP_CHECK_ORCHESTRATION RESP_PO_INTERPRETATION RESP_LOCALE_RESOLUTION RESP_JAPANESE_CHECK EXT_STYLE_GUIDE
+			include RESP_PRESENTATION RESP_CHECK_ORCHESTRATION RESP_PO_INTERPRETATION RESP_LOCALE_RESOLUTION RESP_JAPANESE_CHECK EXT_STYLE_GUIDE EXT_BROWSER_EXPORT_CAPABILITY
 			exclude "relationship.tag!=Structural Dependency"
 			autoLayout lr
 		}
@@ -255,12 +270,22 @@ workspace "WP Translation Checker v1 Architecture" {
 			autoLayout lr
 		}
 
+		custom "RV_EXPORT_SUCCESS_RESULT" {
+			title "Runtime - Export successful result"
+			include RESP_PRESENTATION EXT_BROWSER_EXPORT_CAPABILITY
+			exclude "relationship.tag!=Runtime_RV_EXPORT_SUCCESS_RESULT"
+			properties {
+				"runtime.steps" "1=RT_009"
+			}
+			autoLayout lr
+		}
+
 		custom "RV_INVALID_PO_INPUT" {
 			title "Runtime - Invalid PO input"
 			include RESP_PRESENTATION RESP_CHECK_ORCHESTRATION RESP_PO_INTERPRETATION
 			exclude "relationship.tag!=Runtime_RV_INVALID_PO_INPUT"
 			properties {
-				"runtime.steps" "1=RT_009;2=RT_010;3=RT_011;4=RT_012"
+				"runtime.steps" "1=RT_010;2=RT_011;3=RT_012;4=RT_013"
 			}
 			autoLayout lr
 		}
@@ -270,7 +295,7 @@ workspace "WP Translation Checker v1 Architecture" {
 			include RESP_CHECK_ORCHESTRATION RESP_LOCALE_RESOLUTION RESP_PRESENTATION
 			exclude "relationship.tag!=Runtime_RV_UNRESOLVED_LOCALE"
 			properties {
-				"runtime.steps" "1=RT_003;2=RT_013;3=RT_014"
+				"runtime.steps" "1=RT_003;2=RT_014;3=RT_015"
 			}
 			autoLayout lr
 		}
@@ -280,7 +305,7 @@ workspace "WP Translation Checker v1 Architecture" {
 			include RESP_CHECK_ORCHESTRATION RESP_LOCALE_RESOLUTION RESP_PRESENTATION
 			exclude "relationship.tag!=Runtime_RV_UNSUPPORTED_LOCALE"
 			properties {
-				"runtime.steps" "1=RT_003;2=RT_015;3=RT_016"
+				"runtime.steps" "1=RT_003;2=RT_016;3=RT_017"
 			}
 			autoLayout lr
 		}
@@ -290,7 +315,7 @@ workspace "WP Translation Checker v1 Architecture" {
 			include RESP_PRESENTATION RESP_CHECK_ORCHESTRATION
 			exclude "relationship.tag!=Runtime_RV_INPUT_REPLACED"
 			properties {
-				"runtime.steps" "1=RT_017;2=RT_018"
+				"runtime.steps" "1=RT_018;2=RT_019"
 			}
 			autoLayout lr
 		}
