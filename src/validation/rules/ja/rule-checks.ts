@@ -391,8 +391,7 @@ export function checkSpacingBetweenHalfAndFullWidth(
 
     // コロン前には空白を置かず、後には半角または全角スペースのどちらか1つを置く。
     colonBefore ||= spacingCharacters.has(previous)
-    colonAfterMissing ||=
-      next !== '' && !validColonSpacingCharacters.has(next)
+    colonAfterMissing ||= next !== '' && !validColonSpacingCharacters.has(next)
     colonAfterMultiple ||=
       validColonSpacingCharacters.has(next) &&
       spacingCharacters.has(translation[index + 2] ?? '')
