@@ -117,6 +117,10 @@ describe('Japanese v1 error rules', () => {
     expect(check([createEntry(0, 'Version', '1.2')])).toEqual([])
   })
 
+  it('when periods form an ellipsis-like sequence, should not report rule 1-1', () => {
+    expect(check([createEntry(0, 'Searching...', '検索...')])).toEqual([])
+  })
+
   it('when full-width ASCII is used, should report rule 1-2 with the expected half-width character', () => {
     expect(getOnlyResult('Name', 'Ａです').errors).toContainEqual({
       styleGuideItem: '1-2 英数字・記号の半角表記',
@@ -142,6 +146,26 @@ describe('Japanese v1 error rules', () => {
       styleGuideItem: '1-4 半角文字と全角文字の間のスペース',
       message: '「s」と「設」の間に半角スペースを入れてください',
     })
+  })
+
+  it('when a string placeholder touches Japanese text, should not infer rule 1-4 spacing', () => {
+    expect(check([createEntry(0, '%s items', '%s件')])).toEqual([])
+  })
+
+  it('when a named string placeholder touches Japanese text, should not infer rule 1-4 spacing or rule 1-5 parentheses', () => {
+    expect(check([createEntry(0, 'Field', '%(field)sの範囲')])).toEqual([])
+  })
+
+  it('when template markup touches Japanese text, should not treat the markup delimiter as rule 1-4 text', () => {
+    expect(
+      check([
+        createEntry(
+          0,
+          'Link',
+          '{{Link}}WooCommerce マーケットプレイス{{/Link}}にアクセス',
+        ),
+      ]),
+    ).toEqual([])
   })
 
   it('when a Japanese punctuation mark has an adjacent space, should report rule 1-4', () => {
@@ -194,6 +218,30 @@ describe('Japanese v1 error rules', () => {
     expect(check([createEntry(0, 'Code', 'コード `foo(bar)` を確認')])).toEqual(
       [],
     )
+  })
+
+  it('when empty parentheses belong to a function call, should not report rule 1-5', () => {
+    expect(
+      check([
+        createEntry(
+          0,
+          'Function',
+          'remove_order_items() は文字列型の項目を期待します',
+        ),
+      ]),
+    ).toEqual([])
+  })
+
+  it('when parentheses are wrapped by markup with valid visible spacing, should not report rule 1-5', () => {
+    expect(
+      check([
+        createEntry(
+          0,
+          'Status',
+          '保留中 <span class="count">(%s)</span>',
+        ),
+      ]),
+    ).toEqual([])
   })
 
   it('when spaces exist just inside parentheses, should report rule 1-6', () => {
@@ -269,6 +317,18 @@ describe('Japanese v1 error rules', () => {
 
   it('when spacing is between half-width tokens such as a time expression, should not report rule 1-9', () => {
     expect(check([createEntry(0, 'Time', '2:00 AM')])).toEqual([])
+  })
+
+  it('when a digit is part of a technical token, should not report rule 1-9', () => {
+    expect(
+      check([
+        createEntry(0, 'Encoding', 'ファイルは UTF-8 として扱います'),
+        createEntry(1, 'Date', 'ISO8601 準拠の日付'),
+        createEntry(2, 'Hash', 'MD5 ハッシュ'),
+        createEntry(3, 'Version', 'WooCommerce 5.3 で導入されました'),
+        createEntry(4, 'Image', '150x50 ピクセルの画像'),
+      ]),
+    ).toEqual([])
   })
 
   it('when recommended expressions are used, should report each rule 3-6 message', () => {
