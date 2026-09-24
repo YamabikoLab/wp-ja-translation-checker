@@ -57,53 +57,53 @@ Presentation は利用者向け interaction state と表示を所有し、個別
 
 #### Validation End-to-End {#PV_VALIDATION_END_TO_END kind=normal}
 
-| From                     | To                       | Kind   | Meaning                                                     |
-| ------------------------ | ------------------------ | ------ | ----------------------------------------------------------- |
-| EXT_USER_PO_FILE         | RESP_PRESENTATION        | normal | 利用者が確認対象の `.po` ファイルを選択する。             |
-| RESP_PRESENTATION        | RESP_CHECK_ORCHESTRATION | normal | 確認要求を Validation Core へ渡す。                         |
-| RESP_CHECK_ORCHESTRATION | RESP_PO_INTERPRETATION   | normal | PO を翻訳 entry と metadata へ解釈する。                    |
-| RESP_CHECK_ORCHESTRATION | RESP_LOCALE_RESOLUTION   | normal | metadata から locale を解決する。                           |
+| From                     | To                       | Kind   | Meaning                                                 |
+| ------------------------ | ------------------------ | ------ | ------------------------------------------------------- |
+| EXT_USER_PO_FILE         | RESP_PRESENTATION        | normal | 利用者が確認対象の `.po` ファイルを選択する。           |
+| RESP_PRESENTATION        | RESP_CHECK_ORCHESTRATION | normal | 確認要求を Validation Core へ渡す。                     |
+| RESP_CHECK_ORCHESTRATION | RESP_PO_INTERPRETATION   | normal | PO を翻訳 entry と metadata へ解釈する。                |
+| RESP_CHECK_ORCHESTRATION | RESP_LOCALE_RESOLUTION   | normal | metadata から locale を解決する。                       |
 | RESP_CHECK_ORCHESTRATION | RESP_JAPANESE_CHECK      | normal | locale が `ja` の場合、日本語 `check(entries)` を呼ぶ。 |
-| RESP_CHECK_ORCHESTRATION | RESP_PRESENTATION        | normal | 正常結果または確認不能理由を Presentation へ返す。          |
+| RESP_CHECK_ORCHESTRATION | RESP_PRESENTATION        | normal | 正常結果または確認不能理由を Presentation へ返す。      |
 
 #### Validation Failure Boundaries {#PV_VALIDATION_FAILURE_BOUNDARIES kind=failure-recovery}
 
-| From                   | To                       | Kind     | Meaning                                                            |
-| ---------------------- | ------------------------ | -------- | ------------------------------------------------------------------ |
-| RESP_PO_INTERPRETATION | RESP_CHECK_ORCHESTRATION | failure  | PO を確認可能な入力として解釈できない。                            |
-| RESP_LOCALE_RESOLUTION | RESP_CHECK_ORCHESTRATION | failure  | 対象 locale を判定できない。                                       |
-| RESP_CHECK_ORCHESTRATION | RESP_PRESENTATION      | recovery | 解決済み locale が未対応、またはその他の確認不能理由を表示へ返す。 |
+| From                     | To                       | Kind     | Meaning                                                            |
+| ------------------------ | ------------------------ | -------- | ------------------------------------------------------------------ |
+| RESP_PO_INTERPRETATION   | RESP_CHECK_ORCHESTRATION | failure  | PO を確認可能な入力として解釈できない。                            |
+| RESP_LOCALE_RESOLUTION   | RESP_CHECK_ORCHESTRATION | failure  | 対象 locale を判定できない。                                       |
+| RESP_CHECK_ORCHESTRATION | RESP_PRESENTATION        | recovery | 解決済み locale が未対応、またはその他の確認不能理由を表示へ返す。 |
 
 ## 5. Building Block View
 
 ### Responsibility Inventory
 
-| ID                       | Responsibility      | Summary                                                                        |
-| ------------------------ | ------------------- | ------------------------------------------------------------------------------ |
-| RESP_PRESENTATION        | Result Presentation | 入力、利用者向け状態、確認結果、重要なフィードバックを表示する。              |
-| RESP_CHECK_ORCHESTRATION | Check Orchestration | 1回の確認要求を調整し、確認全体の結果を確定する。                             |
-| RESP_PO_INTERPRETATION   | PO Interpretation   | PO を翻訳 entry と metadata へ解釈する。                                       |
-| RESP_LOCALE_RESOLUTION   | Locale Resolution   | metadata から対象 locale を解決し、判定不能を区別する。                       |
-| RESP_JAPANESE_CHECK      | Japanese v1 Check   | 日本語 v1 の12ルールを実行し、entry ごとの Error / Warning を返す。           |
+| ID                       | Responsibility      | Summary                                                             |
+| ------------------------ | ------------------- | ------------------------------------------------------------------- |
+| RESP_PRESENTATION        | Result Presentation | 入力、利用者向け状態、確認結果、重要なフィードバックを表示する。    |
+| RESP_CHECK_ORCHESTRATION | Check Orchestration | 1回の確認要求を調整し、確認全体の結果を確定する。                   |
+| RESP_PO_INTERPRETATION   | PO Interpretation   | PO を翻訳 entry と metadata へ解釈する。                            |
+| RESP_LOCALE_RESOLUTION   | Locale Resolution   | metadata から対象 locale を解決し、判定不能を区別する。             |
+| RESP_JAPANESE_CHECK      | Japanese v1 Check   | 日本語 v1 の12ルールを実行し、entry ごとの Error / Warning を返す。 |
 
 ### Ownership Boundaries
 
-| ID                       | Name                  | Includes                                                                                                     |
-| ------------------------ | --------------------- | ------------------------------------------------------------------------------------------------------------ |
-| BOUNDARY_PRESENTATION    | Presentation          | RESP_PRESENTATION                                                                                            |
-| BOUNDARY_VALIDATION_CORE | Validation Core       | RESP_CHECK_ORCHESTRATION RESP_PO_INTERPRETATION RESP_LOCALE_RESOLUTION RESP_JAPANESE_CHECK                  |
-| BOUNDARY_BROWSER_INPUT   | Browser Input         | EXT_USER_PO_FILE EXT_BROWSER_FILE_CAPABILITY                                                                 |
-| BOUNDARY_REFERENCE       | Reference Information | EXT_STYLE_GUIDE                                                                                              |
+| ID                       | Name                  | Includes                                                                                   |
+| ------------------------ | --------------------- | ------------------------------------------------------------------------------------------ |
+| BOUNDARY_PRESENTATION    | Presentation          | RESP_PRESENTATION                                                                          |
+| BOUNDARY_VALIDATION_CORE | Validation Core       | RESP_CHECK_ORCHESTRATION RESP_PO_INTERPRETATION RESP_LOCALE_RESOLUTION RESP_JAPANESE_CHECK |
+| BOUNDARY_BROWSER_INPUT   | Browser Input         | EXT_USER_PO_FILE EXT_BROWSER_FILE_CAPABILITY                                               |
+| BOUNDARY_REFERENCE       | Reference Information | EXT_STYLE_GUIDE                                                                            |
 
 ### Dependencies
 
-| Dependent                | Depends on             | Reason                                                                 |
-| ------------------------ | ---------------------- | ---------------------------------------------------------------------- |
-| RESP_PRESENTATION        | RESP_CHECK_ORCHESTRATION | 確認要求を渡し、確認全体の結果を受け取る。                           |
-| RESP_CHECK_ORCHESTRATION | RESP_PO_INTERPRETATION | 入力を Validation Core 用データへ解釈する。                           |
-| RESP_CHECK_ORCHESTRATION | RESP_LOCALE_RESOLUTION | 対象 locale を解決する。                                              |
-| RESP_CHECK_ORCHESTRATION | RESP_JAPANESE_CHECK    | locale が `ja` の場合に日本語 v1 チェックを1回実行する。            |
-| RESP_PRESENTATION        | EXT_STYLE_GUIDE        | 利用者が一次情報を確認できるリンクを提示する。                        |
+| Dependent                | Depends on               | Reason                                                   |
+| ------------------------ | ------------------------ | -------------------------------------------------------- |
+| RESP_PRESENTATION        | RESP_CHECK_ORCHESTRATION | 確認要求を渡し、確認全体の結果を受け取る。               |
+| RESP_CHECK_ORCHESTRATION | RESP_PO_INTERPRETATION   | 入力を Validation Core 用データへ解釈する。              |
+| RESP_CHECK_ORCHESTRATION | RESP_LOCALE_RESOLUTION   | 対象 locale を解決する。                                 |
+| RESP_CHECK_ORCHESTRATION | RESP_JAPANESE_CHECK      | locale が `ja` の場合に日本語 v1 チェックを1回実行する。 |
+| RESP_PRESENTATION        | EXT_STYLE_GUIDE          | 利用者が一次情報を確認できるリンクを提示する。           |
 
 ### Responsibility Details
 

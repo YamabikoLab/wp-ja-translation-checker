@@ -43,7 +43,14 @@ const STYLE_GUIDE = {
 const JAPANESE_CHARACTER =
   /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u
 const ASCII_NON_DIGIT = /[\x21-\x2F\x3A-\x7E]/
-const NO_SPACE_JAPANESE_PUNCTUATION = new Set(['『', '』', '「', '」', '。', '、'])
+const NO_SPACE_JAPANESE_PUNCTUATION = new Set([
+  '『',
+  '』',
+  '「',
+  '」',
+  '。',
+  '、',
+])
 const OUTER_PARENTHESES_SPACE_EXCEPTIONS = new Set([
   '『',
   '』',
@@ -437,10 +444,7 @@ function checkParenthesesSpacing(
 
     if (character === ')' && index < translation.length - 1) {
       const next = translation[index + 1] ?? ''
-      if (
-        next !== '。' &&
-        !OUTER_PARENTHESES_SPACE_EXCEPTIONS.has(next)
-      ) {
+      if (next !== '。' && !OUTER_PARENTHESES_SPACE_EXCEPTIONS.has(next)) {
         const spaceCount = countSpacesForward(translation, index + 1)
         if (spaceCount !== 1) {
           invalidOuterSpacing = true
@@ -574,17 +578,14 @@ function checkSentenceEndingParentheses(
  * @param entry 確認対象 entry。
  * @returns 1-9 に該当する指摘。
  */
-function checkNumberSpacing(
-  entry: TranslationEntry,
-): readonly CheckMessage[] {
+function checkNumberSpacing(entry: TranslationEntry): readonly CheckMessage[] {
   const translation = getTranslation(entry)
   if (translation === undefined) {
     return []
   }
 
   const numericToken = '(?:\\d+|%\\d*\\$?d)'
-  const japanese =
-    '[\\p{Script=Han}\\p{Script=Hiragana}\\p{Script=Katakana}]'
+  const japanese = '[\\p{Script=Han}\\p{Script=Hiragana}\\p{Script=Katakana}]'
   const pattern = new RegExp(
     `(?:${numericToken}) +${japanese}|${japanese} +(?:${numericToken})`,
     'u',

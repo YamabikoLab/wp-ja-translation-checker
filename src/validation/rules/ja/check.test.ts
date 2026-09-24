@@ -74,7 +74,11 @@ describe('Japanese v1 check public interface', () => {
    */
   it('when the same entries are checked repeatedly, should return the same result', () => {
     const entries = [
-      createEntry(1, 'Sorry, you cannot continue.', '申し訳ありません、続行できません。'),
+      createEntry(
+        1,
+        'Sorry, you cannot continue.',
+        '申し訳ありません、続行できません。',
+      ),
       createEntry(2, 'Save settings', '全て保存して下さい'),
     ]
 
@@ -132,7 +136,9 @@ describe('Japanese v1 error rules', () => {
   })
 
   it('when half-width letters touch Japanese text, should report rule 1-4', () => {
-    expect(getOnlyResult('WordPress setting', 'WordPress設定').errors).toContainEqual({
+    expect(
+      getOnlyResult('WordPress setting', 'WordPress設定').errors,
+    ).toContainEqual({
       styleGuideItem: '1-4 半角文字と全角文字の間のスペース',
       message: '「s」と「設」の間に半角スペースを入れてください',
     })
@@ -168,9 +174,7 @@ describe('Japanese v1 error rules', () => {
   })
 
   it('when parentheses are at string boundaries or next to Japanese punctuation, should not require outside spaces', () => {
-    expect(
-      check([createEntry(0, 'Label', '(詳細)、設定。')]),
-    ).toEqual([])
+    expect(check([createEntry(0, 'Label', '(詳細)、設定。')])).toEqual([])
   })
 
   it('when spaces exist just inside parentheses, should report rule 1-6', () => {
@@ -263,8 +267,10 @@ describe('Japanese v1 warning rules', () => {
 
   it('when not allowed to is translated without the permission expression, should report rule 3-3', () => {
     expect(
-      getOnlyResult('Users are not allowed to edit this.', 'ユーザーは編集できません。')
-        .warnings,
+      getOnlyResult(
+        'Users are not allowed to edit this.',
+        'ユーザーは編集できません。',
+      ).warnings,
     ).toContainEqual({
       styleGuideItem:
         '3-3 「XX are/is not allowed to...」を「〜する権限がありません」に統一',
@@ -299,7 +305,11 @@ describe('Japanese v1 warning rules', () => {
   it('when Sorry is not at the source start or the translation has no listed apology prefix, should not report rule 3-4', () => {
     expect(
       check([
-        createEntry(0, 'We are sorry, try again.', 'すみません、再試行してください。'),
+        createEntry(
+          0,
+          'We are sorry, try again.',
+          'すみません、再試行してください。',
+        ),
         createEntry(1, 'Sorry, try again.', '再試行してください。'),
       ]),
     ).toEqual([])
