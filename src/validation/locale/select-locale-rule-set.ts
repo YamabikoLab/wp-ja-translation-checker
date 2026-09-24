@@ -29,9 +29,7 @@ export type LocaleRuleSelectionResult =
  * @param locale Locale Resolution が解決した locale identifier。
  * @returns 対応する rule set、または未対応状態。
  */
-export function selectLocaleRuleSet(
-  locale: string,
-): LocaleRuleSelectionResult {
+export function selectLocaleRuleSet(locale: string): LocaleRuleSelectionResult {
   if (locale === 'ja') {
     return {
       status: 'supported',
