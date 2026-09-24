@@ -149,10 +149,7 @@ export function checkJapanesePunctuation(
 
     const character = translation[index]
     // 日本語句読点の代替として明確に不適切な表記だけを 1-1 の対象とする。
-    if (
-      character !== undefined &&
-      ['，', '．', '､', '｡'].includes(character)
-    ) {
+    if (character !== undefined && ['，', '．', '､', '｡'].includes(character)) {
       return [
         {
           styleGuideItem: STYLE_GUIDE.punctuation,
