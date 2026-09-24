@@ -11,7 +11,9 @@ import type { TranslationEntry } from '../../po/interpret-po'
  * 1件の指摘で利用者へ提示する最小情報を表す。
  */
 export type CheckMessage = {
+  /** 対応する WordPress 日本語翻訳スタイルガイドの項目。 */
   styleGuideItem: string
+  /** 利用者が確認する指摘内容。 */
   message: string
 }
 
@@ -19,11 +21,17 @@ export type CheckMessage = {
  * 1つの翻訳 entry で検出された Error / Warning を表す。
  */
 export type TranslationCheckResult = {
+  /** PO Interpretation が付与した対象 entry の識別位置。 */
   entryIndex: number
+  /** 機械的に高い確度で問題と判断できる指摘。 */
   errors: readonly CheckMessage[]
+  /** 文脈によって正しい可能性があり、人による確認が必要な指摘。 */
   warnings: readonly CheckMessage[]
 }
 
+/**
+ * 日本語 v1 の各指摘で利用者に示すスタイルガイド項目名を定義する。
+ */
 const STYLE_GUIDE = {
   punctuation: '1-1 日本語の句読点',
   halfWidth: '1-2 英数字・記号の半角表記',
@@ -59,6 +67,9 @@ const OUTER_PARENTHESES_SPACE_EXCEPTIONS = new Set([
   '。',
   '、',
 ])
+/**
+ * 3-4 で Sorry に対応する謝罪表現として扱う、v1 の完全な対象集合。
+ */
 const APOLOGY_PREFIXES = [
   'すみませんが',
   'すみません',
@@ -67,6 +78,9 @@ const APOLOGY_PREFIXES = [
   'ごめんなさい',
 ] as const
 
+/**
+ * 日本語本文の表記規則から除外する技術文字列の位置情報を表す。
+ */
 type ProtectedText = {
   text: string
   protectedIndexes: ReadonlySet<number>
@@ -163,6 +177,8 @@ function getTranslation(entry: TranslationEntry): string | undefined {
 /**
  * 日本語本文で使用された半角・全角の代替句読点を検出する。
  *
+ * 数値・技術文字列の一部や、句点と断定できない連続ピリオドは対象外とする。
+ *
  * @param entry 確認対象 entry。
  * @returns 1-1 に該当する指摘。
  */
@@ -228,6 +244,8 @@ function checkJapanesePunctuation(
 
 /**
  * 半角表記すべき英数字・記号の全角文字を検出する。
+ *
+ * 日本語の句読点は 1-1、丸括弧は 1-5 を優先し、技術文字列内部は対象外とする。
  *
  * @param entry 確認対象 entry。
  * @returns 1-2 に該当する指摘。
@@ -662,6 +680,8 @@ function checkSentenceEndingParentheses(
 /**
  * 半角数字または数値プレースホルダーと日本語の間の不要スペースを確認する。
  *
+ * コード等の技術文字列内部や、識別子・バージョン・寸法等の技術表現に含まれる数字は対象外とする。
+ *
  * @param entry 確認対象 entry。
  * @returns 1-9 に該当する指摘。
  */
@@ -671,6 +691,7 @@ function checkNumberSpacing(entry: TranslationEntry): readonly CheckMessage[] {
     return []
   }
 
+  const { protectedIndexes } = protectTechnicalText(translation)
   const numericToken = '(?:\\d+|%\\d*\\$?d)'
   const japanese = '[\\p{Script=Han}\\p{Script=Hiragana}\\p{Script=Katakana}]'
   const pattern = new RegExp(
@@ -691,6 +712,11 @@ function checkNumberSpacing(entry: TranslationEntry): readonly CheckMessage[] {
     const numericStart = start + numericOffset
     const numericEnd = numericStart + numeric.length
     const isPlaceholder = numeric.startsWith('%')
+
+    // コード等の保護された技術文字列内部にある数字は、日本語本文との境界として扱わない。
+    if (protectedIndexes.has(numericStart)) {
+      continue
+    }
 
     if (!isPlaceholder) {
       const before = translation[numericStart - 1] ?? ''
@@ -715,6 +741,8 @@ function checkNumberSpacing(entry: TranslationEntry): readonly CheckMessage[] {
 
 /**
  * 原文の View 操作が、日本語で「表示」を主動作とする表現になっているか確認する。
+ *
+ * 「〜を表示（する）」を正常とし、「〜の表示」など動詞としての「表示」になっていない訳は確認対象とする。
  *
  * @param entry 確認対象 entry。
  * @returns 3-2 に該当する指摘。
@@ -793,6 +821,8 @@ function checkSorryPrefix(entry: TranslationEntry): readonly CheckMessage[] {
 /**
  * スタイルガイドで v1 対象とした3組の推奨表記を確認する。
  *
+ * 対象は「下さい / 全て / 既に」の3組に限定し、コード等の技術文字列内部は対象外とする。
+ *
  * @param entry 確認対象 entry。
  * @returns 3-6 に該当する指摘。
  */
@@ -804,6 +834,7 @@ function checkRecommendedExpressions(
     return []
   }
 
+  const { protectedIndexes } = protectTechnicalText(translation)
   const recommendations = [
     ['下さい', 'ください'],
     ['全て', 'すべて'],
@@ -811,8 +842,21 @@ function checkRecommendedExpressions(
   ] as const
   const messages: CheckMessage[] = []
 
+  // 同じ推奨表記が複数あっても1件にまとめ、技術文字列外に実在する場合だけ指摘する。
   for (const [detected, expected] of recommendations) {
-    if (translation.includes(detected)) {
+    let detectedIndex = translation.indexOf(detected)
+
+    while (
+      detectedIndex !== -1 &&
+      protectedIndexes.has(detectedIndex)
+    ) {
+      detectedIndex = translation.indexOf(
+        detected,
+        detectedIndex + detected.length,
+      )
+    }
+
+    if (detectedIndex !== -1) {
       messages.push({
         styleGuideItem: STYLE_GUIDE.recommendedExpressions,
         message: `「${detected}」は「${expected}」と表記してください`,
