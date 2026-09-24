@@ -76,21 +76,40 @@ function getRuleMessages(
 
 describe('Japanese v1 rule 1-1', () => {
   /**
-   * 日本語本文に半角カンマが句読点として使われた場合の 1-1 判定を確認する。
+   * 日本語の句読点として明確に不適切な代替文字を検出することを確認する。
    *
    * 操作:
-   * - 日本語文字の間に半角カンマを含む翻訳を確認する。
+   * - 全角カンマを含む日本語翻訳を確認する。
    *
    * 期待結果:
    * - 1-1 の Error と対応する表示メッセージが返る。
    */
-  it('when Japanese punctuation uses an ASCII comma, should report rule 1-1', () => {
+  it('when Japanese punctuation uses an unambiguous alternative character, should report rule 1-1', () => {
     expect(
-      getRuleMessages(checkJapanesePunctuation, 'Message', '設定,保存'),
+      getRuleMessages(checkJapanesePunctuation, 'Message', '設定，保存'),
     ).toContainEqual({
       styleGuideItem: '1-1 日本語の句読点',
       message: '日本語の句読点は「、」「。」を使用してください',
     })
+  })
+
+  /**
+   * ASCII のカンマとピリオドを、周囲の日本語だけを理由に句読点と断定しないことを確認する。
+   *
+   * 操作:
+   * - 日本語に隣接する略語のピリオド、文末のピリオド、本文中のカンマを確認する。
+   *
+   * 期待結果:
+   * - 用途を機械的に特定できないため、1-1 の指摘は返らない。
+   */
+  it('when ASCII comma or period usage is ambiguous, should not report rule 1-1', () => {
+    expect(
+      checkEntries(checkJapanesePunctuation, [
+        createEntry(0, 'N. Revenue', 'N.収益'),
+        createEntry(1, 'Notice', '通知が届きます.'),
+        createEntry(2, 'Message', '設定,保存'),
+      ]),
+    ).toEqual([])
   })
 
   /**
@@ -106,6 +125,25 @@ describe('Japanese v1 rule 1-1', () => {
     expect(
       checkEntries(checkJapanesePunctuation, [
         createEntry(0, 'Version', '1.2'),
+      ]),
+    ).toEqual([])
+  })
+
+
+  /**
+   * 数値内の全角カンマ・ピリオドを、日本語の句読点として扱わないことを確認する。
+   *
+   * 操作:
+   * - 数字に挟まれた全角ピリオドと全角カンマを 1-1 で確認する。
+   *
+   * 期待結果:
+   * - 1-1 の指摘は返らない。
+   */
+  it('when full-width punctuation is part of a number, should not report rule 1-1', () => {
+    expect(
+      checkEntries(checkJapanesePunctuation, [
+        createEntry(0, 'Version', '1．2'),
+        createEntry(1, 'Number', '1，000'),
       ]),
     ).toEqual([])
   })
@@ -165,6 +203,31 @@ describe('Japanese v1 rule 1-2', () => {
     ).toContainEqual({
       styleGuideItem: '1-2 英数字・記号の半角表記',
       message: '「Ａ」は半角の「A」で表記してください',
+    })
+  })
+
+
+  /**
+   * 数値表記内の全角カンマ・ピリオドを、1-2 の半角表記として案内することを確認する。
+   *
+   * 操作:
+   * - 数字に挟まれた全角ピリオドと全角カンマを 1-2 で確認する。
+   *
+   * 期待結果:
+   * - それぞれ対応する半角のピリオドとカンマが案内される。
+   */
+  it('when full-width punctuation is part of a number, should report rule 1-2', () => {
+    expect(
+      getRuleMessages(checkHalfWidthCharacters, 'Version', '1．2'),
+    ).toContainEqual({
+      styleGuideItem: '1-2 英数字・記号の半角表記',
+      message: '「．」は半角の「.」で表記してください',
+    })
+    expect(
+      getRuleMessages(checkHalfWidthCharacters, 'Number', '1，000'),
+    ).toContainEqual({
+      styleGuideItem: '1-2 英数字・記号の半角表記',
+      message: '「，」は半角の「,」で表記してください',
     })
   })
 

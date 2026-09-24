@@ -121,9 +121,32 @@ function getTranslation(entry: TranslationEntry): string | undefined {
 }
 
 /**
- * 日本語本文で使用された半角・全角の代替句読点を検出する。
+ * 全角カンマ・ピリオドが数値表記内の符号か確認する。
  *
- * 数値・技術文字列の一部や、句点と断定できない連続ピリオドは対象外とする。
+ * 数字に挟まれている場合は日本語の句読点ではなく、1-2 の半角表記対象として扱う。
+ *
+ * @param text 確認対象の翻訳。
+ * @param index 確認対象文字の位置。
+ * @returns 数値表記内の全角カンマ・ピリオドである場合は true。
+ */
+function isNumericFullWidthPunctuation(text: string, index: number): boolean {
+  const character = text[index]
+  if (character !== '，' && character !== '．') {
+    return false
+  }
+
+  const numericCharacter = /[0-9０-９]/u
+  return (
+    numericCharacter.test(text[index - 1] ?? '') &&
+    numericCharacter.test(text[index + 1] ?? '')
+  )
+}
+
+/**
+ * 日本語本文で使用された、機械的に高い確度で判定できる代替句読点を検出する。
+ *
+ * ASCII のカンマとピリオドは用途を機械的に特定できないため対象外とする。
+ * また、数字に挟まれた全角カンマ・ピリオドは数値表記として 1-2 に委ねる。
  *
  * @param entry 確認対象 entry。
  * @returns 1-1 に該当する指摘。
@@ -139,7 +162,7 @@ export function checkJapanesePunctuation(
 
   const { protectedIndexes } = protectTechnicalText(translation)
 
-  // 日本語本文として評価できる文字だけを対象に、句読点の使用を確認する。
+  // 技術文字列を除く本文で、明確に代替句読点と判断できる文字だけを確認する。
   for (let index = 0; index < translation.length; index += 1) {
     // 技術文字列内部は、日本語本文の句読点として評価しない。
     if (protectedIndexes.has(index)) {
@@ -147,41 +170,12 @@ export function checkJapanesePunctuation(
     }
 
     const character = translation[index]
-    // 判定対象の文字を取得できない場合は指摘を生成しない。
-    if (character === undefined) {
-      continue
-    }
-
-    // 日本語句読点の代替として使われる全角・半角記号は、1-1 の明確な対象とする。
-    if (['，', '．', '､', '｡'].includes(character)) {
-      return [
-        {
-          styleGuideItem: STYLE_GUIDE.punctuation,
-          message: '日本語の句読点は「、」「。」を使用してください',
-        },
-      ]
-    }
-
-    // 1-1 で追加判断が必要なのは、日本語句読点として使われ得る半角カンマとピリオドだけとする。
-    if (character !== ',' && character !== '.') {
-      continue
-    }
-
-    const previous = translation[index - 1] ?? ''
-    const next = translation[index + 1] ?? ''
-
-    // 連続するピリオドは省略表現等の可能性があるため、日本語本文の句点と断定しない。
-    if (character === '.' && (previous === '.' || next === '.')) {
-      continue
-    }
-
-    // 小数・バージョン番号等の数値表記は、日本語本文の句読点として扱わない。
-    if (/\d/.test(previous) && /\d/.test(next)) {
-      continue
-    }
-
-    // 半角句読点が日本語文字と接している場合だけ、日本語本文の句読点と判断する。
-    if (JAPANESE_CHARACTER.test(previous) || JAPANESE_CHARACTER.test(next)) {
+    // 数値表記として明確な全角カンマ・ピリオドを除き、代替句読点だけを 1-1 の対象とする。
+    if (
+      character !== undefined &&
+      ['，', '．', '､', '｡'].includes(character) &&
+      !isNumericFullWidthPunctuation(translation, index)
+    ) {
       return [
         {
           styleGuideItem: STYLE_GUIDE.punctuation,
@@ -234,8 +228,12 @@ export function checkHalfWidthCharacters(
       continue
     }
 
-    // 句読点と丸括弧は、より具体的な 1-1 / 1-5 で扱う。
-    if (['，', '．', '（', '）'].includes(character)) {
+    // 日本語の句読点と丸括弧は個別ルールへ委ねるが、数値表記内の全角カンマ・ピリオドは 1-2 で扱う。
+    if (
+      ['（', '）'].includes(character) ||
+      (['，', '．'].includes(character) &&
+        !isNumericFullWidthPunctuation(translation, index))
+    ) {
       continue
     }
 
