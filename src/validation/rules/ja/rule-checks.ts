@@ -121,10 +121,32 @@ function getTranslation(entry: TranslationEntry): string | undefined {
 }
 
 /**
+ * 全角カンマ・ピリオドが数値表記内の符号か確認する。
+ *
+ * 数字に挟まれている場合は日本語の句読点ではなく、1-2 の半角表記対象として扱う。
+ *
+ * @param text 確認対象の翻訳。
+ * @param index 確認対象文字の位置。
+ * @returns 数値表記内の全角カンマ・ピリオドである場合は true。
+ */
+function isNumericFullWidthPunctuation(text: string, index: number): boolean {
+  const character = text[index]
+  if (character !== '，' && character !== '．') {
+    return false
+  }
+
+  const numericCharacter = /[0-9０-９]/u
+  return (
+    numericCharacter.test(text[index - 1] ?? '') &&
+    numericCharacter.test(text[index + 1] ?? '')
+  )
+}
+
+/**
  * 日本語本文で使用された、機械的に高い確度で判定できる代替句読点を検出する。
  *
- * ASCII のカンマとピリオドは用途を機械的に特定できないため対象外とし、
- * 日本語の句読点として不適切であることを文字自体から判断できる表記だけを確認する。
+ * ASCII のカンマとピリオドは用途を機械的に特定できないため対象外とする。
+ * また、数字に挟まれた全角カンマ・ピリオドは数値表記として 1-2 に委ねる。
  *
  * @param entry 確認対象 entry。
  * @returns 1-1 に該当する指摘。
@@ -148,8 +170,12 @@ export function checkJapanesePunctuation(
     }
 
     const character = translation[index]
-    // 日本語句読点の代替として明確に不適切な表記だけを 1-1 の対象とする。
-    if (character !== undefined && ['，', '．', '､', '｡'].includes(character)) {
+    // 数値表記として明確な全角カンマ・ピリオドを除き、代替句読点だけを 1-1 の対象とする。
+    if (
+      character !== undefined &&
+      ['，', '．', '､', '｡'].includes(character) &&
+      !isNumericFullWidthPunctuation(translation, index)
+    ) {
       return [
         {
           styleGuideItem: STYLE_GUIDE.punctuation,
@@ -202,8 +228,12 @@ export function checkHalfWidthCharacters(
       continue
     }
 
-    // 句読点と丸括弧は、より具体的な 1-1 / 1-5 で扱う。
-    if (['，', '．', '（', '）'].includes(character)) {
+    // 日本語の句読点と丸括弧は個別ルールへ委ねるが、数値表記内の全角カンマ・ピリオドは 1-2 で扱う。
+    if (
+      ['（', '）'].includes(character) ||
+      (['，', '．'].includes(character) &&
+        !isNumericFullWidthPunctuation(translation, index))
+    ) {
       continue
     }
 
