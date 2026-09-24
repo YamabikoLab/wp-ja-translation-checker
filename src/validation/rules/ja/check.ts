@@ -331,6 +331,7 @@ function checkSpacingBetweenHalfAndFullWidth(
     '0'.repeat(value.length),
   )
   const messages: CheckMessage[] = []
+  const spacingCharacters = new Set([' ', '　'])
   let invalidBoundary:
     | {
         left: string
@@ -354,10 +355,7 @@ function checkSpacingBetweenHalfAndFullWidth(
     let hasFullWidthSpace = false
 
     // 境界に存在するスペースを確認し、半角スペース1つ以外は 1-4 の不適合として扱う。
-    while (
-      spacingText[rightIndex] === ' ' ||
-      spacingText[rightIndex] === '　'
-    ) {
+    while (spacingCharacters.has(spacingText[rightIndex] ?? '')) {
       spaceCount += 1
       hasFullWidthSpace ||= spacingText[rightIndex] === '　'
       rightIndex += 1
@@ -413,7 +411,8 @@ function checkSpacingBetweenHalfAndFullWidth(
     if (
       character !== undefined &&
       NO_SPACE_JAPANESE_PUNCTUATION.has(character) &&
-      (translation[index - 1] === ' ' || translation[index + 1] === ' ')
+      (spacingCharacters.has(translation[index - 1] ?? '') ||
+        spacingCharacters.has(translation[index + 1] ?? ''))
     ) {
       unnecessarySymbol = character
       break
@@ -439,9 +438,12 @@ function checkSpacingBetweenHalfAndFullWidth(
       continue
     }
 
-    colonBefore ||= previous === ' '
-    colonAfterMissing ||= next !== '' && next !== ' '
-    colonAfterMultiple ||= translation.slice(index + 1).startsWith('  ')
+    // コロン前には半角・全角どちらのスペースも置かず、後にはどちらか1つを置く。
+    colonBefore ||= spacingCharacters.has(previous)
+    colonAfterMissing ||= next !== '' && !spacingCharacters.has(next)
+    colonAfterMultiple ||=
+      spacingCharacters.has(next) &&
+      spacingCharacters.has(translation[index + 2] ?? '')
   }
 
   // 通常の半角・全角文字境界でスペースの過不足を検出した場合は、その境界を1件の指摘として返す。
@@ -471,11 +473,11 @@ function checkSpacingBetweenHalfAndFullWidth(
     })
   }
 
-  // コロンの直後が半角スペース1つでない場合は、必要なスペースの不足または過剰として指摘する。
+  // コロンの直後が半角または全角スペース1つでない場合は、必要なスペースの不足または過剰として指摘する。
   if (colonAfterMissing || colonAfterMultiple) {
     messages.push({
       styleGuideItem: STYLE_GUIDE.halfFullSpacing,
-      message: '「:」の後に半角スペースを入れてください',
+      message: '「:」の後にスペースを1つ入れてください',
     })
   }
 
