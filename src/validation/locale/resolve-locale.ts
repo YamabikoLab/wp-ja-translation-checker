@@ -5,7 +5,7 @@
  * 対応するルールセットが存在するかどうかは判断しない。
  */
 
-import type { PoMetadata } from '../po/interpret-po'
+import type { PoMetadata } from '@/po/interpret-po'
 
 /**
  * Locale Resolution が後続責務へ公開する結果を表す。
