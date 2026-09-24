@@ -38,49 +38,49 @@ function Feedback({
 }: {
   state: Extract<PresentationState, { status: 'feedback' }>
 }) {
-  if (state.reason === 'file-read-failure') {
-    return (
-      <>
-        <h2>ファイルを読み取れませんでした</h2>
-        <p>別の .po ファイルを選択して、もう一度確認してください。</p>
-      </>
-    )
-  }
+  switch (state.reason) {
+    case 'file-read-failure':
+      return (
+        <>
+          <h2>ファイルを読み取れませんでした</h2>
+          <p>別の .po ファイルを選択して、もう一度確認してください。</p>
+        </>
+      )
 
-  if (state.reason === 'invalid-po') {
-    return (
-      <>
-        <h2>PO ファイルを正常に確認できませんでした</h2>
-        <p>
-          確認可能な PO
-          として解釈できませんでした。ファイル内容を確認するか、別の .po
-          ファイルを選択してください。
-        </p>
-      </>
-    )
-  }
+    case 'invalid-po':
+      return (
+        <>
+          <h2>PO ファイルを正常に確認できませんでした</h2>
+          <p>
+            確認可能な PO
+            として解釈できませんでした。ファイル内容を確認するか、別の .po
+            ファイルを選択してください。
+          </p>
+        </>
+      )
 
-  if (state.reason === 'unresolved-locale') {
-    return (
-      <>
-        <h2>ロケールを判定できませんでした</h2>
-        <p>
-          対象ロケールを特定できないため確認を続行できません。PO ファイルの
-          Language ヘッダーを確認してください。
-        </p>
-      </>
-    )
-  }
+    case 'unresolved-locale':
+      return (
+        <>
+          <h2>ロケールを判定できませんでした</h2>
+          <p>
+            対象ロケールを特定できないため確認を続行できません。PO ファイルの
+            Language ヘッダーを確認してください。
+          </p>
+        </>
+      )
 
-  return (
-    <>
-      <h2>このロケールには対応していません</h2>
-      <p>
-        判定されたロケールは「{state.locale}」です。WTC v1
-        は日本語（ja）のみ対応しています。
-      </p>
-    </>
-  )
+    case 'unsupported-locale':
+      return (
+        <>
+          <h2>このロケールには対応していません</h2>
+          <p>
+            判定されたロケールは「{state.locale}」です。WTC v1
+            は日本語（ja）のみ対応しています。
+          </p>
+        </>
+      )
+  }
 }
 
 /**
