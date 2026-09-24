@@ -85,6 +85,10 @@ function protectTechnicalText(text: string): ProtectedText {
     /https?:\/\/[^\s]+/giu,
     /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/giu,
     /<[^>]+>/gu,
+    /{{\/?[A-Za-z][A-Za-z0-9_-]*}}/gu,
+    /%(?:\d+\$)?s/gu,
+    /%\([A-Za-z0-9_.-]+\)s/gu,
+    /(?:[A-Za-z_][A-Za-z0-9_]*|%(?:\d+\$)?s)\(\)/gu,
     /`[^`]+`/gu,
     /(?:[A-Z]:\\|\/)\S+/giu,
   ]
@@ -197,6 +201,11 @@ function checkJapanesePunctuation(
 
     const previous = translation[index - 1] ?? ''
     const next = translation[index + 1] ?? ''
+
+    // 連続するピリオドは省略表現等の可能性があるため、日本語本文の句点と断定しない。
+    if (character === '.' && (previous === '.' || next === '.')) {
+      continue
+    }
 
     // 小数・バージョン番号等の数値表記は、日本語本文の句読点として扱わない。
     if (/\d/.test(previous) && /\d/.test(next)) {
@@ -450,24 +459,37 @@ function checkParenthesesSpacing(
     const character = translation[index]
 
     if (character === '(' && index > 0) {
-      const previous = translation[index - 1] ?? ''
-      if (!OUTER_PARENTHESES_SPACE_EXCEPTIONS.has(previous)) {
-        const spaceCount = countSpacesBackward(translation, index - 1)
-        if (spaceCount !== 1) {
-          invalidOuterSpacing = true
-          break
-        }
+      const outside = getOuterParenthesesSpacing(
+        translation,
+        protectedIndexes,
+        index - 1,
+        -1,
+      )
+      if (
+        outside !== undefined &&
+        !OUTER_PARENTHESES_SPACE_EXCEPTIONS.has(outside.character) &&
+        outside.spaceCount !== 1
+      ) {
+        invalidOuterSpacing = true
+        break
       }
     }
 
     if (character === ')' && index < translation.length - 1) {
-      const next = translation[index + 1] ?? ''
-      if (next !== '。' && !OUTER_PARENTHESES_SPACE_EXCEPTIONS.has(next)) {
-        const spaceCount = countSpacesForward(translation, index + 1)
-        if (spaceCount !== 1) {
-          invalidOuterSpacing = true
-          break
-        }
+      const outside = getOuterParenthesesSpacing(
+        translation,
+        protectedIndexes,
+        index + 1,
+        1,
+      )
+      if (
+        outside !== undefined &&
+        outside.character !== '。' &&
+        !OUTER_PARENTHESES_SPACE_EXCEPTIONS.has(outside.character) &&
+        outside.spaceCount !== 1
+      ) {
+        invalidOuterSpacing = true
+        break
       }
     }
   }
@@ -483,41 +505,45 @@ function checkParenthesesSpacing(
 }
 
 /**
- * 指定位置から前方へ連続する半角スペース数を数える。
+ * 丸括弧の外側について、マークアップ等の保護範囲を除いた表示本文側の隣接文字とスペース数を取得する。
  *
  * @param text 対象文字列。
- * @param startIndex 開始位置。
- * @returns 連続する半角スペース数。
+ * @param protectedIndexes 技術文字列として判定対象外にする文字位置。
+ * @param startIndex 丸括弧の外側直近から確認を開始する位置。
+ * @param direction 前方は 1、後方は -1。
+ * @returns 表示本文側の文字と、その手前に存在する半角スペース数。文字列境界の場合は undefined。
  */
-function countSpacesBackward(text: string, startIndex: number): number {
-  let count = 0
+function getOuterParenthesesSpacing(
+  text: string,
+  protectedIndexes: ReadonlySet<number>,
+  startIndex: number,
+  direction: 1 | -1,
+): { character: string; spaceCount: number } | undefined {
+  let index = startIndex
+  let spaceCount = 0
 
-  for (let index = startIndex; index >= 0 && text[index] === ' '; index -= 1) {
-    count += 1
+  // HTML 等の表示されない保護範囲を飛ばしつつ、本文側に実在するスペースだけを数える。
+  while (index >= 0 && index < text.length) {
+    if (protectedIndexes.has(index)) {
+      index += direction
+      continue
+    }
+
+    const character = text[index]
+    if (character === ' ') {
+      spaceCount += 1
+      index += direction
+      continue
+    }
+
+    if (character === undefined) {
+      return undefined
+    }
+
+    return { character, spaceCount }
   }
 
-  return count
-}
-
-/**
- * 指定位置から後方へ連続する半角スペース数を数える。
- *
- * @param text 対象文字列。
- * @param startIndex 開始位置。
- * @returns 連続する半角スペース数。
- */
-function countSpacesForward(text: string, startIndex: number): number {
-  let count = 0
-
-  for (
-    let index = startIndex;
-    index < text.length && text[index] === ' ';
-    index += 1
-  ) {
-    count += 1
-  }
-
-  return count
+  return undefined
 }
 
 /**
@@ -648,20 +674,43 @@ function checkNumberSpacing(entry: TranslationEntry): readonly CheckMessage[] {
   const numericToken = '(?:\\d+|%\\d*\\$?d)'
   const japanese = '[\\p{Script=Han}\\p{Script=Hiragana}\\p{Script=Katakana}]'
   const pattern = new RegExp(
-    `(?:${numericToken}) +${japanese}|${japanese} +(?:${numericToken})`,
-    'u',
+    `(?:(${numericToken}) +(${japanese})|(${japanese}) +(${numericToken}))`,
+    'gu',
   )
 
-  if (!pattern.test(translation)) {
-    return []
+  // 数字が識別子・バージョン・寸法等の技術表現の一部ではなく、日本語本文との境界にある場合だけ指摘する。
+  for (const match of translation.matchAll(pattern)) {
+    const value = match[0]
+    const start = match.index
+    const numeric = match[1] ?? match[4]
+    if (numeric === undefined) {
+      continue
+    }
+
+    const numericOffset = value.indexOf(numeric)
+    const numericStart = start + numericOffset
+    const numericEnd = numericStart + numeric.length
+    const isPlaceholder = numeric.startsWith('%')
+
+    if (!isPlaceholder) {
+      const before = translation[numericStart - 1] ?? ''
+      const after = translation[numericEnd] ?? ''
+
+      // ASCII の識別子、バージョン、規格番号、寸法等に埋め込まれた数字は単独の数字として扱わない。
+      if (/[A-Za-z0-9_.-]/u.test(before) || /[A-Za-z0-9_.-]/u.test(after)) {
+        continue
+      }
+    }
+
+    return [
+      {
+        styleGuideItem: STYLE_GUIDE.numberSpacing,
+        message: '半角数字と日本語の間のスペースは削除してください',
+      },
+    ]
   }
 
-  return [
-    {
-      styleGuideItem: STYLE_GUIDE.numberSpacing,
-      message: '半角数字と日本語の間のスペースは削除してください',
-    },
-  ]
+  return []
 }
 
 /**
