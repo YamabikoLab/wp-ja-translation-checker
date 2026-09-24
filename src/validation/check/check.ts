@@ -5,11 +5,11 @@
  * Presentation が1つの公開入口から確認全体の結果を受け取れるようにする。
  */
 
-import { resolveLocale } from '../locale/resolve-locale'
-import { interpretPo } from '../po/interpret-po'
-import type { TranslationEntry } from '../po/interpret-po'
-import { check } from '../rules/ja/check'
-import type { TranslationCheckResult } from '../rules/ja/check'
+import { resolveLocale } from '@/locale/resolve-locale'
+import { interpretPo } from '@/po/interpret-po'
+import type { TranslationEntry } from '@/po/interpret-po'
+import { check } from '@/rules/ja/check'
+import type { TranslationCheckResult } from '@/rules/ja/check'
 
 /**
  * Check Orchestration が Presentation へ返す1回の確認結果を表す。
