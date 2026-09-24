@@ -109,6 +109,7 @@
 }
 
 .checkButton,
+.exportButton,
 .textToggle {
   width: fit-content;
   border: 0;
@@ -130,6 +131,7 @@
 }
 
 .checkButton:focus-visible,
+.exportButton:focus-visible,
 .textToggle:focus-visible,
 .fileInput input:focus-visible,
 .guideReference a:focus-visible {
@@ -189,6 +191,62 @@
   background: var(--color-success-background);
   color: var(--color-success-text);
   font-weight: 700;
+}
+
+.exportArea {
+  display: grid;
+  gap: 14px;
+  padding-top: 20px;
+  border-top: 1px solid var(--color-border);
+}
+
+.exportArea h3,
+.exportArea p {
+  margin: 0;
+}
+
+.exportArea h3 {
+  color: var(--color-heading);
+  font-size: 1rem;
+}
+
+.exportArea > div:first-child p {
+  margin-top: 6px;
+  color: var(--color-muted);
+}
+
+.exportActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.exportButton {
+  padding: 9px 14px;
+  border: 1px solid var(--color-border);
+  background: var(--color-background);
+  color: var(--color-heading);
+}
+
+.exportButton:hover {
+  border-color: var(--color-accent);
+}
+
+.copySuccess,
+.copyFailure {
+  padding: 10px 12px;
+  border-radius: var(--radius-medium);
+  font-weight: 700;
+}
+
+.copySuccess {
+  background: var(--color-success-background);
+  color: var(--color-success-text);
+}
+
+.copyFailure {
+  background: var(--color-error-background);
+  color: var(--color-error);
 }
 
 .findingsSection {
