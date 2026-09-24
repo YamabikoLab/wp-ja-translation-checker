@@ -9,6 +9,9 @@ import { fileURLToPath } from 'node:url'
 import react from '@vitejs/plugin-react'
 import { defineConfig, type Plugin } from 'vite'
 
+const validationSourcePath = fileURLToPath(
+  new URL('./src/validation', import.meta.url),
+)
 const gettextBrowserBundlePath = fileURLToPath(
   new URL('./node_modules/gettext-converter/gettext.min.js', import.meta.url),
 )
@@ -33,5 +36,10 @@ const serveGettextBrowserBundle = (): Plugin => ({
 })
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      '@': validationSourcePath,
+    },
+  },
   plugins: [react(), serveGettextBrowserBundle()],
 })
