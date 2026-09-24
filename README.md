@@ -42,4 +42,4 @@ For v1:
 
 ## License
 
-Released under the [GNU General Public License v2.0](LICENSE).
+Released under the [GNU General Public License v2.0 or later](LICENSE).
