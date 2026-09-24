@@ -5,7 +5,7 @@
  * ルール全体の実行順、Error / Warning の区分、entry ごとの結果集約は check.ts が所有する。
  */
 
-import type { TranslationEntry } from '../../po/interpret-po'
+import type { TranslationEntry } from '@/po/interpret-po'
 
 /**
  * 1件の指摘で利用者へ提示する最小情報を表す。
