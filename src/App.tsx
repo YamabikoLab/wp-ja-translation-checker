@@ -17,23 +17,131 @@ import {
   type TranslationCheckResult,
 } from './validation/rules/ja/check'
 
+type SuccessfulPocResult = {
+  status: 'success'
+  fileName: string
+  entries: readonly TranslationEntry[]
+  results: readonly TranslationCheckResult[]
+}
+
 type PocResult =
   | { status: 'idle' }
   | { status: 'reading'; fileName: string }
   | { status: 'invalid-po'; fileName: string }
   | { status: 'unresolved-locale'; fileName: string }
   | { status: 'unsupported-locale'; fileName: string; locale: string }
-  | {
-      status: 'success'
-      fileName: string
-      entries: readonly TranslationEntry[]
-      results: readonly TranslationCheckResult[]
-    }
+  | SuccessfulPocResult
   | { status: 'error'; fileName: string; message: string }
 
 /**
  * 実ファイルを読み込み、簡易結果だけで修正箇所を判断できるか確認する POC。
  */
+/**
+ * Markdown のコードブロックとして原文・翻訳を読みやすく保持する。
+ *
+ * @param text 出力対象の文字列。
+ * @returns 各行を Markdown のインデントコードブロックに変換した文字列。
+ */
+function toMarkdownCodeBlock(text: string): string {
+  return text
+    .split(/\r\n|\n|\r/u)
+    .map((line) => `    ${line}`)
+    .join('\n')
+}
+
+/**
+ * 簡易結果を、後から人または AI がまとめて確認できる Markdown へ変換する。
+ *
+ * 画面表示と同じ情報だけを使用し、問題箇所の位置情報など POC に存在しない情報は補わない。
+ *
+ * @param result 正常完了した確認結果。
+ * @returns ファイル名、集計、各 entry の原文・翻訳・指摘を含む Markdown。
+ */
+function createMarkdownReport(result: SuccessfulPocResult): string {
+  const entryByIndex = new Map(
+    result.entries.map((entry) => [entry.entryIndex, entry]),
+  )
+  const errorCount = result.results.reduce(
+    (total, item) => total + item.errors.length,
+    0,
+  )
+  const warningCount = result.results.reduce(
+    (total, item) => total + item.warnings.length,
+    0,
+  )
+  const lines = [
+    '# WP Translation Checker POC result',
+    '',
+    `- File: ${result.fileName}`,
+    `- Entries with findings: ${result.results.length}`,
+    `- Errors: ${errorCount}`,
+    `- Warnings: ${warningCount}`,
+    '',
+  ]
+
+  // 画面に表示した各指摘を同じ entry 単位で出力し、結果全体を一括レビューできるようにする。
+  for (const item of result.results) {
+    const entry = entryByIndex.get(item.entryIndex)
+    const source = entry?.source.singular ?? '取得できませんでした'
+    const translation = entry?.translations[0]?.text ?? '取得できませんでした'
+
+    lines.push(
+      `## entryIndex: ${item.entryIndex}`,
+      '',
+      '### 原文',
+      '',
+      toMarkdownCodeBlock(source),
+      '',
+      '### 翻訳',
+      '',
+      toMarkdownCodeBlock(translation),
+      '',
+    )
+
+    if (item.errors.length > 0) {
+      lines.push('### Error', '')
+      for (const message of item.errors) {
+        lines.push(
+          `- **${message.styleGuideItem}**`,
+          `  - ${message.message}`,
+        )
+      }
+      lines.push('')
+    }
+
+    if (item.warnings.length > 0) {
+      lines.push('### Warning', '')
+      for (const message of item.warnings) {
+        lines.push(
+          `- **${message.styleGuideItem}**`,
+          `  - ${message.message}`,
+        )
+      }
+      lines.push('')
+    }
+  }
+
+  return lines.join('\n')
+}
+
+/**
+ * 簡易結果を Markdown ファイルとしてブラウザーから保存する。
+ *
+ * @param result 正常完了した確認結果。
+ */
+function exportMarkdownReport(result: SuccessfulPocResult): void {
+  const report = createMarkdownReport(result)
+  const blob = new Blob([report], { type: 'text/markdown;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+  const baseName = result.fileName.replace(/\.po$/iu, '')
+
+  anchor.href = url
+  anchor.download = `${baseName}-wtc-results.md`
+  anchor.click()
+  URL.revokeObjectURL(url)
+}
+
 function App() {
   const [result, setResult] = useState<PocResult>({ status: 'idle' })
 
@@ -186,10 +294,19 @@ function ResultView({
           <h2 id="results-heading">結果</h2>
           <p>{result.fileName}</p>
         </div>
-        <p>
-          {result.results.length}件の翻訳に指摘 / Error {errorCount}件 / Warning{' '}
-          {warningCount}件
-        </p>
+        <div className="poc__summary-actions">
+          <p>
+            {result.results.length}件の翻訳に指摘 / Error {errorCount}件 / Warning{' '}
+            {warningCount}件
+          </p>
+          <button
+            type="button"
+            className="export-button"
+            onClick={() => exportMarkdownReport(result)}
+          >
+            Markdown をエクスポート
+          </button>
+        </div>
       </div>
 
       <ol className="result-list">
