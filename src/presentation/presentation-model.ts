@@ -65,6 +65,14 @@ export type FindingSummary = {
 }
 
 /**
+ * ルールフィルターで選択できる1ルールと、現在の確認結果に含まれる指摘件数を表す。
+ */
+export type RuleFilterOption = {
+  styleGuideItem: string
+  count: number
+}
+
+/**
  * 完了後にフォーカスを移す Presentation 上の意味領域を表す。
  */
 export type CompletionFocusTarget = 'feedback' | 'summary' | null
