@@ -37,11 +37,12 @@ WordPress 日本語翻訳スタイルガイドは指摘根拠を利用者が確�
 
 ### External Context
 
-| ID                          | Name                                       | Type                | Summary                                                                  |
-| --------------------------- | ------------------------------------------ | ------------------- | ------------------------------------------------------------------------ |
-| EXT_USER_PO_FILE            | Local PO File                              | External System     | 利用者が確認対象として選択するローカルの `.po` ファイル。                |
-| EXT_BROWSER_FILE_CAPABILITY | Browser File Capability                    | External Capability | 選択されたローカルファイルの内容をブラウザー内で読み取る能力を提供する。 |
-| EXT_STYLE_GUIDE             | WordPress Japanese Translation Style Guide | External System     | 各指摘の根拠として利用者が任意に参照する一次情報。                       |
+| ID                            | Name                                       | Type                | Summary                                                                          |
+| ----------------------------- | ------------------------------------------ | ------------------- | -------------------------------------------------------------------------------- |
+| EXT_USER_PO_FILE              | Local PO File                              | External System     | 利用者が確認対象として選択するローカルの `.po` ファイル。                        |
+| EXT_BROWSER_FILE_CAPABILITY   | Browser File Capability                    | External Capability | 選択されたローカルファイルの内容をブラウザー内で読み取る能力を提供する。         |
+| EXT_BROWSER_EXPORT_CAPABILITY | Browser Export Capability                  | External Capability | 確認結果をローカルファイルとして保存し、クリップボードへ書き込む能力を提供する。 |
+| EXT_STYLE_GUIDE               | WordPress Japanese Translation Style Guide | External System     | 各指摘の根拠として利用者が任意に参照する一次情報。                               |
 
 ## 4. Solution Strategy
 
@@ -51,7 +52,7 @@ PO Interpretation は入力を翻訳 entry と metadata へ変換し、Locale Re
 
 Locale Rule Selection / RuleSet / Rule は設けない。Finding Coordination も独立責務として設けず、同一原因の重複回避や具体的ルール優先は日本語 v1 Check 内の各判定条件で扱う。
 
-Presentation は利用者向け interaction state と表示を所有し、個別ルールの判定を再実行しない。
+Presentation は利用者向け interaction state と表示を所有し、個別ルールの判定を再実行しない。正常完了した現在の確認結果については、表示用の同じ指摘集合を CSV / JSON / Markdown へ表現し、ブラウザーの保存・クリップボード能力へ渡す。画面表示のフィルターやページネーションは、この出力対象を変更しない。
 
 ### Process Flow Views
 
@@ -78,13 +79,13 @@ Presentation は利用者向け interaction state と表示を所有し、個別
 
 ### Responsibility Inventory
 
-| ID                       | Responsibility      | Summary                                                             |
-| ------------------------ | ------------------- | ------------------------------------------------------------------- |
-| RESP_PRESENTATION        | Result Presentation | 入力、利用者向け状態、確認結果、重要なフィードバックを表示する。    |
-| RESP_CHECK_ORCHESTRATION | Check Orchestration | 1回の確認要求を調整し、確認全体の結果を確定する。                   |
-| RESP_PO_INTERPRETATION   | PO Interpretation   | PO を翻訳 entry と metadata へ解釈する。                            |
-| RESP_LOCALE_RESOLUTION   | Locale Resolution   | metadata から対象 locale を解決し、判定不能を区別する。             |
-| RESP_JAPANESE_CHECK      | Japanese v1 Check   | 日本語 v1 の12ルールを実行し、entry ごとの Error / Warning を返す。 |
+| ID                       | Responsibility      | Summary                                                                              |
+| ------------------------ | ------------------- | ------------------------------------------------------------------------------------ |
+| RESP_PRESENTATION        | Result Presentation | 入力、利用者向け状態、確認結果、重要なフィードバック、結果の保存・コピーを提供する。 |
+| RESP_CHECK_ORCHESTRATION | Check Orchestration | 1回の確認要求を調整し、確認全体の結果を確定する。                                    |
+| RESP_PO_INTERPRETATION   | PO Interpretation   | PO を翻訳 entry と metadata へ解釈する。                                             |
+| RESP_LOCALE_RESOLUTION   | Locale Resolution   | metadata から対象 locale を解決し、判定不能を区別する。                              |
+| RESP_JAPANESE_CHECK      | Japanese v1 Check   | 日本語 v1 の12ルールを実行し、entry ごとの Error / Warning を返す。                  |
 
 ### Ownership Boundaries
 
@@ -93,23 +94,25 @@ Presentation は利用者向け interaction state と表示を所有し、個別
 | BOUNDARY_PRESENTATION    | Presentation          | RESP_PRESENTATION                                                                          |
 | BOUNDARY_VALIDATION_CORE | Validation Core       | RESP_CHECK_ORCHESTRATION RESP_PO_INTERPRETATION RESP_LOCALE_RESOLUTION RESP_JAPANESE_CHECK |
 | BOUNDARY_BROWSER_INPUT   | Browser Input         | EXT_USER_PO_FILE EXT_BROWSER_FILE_CAPABILITY                                               |
+| BOUNDARY_BROWSER_OUTPUT  | Browser Output        | EXT_BROWSER_EXPORT_CAPABILITY                                                              |
 | BOUNDARY_REFERENCE       | Reference Information | EXT_STYLE_GUIDE                                                                            |
 
 ### Dependencies
 
-| Dependent                | Depends on               | Reason                                                   |
-| ------------------------ | ------------------------ | -------------------------------------------------------- |
-| RESP_PRESENTATION        | RESP_CHECK_ORCHESTRATION | 確認要求を渡し、確認全体の結果を受け取る。               |
-| RESP_CHECK_ORCHESTRATION | RESP_PO_INTERPRETATION   | 入力を Validation Core 用データへ解釈する。              |
-| RESP_CHECK_ORCHESTRATION | RESP_LOCALE_RESOLUTION   | 対象 locale を解決する。                                 |
-| RESP_CHECK_ORCHESTRATION | RESP_JAPANESE_CHECK      | locale が `ja` の場合に日本語 v1 チェックを1回実行する。 |
-| RESP_PRESENTATION        | EXT_STYLE_GUIDE          | 利用者が一次情報を確認できるリンクを提示する。           |
+| Dependent                | Depends on                    | Reason                                                             |
+| ------------------------ | ----------------------------- | ------------------------------------------------------------------ |
+| RESP_PRESENTATION        | RESP_CHECK_ORCHESTRATION      | 確認要求を渡し、確認全体の結果を受け取る。                         |
+| RESP_CHECK_ORCHESTRATION | RESP_PO_INTERPRETATION        | 入力を Validation Core 用データへ解釈する。                        |
+| RESP_CHECK_ORCHESTRATION | RESP_LOCALE_RESOLUTION        | 対象 locale を解決する。                                           |
+| RESP_CHECK_ORCHESTRATION | RESP_JAPANESE_CHECK           | locale が `ja` の場合に日本語 v1 チェックを1回実行する。           |
+| RESP_PRESENTATION        | EXT_STYLE_GUIDE               | 利用者が一次情報を確認できるリンクを提示する。                     |
+| RESP_PRESENTATION        | EXT_BROWSER_EXPORT_CAPABILITY | 正常完了した確認結果をローカル保存またはクリップボードへ書き込む。 |
 
 ### Dependency Views
 
-| ID              | Name         | Includes                                                                                                                     |
-| --------------- | ------------ | ---------------------------------------------------------------------------------------------------------------------------- |
-| DV_WTC_OVERVIEW | WTC Overview | RESP_PRESENTATION RESP_CHECK_ORCHESTRATION RESP_PO_INTERPRETATION RESP_LOCALE_RESOLUTION RESP_JAPANESE_CHECK EXT_STYLE_GUIDE |
+| ID              | Name         | Includes                                                                                                                                                   |
+| --------------- | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| DV_WTC_OVERVIEW | WTC Overview | RESP_PRESENTATION RESP_CHECK_ORCHESTRATION RESP_PO_INTERPRETATION RESP_LOCALE_RESOLUTION RESP_JAPANESE_CHECK EXT_STYLE_GUIDE EXT_BROWSER_EXPORT_CAPABILITY |
 
 ### Responsibility Details
 
@@ -119,7 +122,14 @@ Presentation は利用者向け interaction state と表示を所有し、個別
 
 利用者が確認対象を選択し、確認を開始し、確認中・正常完了・確認不能を理解できるように表示する。
 
-個別ルールの条件、優先関係、Severity を再計算しない。
+正常完了した現在の確認結果について、指摘単位と原文・翻訳の対応を保ったまま CSV / JSON / Markdown へ表現し、ブラウザーの保存・クリップボード能力を通じて利用者へ提供する。
+
+##### Invariants
+
+- 個別ルールの条件、優先関係、Severity を再計算しない。
+- 保存・コピー対象は現在の正常完了結果全体とし、画面表示のフィルターやページネーションによって狭めない。
+- 確認不能状態や現在入力に対応しない古い結果を保存・コピー対象にしない。
+- Validation Core へファイル保存、クリップボード、DOM の責務を持ち込まない。
 
 #### Check Orchestration {#RESP_CHECK_ORCHESTRATION}
 
@@ -230,6 +240,14 @@ export function check(
 |    5 | RESP_JAPANESE_CHECK      | RESP_CHECK_ORCHESTRATION | 指摘がないため空配列を返す。                                |
 |    6 | RESP_CHECK_ORCHESTRATION | RESP_PRESENTATION        | 指摘なし正常完了として確認全体の結果を通知する。            |
 
+### Export successful result {#RV_EXPORT_SUCCESS_RESULT}
+
+正常完了した現在の確認結果を利用者が保存またはコピーする流れを示す。
+
+| Step | Source            | Target                        | Interaction                                                           |
+| ---: | ----------------- | ----------------------------- | --------------------------------------------------------------------- |
+|    1 | RESP_PRESENTATION | EXT_BROWSER_EXPORT_CAPABILITY | 現在の確認結果全体を選択された CSV / JSON / Markdown 表現として渡す。 |
+
 ### Invalid PO input {#RV_INVALID_PO_INPUT}
 
 入力を確認可能な PO として解釈できない場合を示す。
@@ -296,7 +314,11 @@ PO は解釈できるが対象 locale を判定できない場合を示す。
 
 ### Input-result identity
 
-1回の確認結果は、確認開始時点の入力に対応する。Presentation が新しい入力を採用した後、古い確認結果を新しい入力の結果として表示してはならない。
+1回の確認結果は、確認開始時点の入力に対応する。Presentation が新しい入力を採用した後、古い確認結果を新しい入力の結果として表示してはならず、保存・コピーの対象にもしてはならない。
+
+### Display and export scope
+
+フィルターやページネーションは Presentation 内の画面表示だけに作用する。結果の保存・コピーは、表示中の部分集合ではなく現在の正常完了結果全体を対象とする。
 
 ## 9. Architecture Decisions
 
@@ -333,6 +355,12 @@ Validation Core を React / DOM から分離する。Presentation は日本語�
 ### AD-07 Preserve input and bind results to validation input
 
 確認処理は入力 PO を変更しない。各確認結果は確認開始時点の入力に対応付け、入力変更後に古い結果を現在入力へ適用しない。
+
+### AD-08 Keep result export in Presentation
+
+結果の CSV / JSON / Markdown 表現とブラウザーへの保存・コピー要求は Presentation の責務に置く。Validation Core は確認結果の確定に専念し、Blob、Clipboard、DOM へ依存しない。
+
+保存・コピーは Presentation が既に受け取った正常完了結果を利用し、ルール判定や Severity を再実行しない。画面表示のフィルターやページネーションは保存・コピー対象を変更しない。
 
 ## 10. Quality Requirements
 
