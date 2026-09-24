@@ -214,6 +214,13 @@ workspace "WP Translation Checker v1 Architecture" {
 	}
 
 	views {
+		systemLandscape "DV_WTC_OVERVIEW" {
+			title "Structural Dependencies - WTC Overview"
+			include RESP_PRESENTATION RESP_CHECK_ORCHESTRATION RESP_PO_INTERPRETATION RESP_LOCALE_RESOLUTION RESP_JAPANESE_CHECK EXT_STYLE_GUIDE
+			exclude "relationship.tag!=Structural Dependency"
+			autoLayout lr
+		}
+
 		custom "PV_VALIDATION_END_TO_END" {
 			title "Process Flow - Validation End-to-End"
 			include EXT_USER_PO_FILE RESP_PRESENTATION RESP_CHECK_ORCHESTRATION RESP_PO_INTERPRETATION RESP_LOCALE_RESOLUTION RESP_JAPANESE_CHECK
