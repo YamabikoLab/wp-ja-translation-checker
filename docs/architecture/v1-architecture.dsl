@@ -1,4 +1,4 @@
-// Generated from /home/yamabiko/git_dev/wp-translation-checker/docs/architecture/v1-architecture.md. Do not edit manually.
+// Generated from docs/architecture/v1-architecture.md. Do not edit manually.
 workspace "WP Translation Checker v1 Architecture" {
 	!impliedRelationships false
 
