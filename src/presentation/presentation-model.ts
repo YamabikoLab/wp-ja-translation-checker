@@ -145,11 +145,13 @@ export function createFindings(
   const findings: Finding[] = []
 
   for (const checkedEntry of result.results) {
-    const entry = result.entries.find(
-      (candidate) => candidate.entryIndex === checkedEntry.entryIndex,
-    )
+    const entry = result.entries[checkedEntry.entryIndex]
 
-    if (entry === undefined) {
+    // PO Interpretation が保証する配列位置と entryIndex の対応が崩れている場合は、誤った翻訳を指摘へ結び付けない。
+    if (
+      entry === undefined ||
+      entry.entryIndex !== checkedEntry.entryIndex
+    ) {
       throw new Error(
         `確認結果の entryIndex ${checkedEntry.entryIndex} に対応する翻訳 entry がありません。`,
       )
