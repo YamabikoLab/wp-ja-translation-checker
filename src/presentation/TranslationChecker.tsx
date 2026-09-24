@@ -347,6 +347,7 @@ export function TranslationChecker() {
       <header className={styles.intro}>
         <p className={styles.eyebrow}>YamabikoLab</p>
         <h1>WP 翻訳チェッカー</h1>
+        <p className={styles.version}>v{__APP_VERSION__}</p>
         <p className={styles.lead}>
           WordPress 日本語翻訳スタイルガイド（{STYLE_GUIDE_LAST_UPDATED}
           最終更新）の対象ルールを、ブラウザー内で確認します。
