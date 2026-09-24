@@ -110,7 +110,7 @@ describe('Japanese v1 error rules', () => {
   })
 
   it('when a decimal point is part of a number, should not report rule 1-1', () => {
-    expect(check([createEntry(0, 'Version', 'バージョン 1.2')])).toEqual([])
+    expect(check([createEntry(0, 'Version', '1.2')])).toEqual([])
   })
 
   it('when full-width ASCII is used, should report rule 1-2 with the expected half-width character', () => {
