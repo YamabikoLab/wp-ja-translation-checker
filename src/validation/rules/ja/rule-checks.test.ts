@@ -76,21 +76,40 @@ function getRuleMessages(
 
 describe('Japanese v1 rule 1-1', () => {
   /**
-   * 日本語本文に半角カンマが句読点として使われた場合の 1-1 判定を確認する。
+   * 日本語の句読点として明確に不適切な代替文字を検出することを確認する。
    *
    * 操作:
-   * - 日本語文字の間に半角カンマを含む翻訳を確認する。
+   * - 全角カンマを含む日本語翻訳を確認する。
    *
    * 期待結果:
    * - 1-1 の Error と対応する表示メッセージが返る。
    */
-  it('when Japanese punctuation uses an ASCII comma, should report rule 1-1', () => {
+  it('when Japanese punctuation uses an unambiguous alternative character, should report rule 1-1', () => {
     expect(
-      getRuleMessages(checkJapanesePunctuation, 'Message', '設定,保存'),
+      getRuleMessages(checkJapanesePunctuation, 'Message', '設定，保存'),
     ).toContainEqual({
       styleGuideItem: '1-1 日本語の句読点',
       message: '日本語の句読点は「、」「。」を使用してください',
     })
+  })
+
+  /**
+   * ASCII のカンマとピリオドを、周囲の日本語だけを理由に句読点と断定しないことを確認する。
+   *
+   * 操作:
+   * - 日本語に隣接する略語のピリオド、文末のピリオド、本文中のカンマを確認する。
+   *
+   * 期待結果:
+   * - 用途を機械的に特定できないため、1-1 の指摘は返らない。
+   */
+  it('when ASCII comma or period usage is ambiguous, should not report rule 1-1', () => {
+    expect(
+      checkEntries(checkJapanesePunctuation, [
+        createEntry(0, 'N. Revenue', 'N.収益'),
+        createEntry(1, 'Notice', '通知が届きます.'),
+        createEntry(2, 'Message', '設定,保存'),
+      ]),
+    ).toEqual([])
   })
 
   /**
