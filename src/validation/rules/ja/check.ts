@@ -332,12 +332,12 @@ function checkSpacingBetweenHalfAndFullWidth(
   )
   const messages: CheckMessage[] = []
   let invalidBoundary:
-    {
-      left: string
-      right: string
-      spaceCount: number
-      hasFullWidthSpace: boolean
-    }
+    | {
+        left: string
+        right: string
+        spaceCount: number
+        hasFullWidthSpace: boolean
+      }
     | undefined
   let unnecessarySymbol: string | undefined
 
