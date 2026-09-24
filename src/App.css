@@ -71,6 +71,32 @@
   margin-bottom: 4px;
 }
 
+.poc__summary-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.export-button {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-h);
+  background: var(--code-bg);
+  font: inherit;
+  cursor: pointer;
+}
+
+.export-button:hover {
+  border-color: var(--accent-border);
+}
+
+.export-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .result-list {
   margin: 0;
   padding: 0;
@@ -156,7 +182,8 @@
     display: block;
   }
 
-  .poc__summary > p {
+  .poc__summary-actions {
+    align-items: flex-start;
     margin-top: 12px;
   }
 
