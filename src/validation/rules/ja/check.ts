@@ -304,7 +304,9 @@ function checkSpacingBetweenHalfAndFullWidth(
       left === ':' ||
       right === ':' ||
       NO_SPACE_JAPANESE_PUNCTUATION.has(left) ||
-      NO_SPACE_JAPANESE_PUNCTUATION.has(right)
+      NO_SPACE_JAPANESE_PUNCTUATION.has(right) ||
+      [',', '.', '，', '．', '､', '｡'].includes(left) ||
+      [',', '.', '，', '．', '､', '｡'].includes(right)
     ) {
       continue
     }
@@ -337,9 +339,27 @@ function checkSpacingBetweenHalfAndFullWidth(
     }
   }
 
-  const colonBefore = /\s+:/u.test(translation)
-  const colonAfterMissing = /:(?!\s|$)/u.test(translation)
-  const colonAfterMultiple = /: {2,}/u.test(translation)
+  let colonBefore = false
+  let colonAfterMissing = false
+  let colonAfterMultiple = false
+
+  for (let index = 0; index < translation.length; index += 1) {
+    if (translation[index] !== ':' || protectedIndexes.has(index)) {
+      continue
+    }
+
+    const previous = translation[index - 1] ?? ''
+    const next = translation[index + 1] ?? ''
+
+    // 時刻のような数字同士を結ぶコロンは、日本語本文の区切り記号として扱わない。
+    if (/\d/u.test(previous) && /\d/u.test(next)) {
+      continue
+    }
+
+    colonBefore ||= previous === ' '
+    colonAfterMissing ||= next !== '' && next !== ' '
+    colonAfterMultiple ||= translation.slice(index + 1).startsWith('  ')
+  }
 
   if (missingBoundary !== undefined) {
     messages.push({
