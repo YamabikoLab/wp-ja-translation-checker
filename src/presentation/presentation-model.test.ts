@@ -556,7 +556,6 @@ describe('Long text presentation', () => {
   })
 })
 
-
 describe('Rule filtering', () => {
   /**
    * 現在の確認結果に存在するルールだけを重複なく件数付きで提示できることを確認する。
