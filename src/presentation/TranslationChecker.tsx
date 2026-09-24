@@ -29,7 +29,8 @@ const STYLE_GUIDE_URL =
 /**
  * 重要な確認不能状態を利用者へ説明する。
  *
- * @param state 確認不能を表す画面状態。
+ * @param props 確認不能状態を表示するための属性。
+ * @param props.state 確認不能を表す画面状態。
  * @returns 確認不能理由と次の操作を示す領域。
  */
 function Feedback({
@@ -84,7 +85,8 @@ function Feedback({
 /**
  * 200文字を超える原文または翻訳を、利用者が個別に展開・折りたたみできる形で表示する。
  *
- * @param text 表示対象の文字列。
+ * @param props 文字列表示に必要な属性。
+ * @param props.text 表示対象の文字列。
  * @returns 長文時だけ展開操作を持つ文字列表示。
  */
 function ExpandableText({ text }: { text: string }) {
@@ -113,7 +115,8 @@ function ExpandableText({ text }: { text: string }) {
 /**
  * 1件の CheckMessage と、その指摘が属する entry の原文・翻訳を表示する。
  *
- * @param finding 表示対象の1指摘。
+ * @param props 指摘表示に必要な属性。
+ * @param props.finding 表示対象の1指摘。
  * @returns Severity、メッセージ、翻訳比較、一次情報へのリンクを含む指摘。
  */
 function FindingCard({ finding }: { finding: Finding }) {
@@ -182,7 +185,7 @@ export function TranslationChecker() {
     if (focusTarget === 'summary') {
       summaryRef.current?.focus()
     }
-  }, [focusTarget, state])
+  }, [focusTarget])
 
   /**
    * 利用者が選択した File を現在入力として採用し、以前の結果を画面状態から外す。
