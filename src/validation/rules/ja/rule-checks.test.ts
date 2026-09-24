@@ -374,6 +374,68 @@ describe('Japanese v1 rule 1-4', () => {
     })
   })
 
+
+  /**
+   * NBSP もスペースとして扱い、コロン前の不要スペースを検出することを確認する。
+   *
+   * 操作:
+   * - コロンの直前に NBSP を含む翻訳を確認する。
+   *
+   * 期待結果:
+   * - 1-4 の Error が返り、コロン前のスペース不要が案内される。
+   */
+  it('when a colon has a leading NBSP, should report rule 1-4', () => {
+    expect(
+      getRuleMessages(
+        checkSpacingBetweenHalfAndFullWidth,
+        'User ID',
+        'ユーザー ID\u00a0: username',
+      ),
+    ).toContainEqual({
+      styleGuideItem: '1-4 半角文字と全角文字の間のスペース',
+      message: '「:」の前のスペースは不要です',
+    })
+  })
+
+  /**
+   * NBSP もスペースとして扱い、日本語句読点直後の不要スペースを検出することを確認する。
+   *
+   * 操作:
+   * - 読点の直後に NBSP を含む翻訳を確認する。
+   *
+   * 期待結果:
+   * - 1-4 の Error が返り、句読点前後のスペース不要が案内される。
+   */
+  it('when Japanese punctuation has an adjacent NBSP, should report rule 1-4', () => {
+    expect(
+      getRuleMessages(
+        checkSpacingBetweenHalfAndFullWidth,
+        'Message',
+        'こんにちは、\u00a0username さん。',
+      ),
+    ).toContainEqual({
+      styleGuideItem: '1-4 半角文字と全角文字の間のスペース',
+      message: '「、」の前後のスペースは不要です',
+    })
+  })
+
+  /**
+   * 疑問符の前に半角スペース1つがある通常の半角・全角境界を正常とすることを確認する。
+   *
+   * 操作:
+   * - 日本語文末と半角疑問符の間を半角スペース1つで区切った翻訳を確認する。
+   *
+   * 期待結果:
+   * - 1-4 の指摘は返らない。
+   */
+  it('when one regular space separates Japanese text and a half-width question mark, should not report rule 1-4', () => {
+    expect(
+      checkEntries(checkSpacingBetweenHalfAndFullWidth, [
+        createEntry(0, 'Ready?', '準備ができましたか ?'),
+      ]),
+    ).toEqual([])
+  })
+
   /**
    * コロン後は半角・全角を問わずスペース1つであれば 1-4 を満たすことを確認する。
    *
