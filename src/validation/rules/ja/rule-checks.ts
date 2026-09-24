@@ -277,12 +277,13 @@ export function checkSpacingBetweenHalfAndFullWidth(
   )
   const messages: CheckMessage[] = []
   const spacingCharacters = new Set([' ', '\u00a0', '　'])
+  const validColonSpacingCharacters = new Set([' ', '　'])
   let invalidBoundary:
     | {
         left: string
         right: string
         spaceCount: number
-        hasFullWidthSpace: boolean
+        hasInvalidBoundarySpace: boolean
       }
     | undefined
   let unnecessarySymbol: string | undefined
@@ -297,12 +298,12 @@ export function checkSpacingBetweenHalfAndFullWidth(
     const left = spacingText[index] ?? ''
     let rightIndex = index + 1
     let spaceCount = 0
-    let hasFullWidthSpace = false
+    let hasInvalidBoundarySpace = false
 
-    // 境界に存在するスペースを確認し、半角スペース1つ以外は 1-4 の不適合として扱う。
+    // 境界に存在する空白を確認し、通常の半角スペース以外を含む場合は 1-4 の不適合として扱う。
     while (spacingCharacters.has(spacingText[rightIndex] ?? '')) {
       spaceCount += 1
-      hasFullWidthSpace ||= spacingText[rightIndex] === '　'
+      hasInvalidBoundarySpace ||= spacingText[rightIndex] !== ' '
       rightIndex += 1
     }
 
@@ -337,9 +338,14 @@ export function checkSpacingBetweenHalfAndFullWidth(
     // 数字を除く半角文字と日本語文字の境界は、半角スペースがちょうど1つの場合だけ正常とする。
     if (
       ((leftHalf && rightJapanese) || (leftJapanese && rightHalf)) &&
-      (spaceCount !== 1 || hasFullWidthSpace)
+      (spaceCount !== 1 || hasInvalidBoundarySpace)
     ) {
-      invalidBoundary = { left, right, spaceCount, hasFullWidthSpace }
+      invalidBoundary = {
+        left,
+        right,
+        spaceCount,
+        hasInvalidBoundarySpace,
+      }
       break
     }
   }
@@ -383,11 +389,12 @@ export function checkSpacingBetweenHalfAndFullWidth(
       continue
     }
 
-    // コロン前には半角・全角どちらのスペースも置かず、後にはどちらか1つを置く。
+    // コロン前には空白を置かず、後には半角または全角スペースのどちらか1つを置く。
     colonBefore ||= spacingCharacters.has(previous)
-    colonAfterMissing ||= next !== '' && !spacingCharacters.has(next)
+    colonAfterMissing ||=
+      next !== '' && !validColonSpacingCharacters.has(next)
     colonAfterMultiple ||=
-      spacingCharacters.has(next) &&
+      validColonSpacingCharacters.has(next) &&
       spacingCharacters.has(translation[index + 2] ?? '')
   }
 
