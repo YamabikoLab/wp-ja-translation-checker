@@ -397,7 +397,58 @@ describe('Japanese v1 error rules', () => {
     })
     expect(result.errors).toContainEqual({
       styleGuideItem: '1-4 半角文字と全角文字の間のスペース',
-      message: '「:」の後に半角スペースを入れてください',
+      message: '「:」の後にスペースを1つ入れてください',
+    })
+  })
+
+  /**
+   * コロン前の全角スペースも不要なスペースとして 1-4 で検出することを確認する。
+   *
+   * 操作:
+   * - コロンの直前に全角スペースを含む翻訳を確認する。
+   *
+   * 期待結果:
+   * - 1-4 の Error が返り、コロン前のスペース不要が案内される。
+   */
+  it('when a colon has a leading full-width space, should report rule 1-4', () => {
+    expect(
+      getOnlyResult('Status', 'ユーザー ID　: username').errors,
+    ).toContainEqual({
+      styleGuideItem: '1-4 半角文字と全角文字の間のスペース',
+      message: '「:」の前のスペースは不要です',
+    })
+  })
+
+  /**
+   * コロン後は半角・全角を問わずスペース1つであれば 1-4 を満たすことを確認する。
+   *
+   * 操作:
+   * - コロンの直後に全角スペースを1つ含む翻訳を確認する。
+   *
+   * 期待結果:
+   * - 1-4 の指摘は返らない。
+   */
+  it('when a colon has one trailing full-width space, should not report rule 1-4', () => {
+    expect(
+      check([createEntry(0, 'User ID', 'ユーザー ID:　username')]),
+    ).toEqual([])
+  })
+
+  /**
+   * 日本語の句読点前後では全角スペースも不要なスペースとして扱うことを確認する。
+   *
+   * 操作:
+   * - 読点の直後に全角スペースを含む翻訳を確認する。
+   *
+   * 期待結果:
+   * - 1-4 の Error が返り、句読点前後のスペース不要が案内される。
+   */
+  it('when Japanese punctuation has an adjacent full-width space, should report rule 1-4', () => {
+    expect(
+      getOnlyResult('Message', 'こんにちは、　username さん。').errors,
+    ).toContainEqual({
+      styleGuideItem: '1-4 半角文字と全角文字の間のスペース',
+      message: '「、」の前後のスペースは不要です',
     })
   })
 
