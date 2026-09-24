@@ -127,12 +127,6 @@ describe('Japanese v1 rule 1-1', () => {
     ).toEqual([])
   })
 
-  
-
-  
-
-  
-
   /**
    * URL やメールアドレス内部の句読点記号を日本語本文の 1-1 対象として扱わないことを確認する。
    *
@@ -397,7 +391,7 @@ describe('Japanese v1 rule 1-4', () => {
     ).toEqual([])
   })
 
-/**
+  /**
    * 日本語の句読点前後に不要なスペースがある場合の 1-4 判定を確認する。
    *
    * 操作:
@@ -408,14 +402,18 @@ describe('Japanese v1 rule 1-4', () => {
    */
   it('when a Japanese punctuation mark has an adjacent space, should report rule 1-4', () => {
     expect(
-      getRuleMessages(checkSpacingBetweenHalfAndFullWidth, 'Message', '設定 、保存'),
+      getRuleMessages(
+        checkSpacingBetweenHalfAndFullWidth,
+        'Message',
+        '設定 、保存',
+      ),
     ).toContainEqual({
       styleGuideItem: '1-4 半角文字と全角文字の間のスペース',
       message: '「、」の前後のスペースは不要です',
     })
   })
 
-/**
+  /**
    * 日本語の句読点前後では全角スペースも不要なスペースとして扱うことを確認する。
    *
    * 操作:
@@ -549,7 +547,7 @@ describe('Japanese v1 rule 1-5', () => {
     ).toEqual([])
   })
 
-/**
+  /**
    * 丸括弧外側スペースの文字列境界・日本語句読点例外を確認する。
    *
    * 操作:
