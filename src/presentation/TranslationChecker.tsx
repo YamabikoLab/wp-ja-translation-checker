@@ -14,6 +14,8 @@ import {
 import { checkPo } from '@/check/check'
 import {
   createFindings,
+  createRuleFilterOptions,
+  filterFindingsByRule,
   getCollapsedText,
   getCompletionFocusTarget,
   presentationReducer,
@@ -182,6 +184,7 @@ export function TranslationChecker() {
   const feedbackRef = useRef<HTMLElement>(null)
   const summaryRef = useRef<HTMLElement>(null)
   const [copyFeedback, setCopyFeedback] = useState<CopyFeedback>(null)
+  const [selectedRule, setSelectedRule] = useState<string | null>(null)
 
   const focusTarget = getCompletionFocusTarget(state)
 
@@ -209,6 +212,7 @@ export function TranslationChecker() {
 
     activeFileRef.current = null
     setCopyFeedback(null)
+    setSelectedRule(null)
     dispatch({ type: 'select-file', file })
   }
 
@@ -230,6 +234,7 @@ export function TranslationChecker() {
 
     activeFileRef.current = file
     setCopyFeedback(null)
+    setSelectedRule(null)
     dispatch({ type: 'start-check' })
 
     let source: string
@@ -334,6 +339,8 @@ export function TranslationChecker() {
   const findings =
     state.status === 'success' ? createFindings(state.result) : []
   const summary = summarizeFindings(findings)
+  const ruleFilterOptions = createRuleFilterOptions(findings)
+  const filteredFindings = filterFindingsByRule(findings, selectedRule)
 
   return (
     <main className={styles.page}>
@@ -482,10 +489,31 @@ export function TranslationChecker() {
             >
               <div className={styles.findingsHeading}>
                 <h2 id="findings-title">指摘一覧</h2>
-                <p>{findings.length}件の指摘</p>
+                <p>{filteredFindings.length}件の指摘</p>
               </div>
+
+              <label className={styles.ruleFilter}>
+                <span>ルールで絞り込む</span>
+                <select
+                  value={selectedRule ?? ''}
+                  onChange={(event) =>
+                    setSelectedRule(event.target.value || null)
+                  }
+                >
+                  <option value="">すべてのルール</option>
+                  {ruleFilterOptions.map((option) => (
+                    <option
+                      key={option.styleGuideItem}
+                      value={option.styleGuideItem}
+                    >
+                      {option.styleGuideItem} ({option.count})
+                    </option>
+                  ))}
+                </select>
+              </label>
+
               <div className={styles.findingsList}>
-                {findings.map((finding) => (
+                {filteredFindings.map((finding) => (
                   <FindingCard key={finding.key} finding={finding} />
                 ))}
               </div>

@@ -65,6 +65,14 @@ export type FindingSummary = {
 }
 
 /**
+ * ルールフィルターで選択できる1ルールと、現在の確認結果に含まれる指摘件数を表す。
+ */
+export type RuleFilterOption = {
+  styleGuideItem: string
+  count: number
+}
+
+/**
  * 完了後にフォーカスを移す Presentation 上の意味領域を表す。
  */
 export type CompletionFocusTarget = 'feedback' | 'summary' | null
@@ -206,6 +214,51 @@ export function summarizeFindings(
     warningCount,
     totalCount: errorCount + warningCount,
   }
+}
+
+/**
+ * 現在の確認結果に存在するルールを、最初に現れた順で重複なく集計する。
+ *
+ * @param findings 正常完了結果から導出した全指摘。
+ * @returns ルール名と CheckMessage 単位の指摘件数。
+ */
+export function createRuleFilterOptions(
+  findings: readonly Finding[],
+): readonly RuleFilterOption[] {
+  const counts = new Map<string, number>()
+
+  // 画面で選択可能なルールと件数だけを導出し、元の指摘一覧は変更しない。
+  for (const finding of findings) {
+    counts.set(
+      finding.styleGuideItem,
+      (counts.get(finding.styleGuideItem) ?? 0) + 1,
+    )
+  }
+
+  return Array.from(counts, ([styleGuideItem, count]) => ({
+    styleGuideItem,
+    count,
+  }))
+}
+
+/**
+ * 選択された1ルールに一致する指摘だけを画面表示用として導出する。
+ *
+ * @param findings 正常完了結果から導出した全指摘。
+ * @param selectedStyleGuideItem 選択中のスタイルガイド項目。null は「すべてのルール」を表す。
+ * @returns 選択ルールに一致する指摘一覧。元の指摘一覧は変更しない。
+ */
+export function filterFindingsByRule(
+  findings: readonly Finding[],
+  selectedStyleGuideItem: string | null,
+): readonly Finding[] {
+  if (selectedStyleGuideItem === null) {
+    return findings
+  }
+
+  return findings.filter(
+    (finding) => finding.styleGuideItem === selectedStyleGuideItem,
+  )
 }
 
 /**

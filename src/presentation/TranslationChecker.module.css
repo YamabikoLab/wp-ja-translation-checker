@@ -134,6 +134,7 @@
 .exportButton:focus-visible,
 .textToggle:focus-visible,
 .fileInput input:focus-visible,
+.ruleFilter select:focus-visible,
 .guideReference a:focus-visible {
   outline: 3px solid var(--color-focus);
   outline-offset: 3px;
@@ -263,6 +264,26 @@
 
 .findingsHeading p {
   margin: 0;
+}
+
+.ruleFilter {
+  display: grid;
+  gap: 8px;
+  width: min(100%, 420px);
+  margin-bottom: 20px;
+  color: var(--color-heading);
+  font-weight: 700;
+}
+
+.ruleFilter select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-medium);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
 }
 
 .findingsList {
