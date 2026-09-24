@@ -1,18 +1,20 @@
 /**
- * Locale Rule Selection と後続の Rule Evaluation の間で受け渡す、ルール集合の最小契約を定義する。
+ * Locale Rule Selection と Rule Evaluation の間で受け渡す、ルールセットの最小契約を定義する。
  *
- * Phase 3 ではルール集合が順序付き readonly collection であることだけを確定し、
- * 個別 Rule の評価契約は実際の日本語ルールを実装する段階で必要になった範囲を定義する。
+ * この境界では、ルールセットが適用順を保持する読み取り専用の集合であることだけを定める。
+ * 個別ルールの評価契約は、日本語ルールの責務として必要になった範囲で定義する。
  */
 
 /**
- * RuleSet に含まれる個別ルールを表す暫定的な型境界。
+ * ルールセットに含まれる個別ルールを表す型境界。
  *
- * Phase 3 では個別ルールの具体的な入力や評価操作を確定しない。
+ * 現時点では個別ルールの入力や評価操作をこの責務で規定しない。
  */
 export type Rule = unknown
 
 /**
- * Rule Evaluation が rule set order を保持して利用する、順序付きの readonly collection を表す。
+ * Rule Evaluation がルールの適用順を保持して利用する、読み取り専用の順序付き集合を表す。
+ *
+ * 配列順をルールセット内の適用順とし、ルールセット自身はロケールやルールの説明情報を重複して所有しない。
  */
 export type RuleSet = readonly Rule[]
