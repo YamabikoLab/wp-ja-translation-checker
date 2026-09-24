@@ -6,6 +6,8 @@ The product is designed to support locale-specific rule sets. **v1 supports Japa
 
 All PO processing is performed in the browser. The v1 scope does not upload translation files to a server or integrate directly with translate.wordpress.org.
 
+WTC is an independent YamabikoLab project. It is not an official WordPress project and is not affiliated with or endorsed by the WordPress project.
+
 ## Development
 
 This repository uses React, TypeScript, Vite, and Vitest.
@@ -23,6 +25,9 @@ Repository-wide validation commands and guidance are documented in [`docs/develo
 - [v1 design](docs/design/v1-design.md)
 - [v1 architecture](docs/architecture/v1-architecture.md)
 - [v1 implementation plan](docs/plans/v1-plan.md)
+- [Contributing](CONTRIBUTING.md)
+- [Security policy](SECURITY.md)
+- [Code of Conduct](CODE_OF_CONDUCT.md)
 
 ## v1 locale scope
 
@@ -34,3 +39,7 @@ For v1:
 - rule source: WordPress Japanese Translation Style Guide
 - unsupported locales: reported as unsupported, without applying `ja` rules
 - additional locale rule sets: out of scope
+
+## License
+
+Released under the [GNU General Public License v2.0 or later](LICENSE).
