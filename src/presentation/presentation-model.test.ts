@@ -6,6 +6,8 @@ import { describe, expect, it } from 'vitest'
 import type { CheckResult } from '@/check/check'
 import {
   createFindings,
+  createRuleFilterOptions,
+  filterFindingsByRule,
   getCollapsedText,
   getCompletionFocusTarget,
   presentationReducer,
@@ -551,5 +553,149 @@ describe('Long text presentation', () => {
     expect(result.isLong).toBe(true)
     expect(Array.from(result.collapsed)).toHaveLength(201)
     expect(result.collapsed.endsWith('…')).toBe(true)
+  })
+})
+
+
+describe('Rule filtering', () => {
+  /**
+   * 現在の確認結果に存在するルールだけを重複なく件数付きで提示できることを確認する。
+   *
+   * 事前条件:
+   * - Error / Warning に同じルールの指摘が含まれる。
+   * - 別ルールの指摘も含まれる。
+   *
+   * 操作:
+   * - ルール選択肢を導出する。
+   *
+   * 期待結果:
+   * - 同じルールは1つの選択肢となる。
+   * - Error / Warning を区別せず、1つの CheckMessage を1件として集計する。
+   * - 最初に現れたルール順を維持する。
+   */
+  it('when findings contain repeated rules across severities, should create unique rule options with message counts', () => {
+    const entry = createSuccessResult().entries[0]
+    const findings = [
+      {
+        key: '0-error-0',
+        severity: 'Error' as const,
+        message: 'Error 1',
+        styleGuideItem: '1-1 日本語の句読点',
+        entry,
+      },
+      {
+        key: '0-warning-0',
+        severity: 'Warning' as const,
+        message: 'Warning 1',
+        styleGuideItem: '3-2 View XX',
+        entry,
+      },
+      {
+        key: '0-warning-1',
+        severity: 'Warning' as const,
+        message: 'Warning 2',
+        styleGuideItem: '1-1 日本語の句読点',
+        entry,
+      },
+    ]
+
+    expect(createRuleFilterOptions(findings)).toEqual([
+      { styleGuideItem: '1-1 日本語の句読点', count: 2 },
+      { styleGuideItem: '3-2 View XX', count: 1 },
+    ])
+  })
+
+  /**
+   * 単一ルール選択では Error / Warning の両方を同じ条件で絞り込むことを確認する。
+   *
+   * 事前条件:
+   * - 同じルールに Error と Warning が存在する。
+   * - 別ルールの指摘も存在する。
+   *
+   * 操作:
+   * - 1つのルールを選択する。
+   *
+   * 期待結果:
+   * - 選択したルールの Error / Warning だけを返す。
+   * - 元の指摘一覧は変更しない。
+   */
+  it('when one rule is selected, should filter both error and warning findings without changing the source list', () => {
+    const entry = createSuccessResult().entries[0]
+    const findings = [
+      {
+        key: '0-error-0',
+        severity: 'Error' as const,
+        message: 'Error 1',
+        styleGuideItem: '1-1 日本語の句読点',
+        entry,
+      },
+      {
+        key: '0-warning-0',
+        severity: 'Warning' as const,
+        message: 'Warning 1',
+        styleGuideItem: '1-1 日本語の句読点',
+        entry,
+      },
+      {
+        key: '0-error-1',
+        severity: 'Error' as const,
+        message: 'Error 2',
+        styleGuideItem: '1-2 英数字・記号の半角表記',
+        entry,
+      },
+    ]
+
+    const filtered = filterFindingsByRule(findings, '1-1 日本語の句読点')
+
+    expect(filtered.map((finding) => finding.key)).toEqual([
+      '0-error-0',
+      '0-warning-0',
+    ])
+    expect(findings).toHaveLength(3)
+  })
+
+  /**
+   * 「すべてのルール」では元の確認結果全体を表示対象とすることを確認する。
+   *
+   * 事前条件:
+   * - 複数ルールの指摘が存在する。
+   *
+   * 操作:
+   * - 「すべてのルール」を表す null を指定する。
+   *
+   * 期待結果:
+   * - 元の指摘一覧全体をそのまま返す。
+   */
+  it('when all rules are selected, should return the complete finding list', () => {
+    const findings = createFindings(createSuccessResult())
+
+    expect(filterFindingsByRule(findings, null)).toBe(findings)
+  })
+
+  /**
+   * 結果概要はフィルター後の件数ではなく確認結果全体の件数を維持できることを確認する。
+   *
+   * 事前条件:
+   * - 複数ルールに Error / Warning が存在する。
+   *
+   * 操作:
+   * - 全指摘から概要を集計し、別に1ルールの表示対象を導出する。
+   *
+   * 期待結果:
+   * - 概要は全指摘の件数を保持する。
+   * - フィルター後の指摘件数だけが選択ルールの件数となる。
+   */
+  it('when a rule filter is applied, should keep the summary based on all findings while narrowing the visible count', () => {
+    const findings = createFindings(createSuccessResult(2, 1))
+    const selectedRule = findings[0]?.styleGuideItem ?? null
+    const summary = summarizeFindings(findings)
+    const filtered = filterFindingsByRule(findings, selectedRule)
+
+    expect(summary).toEqual({
+      errorCount: 2,
+      warningCount: 1,
+      totalCount: 3,
+    })
+    expect(filtered).toHaveLength(1)
   })
 })
