@@ -120,6 +120,8 @@ function ExpandableText({ text }: { text: string }) {
  * @returns Severity、メッセージ、翻訳比較、一次情報へのリンクを含む指摘。
  */
 function FindingCard({ finding }: { finding: Finding }) {
+  const translation = finding.entry.translations[0]?.text ?? ''
+
   return (
     <article className={styles.finding}>
       <div className={styles.findingHeader}>
@@ -138,17 +140,17 @@ function FindingCard({ finding }: { finding: Finding }) {
       <div className={styles.comparison}>
         <section className={styles.comparisonPanel}>
           <h3>原文</h3>
-          <ExpandableText text={finding.source} />
-          {finding.pluralSource !== undefined && (
+          <ExpandableText text={finding.entry.source.singular} />
+          {finding.entry.source.plural !== undefined && (
             <div className={styles.pluralSource}>
               <h4>複数形原文</h4>
-              <ExpandableText text={finding.pluralSource} />
+              <ExpandableText text={finding.entry.source.plural} />
             </div>
           )}
         </section>
         <section className={styles.comparisonPanel}>
           <h3>翻訳</h3>
-          <ExpandableText text={finding.translation} />
+          <ExpandableText text={translation} />
         </section>
       </div>
 
