@@ -281,6 +281,22 @@ describe('Japanese v1 error rules', () => {
     })
   })
 
+
+  /**
+   * 数字以外の半角文字と日本語文字の間が半角スペース1つなら 1-4 を満たすことを確認する。
+   *
+   * 操作:
+   * - 半角英字と日本語文字の間を半角スペース1つで区切った翻訳を確認する。
+   *
+   * 期待結果:
+   * - 1-4 の指摘は返らない。
+   */
+  it('when one space separates half-width and Japanese text, should not report rule 1-4', () => {
+    expect(
+      check([createEntry(0, 'WordPress setting', 'WordPress 設定')]),
+    ).toEqual([])
+  })
+
   /**
    * 文字列プレースホルダーと日本語の境界を 1-4 として断定しないことを確認する。
    *
