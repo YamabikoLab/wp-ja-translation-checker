@@ -21,11 +21,18 @@ import {
   type Finding,
   type PresentationState,
 } from './presentation-model'
+import {
+  serializeCsv,
+  serializeJson,
+  serializeMarkdown,
+} from './result-export'
 import styles from './TranslationChecker.module.css'
 
 const STYLE_GUIDE_URL =
   'https://ja.wordpress.org/team/handbook/translation/translation-style-guide/'
 const STYLE_GUIDE_LAST_UPDATED = '2026年8月28日'
+
+type CopyFeedback = 'success' | 'failure' | null
 
 /**
  * 重要な確認不能状態を利用者へ説明する。
@@ -178,6 +185,7 @@ export function TranslationChecker() {
   const activeFileRef = useRef<File | null>(null)
   const feedbackRef = useRef<HTMLElement>(null)
   const summaryRef = useRef<HTMLElement>(null)
+  const [copyFeedback, setCopyFeedback] = useState<CopyFeedback>(null)
 
   const focusTarget = getCompletionFocusTarget(state)
 
@@ -204,6 +212,7 @@ export function TranslationChecker() {
     }
 
     activeFileRef.current = null
+    setCopyFeedback(null)
     dispatch({ type: 'select-file', file })
   }
 
@@ -224,6 +233,7 @@ export function TranslationChecker() {
     }
 
     activeFileRef.current = file
+    setCopyFeedback(null)
     dispatch({ type: 'start-check' })
 
     let source: string
@@ -246,6 +256,82 @@ export function TranslationChecker() {
     }
 
     dispatch({ type: 'check-completed', file, result })
+  }
+
+  /**
+   * 正常完了した現在の確認結果を、指定形式のローカルファイルとして保存する。
+   *
+   * @param content 保存する出力文字列。
+   * @param extension 出力形式を表す拡張子。
+   * @param mediaType 出力形式に対応する MIME type。
+   */
+  const downloadResult = (
+    content: string,
+    extension: 'csv' | 'json',
+    mediaType: string,
+  ) => {
+    if (state.status !== 'success') {
+      return
+    }
+
+    const baseName = state.file.name.replace(/\.po$/i, '')
+    const blob = new Blob([content], { type: mediaType })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+
+    link.href = url
+    link.download = `${baseName}-wtc-results.${extension}`
+    document.body.append(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(url)
+  }
+
+  /**
+   * 現在の確認結果全体を CSV として保存する。
+   */
+  const handleCsvDownload = () => {
+    downloadResult(serializeCsv(findings), 'csv', 'text/csv;charset=utf-8')
+  }
+
+  /**
+   * 現在の確認結果全体を JSON として保存する。
+   */
+  const handleJsonDownload = () => {
+    if (state.status !== 'success') {
+      return
+    }
+
+    downloadResult(
+      serializeJson(state.file.name, findings),
+      'json',
+      'application/json;charset=utf-8',
+    )
+  }
+
+  /**
+   * 現在の確認結果全体を Markdown としてクリップボードへコピーする。
+   *
+   * Clipboard API を利用できない場合や書き込みに失敗した場合は、成功扱いにせず利用者へ通知する。
+   */
+  const handleMarkdownCopy = async () => {
+    if (state.status !== 'success') {
+      return
+    }
+
+    if (navigator.clipboard?.writeText === undefined) {
+      setCopyFeedback('failure')
+      return
+    }
+
+    try {
+      await navigator.clipboard.writeText(
+        serializeMarkdown(state.file.name, findings),
+      )
+      setCopyFeedback('success')
+    } catch {
+      setCopyFeedback('failure')
+    }
   }
 
   const selectedFile = state.status === 'no-file' ? null : state.file
@@ -347,6 +433,48 @@ export function TranslationChecker() {
                 最終更新版の対象ルールでは問題が検出されませんでした。
               </p>
             )}
+
+            <div className={styles.exportArea}>
+              <div>
+                <h3>確認結果を共有・保存</h3>
+                <p>
+                  CSV / JSON はファイルとして保存し、Markdown はクリップボードへコピーします。
+                </p>
+              </div>
+              <div className={styles.exportActions}>
+                <button
+                  type="button"
+                  className={styles.exportButton}
+                  onClick={handleCsvDownload}
+                >
+                  CSV をダウンロード
+                </button>
+                <button
+                  type="button"
+                  className={styles.exportButton}
+                  onClick={handleJsonDownload}
+                >
+                  JSON をダウンロード
+                </button>
+                <button
+                  type="button"
+                  className={styles.exportButton}
+                  onClick={handleMarkdownCopy}
+                >
+                  Markdown をコピー
+                </button>
+              </div>
+              {copyFeedback === 'success' && (
+                <p className={styles.copySuccess} role="status">
+                  Markdown をクリップボードへコピーしました。
+                </p>
+              )}
+              {copyFeedback === 'failure' && (
+                <p className={styles.copyFailure} role="alert">
+                  Markdown をコピーできませんでした。ブラウザーのクリップボード利用設定を確認してください。
+                </p>
+              )}
+            </div>
           </section>
 
           {findings.length > 0 && (
