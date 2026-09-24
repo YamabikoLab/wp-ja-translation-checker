@@ -846,10 +846,7 @@ function checkRecommendedExpressions(
   for (const [detected, expected] of recommendations) {
     let detectedIndex = translation.indexOf(detected)
 
-    while (
-      detectedIndex !== -1 &&
-      protectedIndexes.has(detectedIndex)
-    ) {
+    while (detectedIndex !== -1 && protectedIndexes.has(detectedIndex)) {
       detectedIndex = translation.indexOf(
         detected,
         detectedIndex + detected.length,

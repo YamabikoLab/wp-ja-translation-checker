@@ -250,11 +250,7 @@ describe('Japanese v1 error rules', () => {
   it('when parentheses are wrapped by markup with valid visible spacing, should not report rule 1-5', () => {
     expect(
       check([
-        createEntry(
-          0,
-          'Status',
-          '保留中 <span class="count">(%s)</span>',
-        ),
+        createEntry(0, 'Status', '保留中 <span class="count">(%s)</span>'),
       ]),
     ).toEqual([])
   })
@@ -347,9 +343,7 @@ describe('Japanese v1 error rules', () => {
   })
 
   it('when number spacing appears inside protected code, should not report rule 1-9', () => {
-    expect(check([createEntry(0, 'Code', 'コード `3 件` を確認')])).toEqual(
-      [],
-    )
+    expect(check([createEntry(0, 'Code', 'コード `3 件` を確認')])).toEqual([])
   })
 
   it('when recommended expressions are used, should report each rule 3-6 message', () => {
