@@ -200,31 +200,69 @@ export function check(
 
 ### Successful validation with findings {#RV_SUCCESS_WITH_FINDINGS}
 
-1. Presentation が Check Orchestration へ確認対象を渡す。
-2. Check Orchestration が PO Interpretation を実行する。
-3. Check Orchestration が Locale Resolution を実行する。
-4. locale が `ja` の場合、日本語 `check(entries)` を1回呼ぶ。
-5. 1件以上の Error / Warning を含む正常結果を Presentation へ返す。
+確認可能な日本語 PO に対して、1件以上の指摘を含む正常結果が得られる流れを示す。
+
+| Step | Source                   | Target                   | Interaction                                                       |
+| ---: | ------------------------ | ------------------------ | ----------------------------------------------------------------- |
+|    1 | RESP_PRESENTATION        | RESP_CHECK_ORCHESTRATION | 確認開始時点の選択入力を対象として確認を要求する。                |
+|    2 | RESP_CHECK_ORCHESTRATION | RESP_PO_INTERPRETATION   | 入力を翻訳 entry と metadata へ解釈するよう求める。               |
+|    3 | RESP_CHECK_ORCHESTRATION | RESP_LOCALE_RESOLUTION   | 解釈済み metadata から対象 locale の判定を求める。                |
+|    4 | RESP_CHECK_ORCHESTRATION | RESP_JAPANESE_CHECK      | locale が `ja` のため、日本語 `check(entries)` を実行する。   |
+|    5 | RESP_JAPANESE_CHECK      | RESP_CHECK_ORCHESTRATION | Error / Warning を含む日本語チェック結果を返す。                  |
+|    6 | RESP_CHECK_ORCHESTRATION | RESP_PRESENTATION        | 指摘あり正常完了として確認全体の結果を通知する。                  |
 
 ### Successful validation without findings {#RV_SUCCESS_WITHOUT_FINDINGS}
 
-日本語 `check(entries)` が `[]` を返した場合でも、Check Orchestration は「確認が正常に完了し、対象ルールでは指摘がない」状態として扱う。
+確認が正常に完了し、日本語 v1 対象ルールで指摘がない場合を示す。
+
+| Step | Source                   | Target                   | Interaction                                                       |
+| ---: | ------------------------ | ------------------------ | ----------------------------------------------------------------- |
+|    1 | RESP_PRESENTATION        | RESP_CHECK_ORCHESTRATION | 確認開始時点の選択入力を対象として確認を要求する。                |
+|    2 | RESP_CHECK_ORCHESTRATION | RESP_PO_INTERPRETATION   | 入力を翻訳 entry と metadata へ解釈するよう求める。               |
+|    3 | RESP_CHECK_ORCHESTRATION | RESP_LOCALE_RESOLUTION   | 解釈済み metadata から対象 locale の判定を求める。                |
+|    4 | RESP_CHECK_ORCHESTRATION | RESP_JAPANESE_CHECK      | locale が `ja` のため、日本語 `check(entries)` を実行する。   |
+|    5 | RESP_JAPANESE_CHECK      | RESP_CHECK_ORCHESTRATION | 指摘がないため空配列を返す。                                      |
+|    6 | RESP_CHECK_ORCHESTRATION | RESP_PRESENTATION        | 指摘なし正常完了として確認全体の結果を通知する。                  |
 
 ### Invalid PO input {#RV_INVALID_PO_INPUT}
 
-PO Interpretation が解析不能を返した場合、日本語チェックは実行しない。
+入力を確認可能な PO として解釈できない場合を示す。
+
+| Step | Source                   | Target                   | Interaction                                      |
+| ---: | ------------------------ | ------------------------ | ------------------------------------------------ |
+|    1 | RESP_PRESENTATION        | RESP_CHECK_ORCHESTRATION | 選択入力の確認を要求する。                       |
+|    2 | RESP_CHECK_ORCHESTRATION | RESP_PO_INTERPRETATION   | 入力の解釈を求める。                             |
+|    3 | RESP_PO_INTERPRETATION   | RESP_CHECK_ORCHESTRATION | 確認可能な PO として解釈できないことを通知する。 |
+|    4 | RESP_CHECK_ORCHESTRATION | RESP_PRESENTATION        | 入力解析不能として確認全体の結果を通知する。     |
 
 ### Unresolved locale {#RV_UNRESOLVED_LOCALE}
 
-Locale Resolution が判定不能を返した場合、日本語チェックは実行しない。
+PO は解釈できるが対象 locale を判定できない場合を示す。
+
+| Step | Source                   | Target                   | Interaction                                        |
+| ---: | ------------------------ | ------------------------ | -------------------------------------------------- |
+|    1 | RESP_CHECK_ORCHESTRATION | RESP_LOCALE_RESOLUTION   | 解釈済み metadata から対象 locale の判定を求める。 |
+|    2 | RESP_LOCALE_RESOLUTION   | RESP_CHECK_ORCHESTRATION | 対象 locale を判定できないことを通知する。         |
+|    3 | RESP_CHECK_ORCHESTRATION | RESP_PRESENTATION        | locale 判定不能として確認全体の結果を通知する。    |
 
 ### Unsupported locale {#RV_UNSUPPORTED_LOCALE}
 
-locale を解決できても `ja` でない場合、日本語チェックは実行せず未対応 locale として扱う。
+対象 locale は判定できるが v1 では未対応の場合を示す。
+
+| Step | Source                   | Target                   | Interaction                                                      |
+| ---: | ------------------------ | ------------------------ | ---------------------------------------------------------------- |
+|    1 | RESP_CHECK_ORCHESTRATION | RESP_LOCALE_RESOLUTION   | 解釈済み metadata から対象 locale の判定を求める。               |
+|    2 | RESP_LOCALE_RESOLUTION   | RESP_CHECK_ORCHESTRATION | `ja` 以外の解決済み locale を返す。                            |
+|    3 | RESP_CHECK_ORCHESTRATION | RESP_PRESENTATION        | 日本語チェックを実行せず、未対応 locale として結果を通知する。   |
 
 ### Input replaced during validation {#RV_INPUT_REPLACED}
 
-入力差し替え後に旧入力の結果を現在入力へ適用しない責務は Presentation が所有する。具体的な version、cancel、queue 等の方式はアーキテクチャでは固定しない。
+確認中に利用者が別のファイルを選択した場合でも、旧入力に対応付いた結果を現在の入力へ誤適用しないことを示す。利用者による現在入力の置き換えは Presentation 内の state transition であり、責務間 interaction としては扱わない。
+
+| Step | Source                   | Target                   | Interaction                            |
+| ---: | ------------------------ | ------------------------ | -------------------------------------- |
+|    1 | RESP_PRESENTATION        | RESP_CHECK_ORCHESTRATION | 旧入力を対象とする確認を開始する。     |
+|    2 | RESP_CHECK_ORCHESTRATION | RESP_PRESENTATION        | 旧入力に対応付いた確認結果を通知する。 |
 
 ## 8. Crosscutting Concepts
 
