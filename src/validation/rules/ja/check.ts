@@ -5,7 +5,7 @@
  * 問題のない entry は結果に含めず、同じ入力からは同じ順序の結果を返す。
  */
 
-import type { TranslationEntry } from '../../po/interpret-po'
+import type { TranslationEntry } from '@/po/interpret-po'
 import {
   checkHalfWidthCharacters,
   checkInnerParenthesesSpacing,

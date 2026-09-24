@@ -5,7 +5,7 @@
  */
 
 import { describe, expect, it } from 'vitest'
-import type { TranslationEntry } from '../../po/interpret-po'
+import type { TranslationEntry } from '@/po/interpret-po'
 import {
   checkHalfWidthCharacters,
   checkInnerParenthesesSpacing,
