@@ -331,23 +331,37 @@ function checkSpacingBetweenHalfAndFullWidth(
     '0'.repeat(value.length),
   )
   const messages: CheckMessage[] = []
-  let missingBoundary: [string, string] | undefined
+  let invalidBoundary:
+    | { left: string; right: string; spaceCount: number }
+    | undefined
   let unnecessarySymbol: string | undefined
 
-  // 数字以外の半角文字と日本語文字の境界に、必要な半角スペースがあるか確認する。
+  // 数字以外の半角文字と日本語文字の境界が、半角スペース1つで区切られているか確認する。
   for (let index = 0; index < spacingText.length - 1; index += 1) {
-    // 技術文字列と本文の境界は、技術文字列内部の表記規則として断定しない。
-    if (protectedIndexes.has(index) || protectedIndexes.has(index + 1)) {
+    // 技術文字列内部から始まる境界は、日本語本文のスペース規則として評価しない。
+    if (protectedIndexes.has(index)) {
       continue
     }
 
     const left = spacingText[index] ?? ''
-    const right = spacingText[index + 1] ?? ''
+    let rightIndex = index + 1
+    let spaceCount = 0
+
+    // 境界に存在する半角スペースを数え、次の本文文字との組み合わせで過不足を判断する。
+    while (spacingText[rightIndex] === ' ') {
+      spaceCount += 1
+      rightIndex += 1
+    }
+
+    // 技術文字列へ接続する境界は、本文同士のスペース規則として断定しない。
+    if (protectedIndexes.has(rightIndex)) {
+      continue
+    }
+
+    const right = spacingText[rightIndex] ?? ''
 
     // 丸括弧・コロン・句読点等は個別規則または例外があるため、通常の半角・全角境界判定から除外する。
     if (
-      left === ' ' ||
-      right === ' ' ||
       left === '(' ||
       right === ')' ||
       left === ')' ||
@@ -367,9 +381,12 @@ function checkSpacingBetweenHalfAndFullWidth(
     const leftJapanese = JAPANESE_CHARACTER.test(left)
     const rightJapanese = JAPANESE_CHARACTER.test(right)
 
-    // 数字を除く半角文字と日本語文字が直接接している場合は、必要な半角スペースが欠けていると判断する。
-    if ((leftHalf && rightJapanese) || (leftJapanese && rightHalf)) {
-      missingBoundary = [left, right]
+    // 数字を除く半角文字と日本語文字の境界は、スペースがちょうど1つの場合だけ正常とする。
+    if (
+      ((leftHalf && rightJapanese) || (leftJapanese && rightHalf)) &&
+      spaceCount !== 1
+    ) {
+      invalidBoundary = { left, right, spaceCount }
       break
     }
   }
@@ -417,11 +434,14 @@ function checkSpacingBetweenHalfAndFullWidth(
     colonAfterMultiple ||= translation.slice(index + 1).startsWith('  ')
   }
 
-  // 通常の半角・全角文字境界でスペース不足を検出した場合は、その境界を1件の指摘として返す。
-  if (missingBoundary !== undefined) {
+  // 通常の半角・全角文字境界でスペースの過不足を検出した場合は、その境界を1件の指摘として返す。
+  if (invalidBoundary !== undefined) {
     messages.push({
       styleGuideItem: STYLE_GUIDE.halfFullSpacing,
-      message: `「${missingBoundary[0]}」と「${missingBoundary[1]}」の間に半角スペースを入れてください`,
+      message:
+        invalidBoundary.spaceCount === 0
+          ? `「${invalidBoundary.left}」と「${invalidBoundary.right}」の間に半角スペースを入れてください`
+          : `「${invalidBoundary.left}」と「${invalidBoundary.right}」の間の半角スペースは1つにしてください`,
     })
   }
 
@@ -829,10 +849,14 @@ function checkNotAllowedExpression(
   entry: TranslationEntry,
 ): readonly CheckMessage[] {
   const translation = getTranslation(entry)
-  // 3-3 は、対象の原文構文が存在し、翻訳が既定の権限表現を満たしていない場合だけ Warning とする。
+  // v1 では、権限主体と明確に判断できる代表的な人・利用者の表現に対象を限定し、物や値の制約表現は指摘しない。
+  const permissionSource =
+    /\b(?:you|users?|administrators?|editors?|authors?|contributors?|subscribers?|customers?|members?)\s+(?:is|are) not allowed to\b/iu
+
+  // 3-3 は、対象の権限不足構文が存在し、翻訳が既定の権限表現を満たしていない場合だけ Warning とする。
   if (
     translation === undefined ||
-    !/\b(?:is|are) not allowed to\b/iu.test(entry.source.singular) ||
+    !permissionSource.test(entry.source.singular) ||
     /権限がありません/u.test(translation)
   ) {
     return []
