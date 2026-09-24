@@ -402,6 +402,8 @@ function checkSpacingBetweenHalfAndFullWidth(
 /**
  * 丸括弧の全角表記と、半角丸括弧の外側スペースを確認する。
  *
+ * 明示的に判別できる技術文字列の内部は日本語本文の丸括弧規則として扱わない。
+ *
  * @param entry 確認対象 entry。
  * @returns 1-5 に該当する指摘。
  */
@@ -413,22 +415,38 @@ function checkParenthesesSpacing(
     return []
   }
 
+  const { protectedIndexes } = protectTechnicalText(translation)
   const messages: CheckMessage[] = []
+  let hasFullWidthParentheses = false
 
-  if (/[（）]/u.test(translation)) {
+  // 技術文字列を除く本文で、全角丸括弧が使われていないか確認する。
+  for (let index = 0; index < translation.length; index += 1) {
+    if (protectedIndexes.has(index)) {
+      continue
+    }
+
+    const character = translation[index]
+    if (character === '（' || character === '）') {
+      hasFullWidthParentheses = true
+      break
+    }
+  }
+
+  if (hasFullWidthParentheses) {
     messages.push({
       styleGuideItem: STYLE_GUIDE.parentheses,
       message: '丸括弧は半角の「( )」を使用してください',
     })
   }
 
-  if (!JAPANESE_CHARACTER.test(translation)) {
-    return messages
-  }
-
   let invalidOuterSpacing = false
 
+  // 半角丸括弧の外側が、例外を除いて半角スペース1つになっているか確認する。
   for (let index = 0; index < translation.length; index += 1) {
+    if (protectedIndexes.has(index)) {
+      continue
+    }
+
     const character = translation[index]
 
     if (character === '(' && index > 0) {
