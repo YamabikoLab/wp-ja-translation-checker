@@ -276,7 +276,7 @@ export function checkSpacingBetweenHalfAndFullWidth(
     '0'.repeat(value.length),
   )
   const messages: CheckMessage[] = []
-  const spacingCharacters = new Set([' ', '　'])
+  const spacingCharacters = new Set([' ', '\u00a0', '　'])
   let invalidBoundary:
     | {
         left: string
