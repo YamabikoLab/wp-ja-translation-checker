@@ -107,9 +107,9 @@ Presentation は利用者向け interaction state と表示を所有し、個別
 
 ### Dependency Views
 
-| ID              | Name         | Includes                                                                                                                              |
-| --------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
-| DV_WTC_OVERVIEW | WTC Overview | RESP_PRESENTATION RESP_CHECK_ORCHESTRATION RESP_PO_INTERPRETATION RESP_LOCALE_RESOLUTION RESP_JAPANESE_CHECK EXT_STYLE_GUIDE         |
+| ID              | Name         | Includes                                                                                                                     |
+| --------------- | ------------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| DV_WTC_OVERVIEW | WTC Overview | RESP_PRESENTATION RESP_CHECK_ORCHESTRATION RESP_PO_INTERPRETATION RESP_LOCALE_RESOLUTION RESP_JAPANESE_CHECK EXT_STYLE_GUIDE |
 
 ### Responsibility Details
 

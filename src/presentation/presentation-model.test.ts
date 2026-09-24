@@ -410,13 +410,13 @@ describe('Presentation result model', () => {
    * - Error 2件、Warning 0件、全体2件となる。
    */
   it('when success has only errors, should count each Error CheckMessage', () => {
-    expect(summarizeFindings(createFindings(createSuccessResult(2, 0)))).toEqual(
-      {
-        errorCount: 2,
-        warningCount: 0,
-        totalCount: 2,
-      },
-    )
+    expect(
+      summarizeFindings(createFindings(createSuccessResult(2, 0))),
+    ).toEqual({
+      errorCount: 2,
+      warningCount: 0,
+      totalCount: 2,
+    })
   })
 
   /**
@@ -432,13 +432,13 @@ describe('Presentation result model', () => {
    * - Error 0件、Warning 2件、全体2件となる。
    */
   it('when success has only warnings, should count each Warning CheckMessage', () => {
-    expect(summarizeFindings(createFindings(createSuccessResult(0, 2)))).toEqual(
-      {
-        errorCount: 0,
-        warningCount: 2,
-        totalCount: 2,
-      },
-    )
+    expect(
+      summarizeFindings(createFindings(createSuccessResult(0, 2))),
+    ).toEqual({
+      errorCount: 0,
+      warningCount: 2,
+      totalCount: 2,
+    })
   })
 
   /**
