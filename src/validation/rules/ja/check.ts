@@ -85,7 +85,7 @@ function protectTechnicalText(text: string): ProtectedText {
     /https?:\/\/[^\s]+/giu,
     /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/giu,
     /<[^>]+>/gu,
-    /{{\/?[A-Za-z][A-Za-z0-9_-]*}}/gu,
+    /\{\{\/?[A-Za-z][A-Za-z0-9_-]*\}\}/gu,
     /%(?:\d+\$)?s/gu,
     /%\([A-Za-z0-9_.-]+\)s/gu,
     /(?:[A-Za-z_][A-Za-z0-9_]*|%(?:\d+\$)?s)\(\)/gu,
