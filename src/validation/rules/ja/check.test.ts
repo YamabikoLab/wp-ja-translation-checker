@@ -262,6 +262,25 @@ describe('Japanese v1 error rules', () => {
     })
   })
 
+
+  /**
+   * 数字以外の半角文字と日本語文字の間に半角スペースが2個以上ある場合の 1-4 判定を確認する。
+   *
+   * 操作:
+   * - 半角英字と日本語文字の間に半角スペースを2個含む翻訳を確認する。
+   *
+   * 期待結果:
+   * - 1-4 の Error が返り、境界の半角スペースを1つにするよう案内される。
+   */
+  it('when multiple spaces separate half-width and Japanese text, should report rule 1-4', () => {
+    expect(
+      getOnlyResult('WordPress setting', 'WordPress  設定').errors,
+    ).toContainEqual({
+      styleGuideItem: '1-4 半角文字と全角文字の間のスペース',
+      message: '「s」と「設」の間の半角スペースは1つにしてください',
+    })
+  })
+
   /**
    * 文字列プレースホルダーと日本語の境界を 1-4 として断定しないことを確認する。
    *
@@ -795,6 +814,28 @@ describe('Japanese v1 warning rules', () => {
           0,
           'User is not allowed to edit this.',
           '編集する権限がありません。',
+        ),
+      ]),
+    ).toEqual([])
+  })
+
+
+  /**
+   * 権限不足ではない制約表現の「not allowed to」を 3-3 として誤検出しないことを確認する。
+   *
+   * 操作:
+   * - 値に対する制約を表す「is not allowed to」を含む原文を確認する。
+   *
+   * 期待結果:
+   * - 権限不足と十分に判断できないため、3-3 の Warning は返らない。
+   */
+  it('when not allowed to describes a value constraint, should not report rule 3-3', () => {
+    expect(
+      check([
+        createEntry(
+          0,
+          'This value is not allowed to contain spaces.',
+          'この値にスペースを含めることはできません。',
         ),
       ]),
     ).toEqual([])
