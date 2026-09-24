@@ -332,8 +332,7 @@ function checkSpacingBetweenHalfAndFullWidth(
   )
   const messages: CheckMessage[] = []
   let invalidBoundary:
-    | { left: string; right: string; spaceCount: number }
-    | undefined
+    { left: string; right: string; spaceCount: number } | undefined
   let unnecessarySymbol: string | undefined
 
   // 数字以外の半角文字と日本語文字の境界が、半角スペース1つで区切られているか確認する。
