@@ -47,6 +47,17 @@ const finding: GlossaryFinding = {
 describe('GlossaryFindingCard', () => {
   /**
    * 複数候補と補足がある Warning で、利用者が公式 Glossary と照合できる情報を失わないことを確認する。
+   *
+   * 事前条件:
+   * - 原語に複数の Glossary 候補があり、一部候補に補足がある。
+   * - 現在の翻訳が Glossary 候補と一致していない。
+   *
+   * 操作:
+   * - Glossary Warning カードを表示する。
+   *
+   * 期待結果:
+   * - 原語、全候補、品詞、補足、現在の翻訳を確認できる。
+   * - 公式 Glossary への参照リンクを利用できる。
    */
   it('when glossary warning has multiple candidates and a comment, should show candidates, context, current translation, and the official glossary link', () => {
     render(<GlossaryFindingCard finding={finding} />)
