@@ -30,6 +30,7 @@ const STYLE_GUIDE_URL =
   'https://ja.wordpress.org/team/handbook/translation/translation-style-guide/'
 const STYLE_GUIDE_LAST_UPDATED = '2026年8月28日'
 
+/** Markdown コピー操作の結果として利用者へ通知する状態。 */
 type CopyFeedback = 'success' | 'failure' | null
 
 /**
