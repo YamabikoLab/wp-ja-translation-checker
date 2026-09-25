@@ -571,6 +571,110 @@ describe('Japanese v1 rule 1-4', () => {
   })
 
   /**
+   * 終了タグをまたいだコロン後の半角スペースを、表示本文上の正しいスペースとして扱うことを確認する。
+   *
+   * 操作:
+   * - コロン直後に終了タグがあり、その後に半角スペース1つと日本語本文が続く翻訳を確認する。
+   *
+   * 期待結果:
+   * - 1-4 の指摘は返らない。
+   */
+  it('when one trailing space follows a colon across protected markup, should not report rule 1-4', () => {
+    expect(
+      checkEntries(checkSpacingBetweenHalfAndFullWidth, [
+        createEntry(
+          0,
+          'Ads',
+          '<strong>Ads:</strong> Google 広告',
+        ),
+      ]),
+    ).toEqual([])
+  })
+
+  /**
+   * 終了タグをまたいでもコロン後にスペースがなければ 1-4 として検出することを確認する。
+   *
+   * 操作:
+   * - コロン直後に終了タグがあり、その後へ日本語本文が直接続く翻訳を確認する。
+   *
+   * 期待結果:
+   * - コロン後へスペースを1つ入れる指摘が返る。
+   */
+  it('when a colon lacks trailing space across protected markup, should report rule 1-4', () => {
+    expect(
+      getRuleMessages(
+        checkSpacingBetweenHalfAndFullWidth,
+        'Ads',
+        '<strong>Ads:</strong>Google 広告',
+      ),
+    ).toContainEqual({
+      styleGuideItem: '1-4 半角文字と全角文字の間のスペース',
+      message: '「:」の後にスペースを1つ入れてください',
+    })
+  })
+
+  /**
+   * 終了タグをまたいだコロン後の複数スペースを 1-4 として検出することを確認する。
+   *
+   * 操作:
+   * - コロン直後に終了タグがあり、その後に半角スペース2つと本文が続く翻訳を確認する。
+   *
+   * 期待結果:
+   * - コロン後のスペースを1つにするための既存メッセージが返る。
+   */
+  it('when multiple trailing spaces follow a colon across protected markup, should report rule 1-4', () => {
+    expect(
+      getRuleMessages(
+        checkSpacingBetweenHalfAndFullWidth,
+        'Ads',
+        '<strong>Ads:</strong>  Google 広告',
+      ),
+    ).toContainEqual({
+      styleGuideItem: '1-4 半角文字と全角文字の間のスペース',
+      message: '「:」の後にスペースを1つ入れてください',
+    })
+  })
+
+  /**
+   * 終了タグをまたいだコロン前に不要スペースがなければ正常とすることを確認する。
+   *
+   * 操作:
+   * - 可視本文の末尾とコロンの間に終了タグだけが存在する翻訳を確認する。
+   *
+   * 期待結果:
+   * - コロン前の不要スペースは指摘されない。
+   */
+  it('when no leading space exists before a colon across protected markup, should not report rule 1-4', () => {
+    expect(
+      checkEntries(checkSpacingBetweenHalfAndFullWidth, [
+        createEntry(0, 'Ads', '<strong>Ads</strong>: value'),
+      ]),
+    ).toEqual([])
+  })
+
+  /**
+   * 終了タグをまたいだコロン前の不要スペースを 1-4 として検出することを確認する。
+   *
+   * 操作:
+   * - 可視本文末尾に半角スペースがあり、その後に終了タグとコロンが続く翻訳を確認する。
+   *
+   * 期待結果:
+   * - コロン前のスペース不要が案内される。
+   */
+  it('when a leading space exists before a colon across protected markup, should report rule 1-4', () => {
+    expect(
+      getRuleMessages(
+        checkSpacingBetweenHalfAndFullWidth,
+        'Ads',
+        '<strong>Ads </strong>: value',
+      ),
+    ).toContainEqual({
+      styleGuideItem: '1-4 半角文字と全角文字の間のスペース',
+      message: '「:」の前のスペースは不要です',
+    })
+  })
+
+  /**
    * 日本語の句読点前後に不要なスペースがある場合の 1-4 判定を確認する。
    *
    * 操作:
@@ -1289,6 +1393,37 @@ describe('Japanese v1 match ranges', () => {
           styleGuideItem: '1-4 半角文字と全角文字の間のスペース',
           message: '「:」の後にスペースを1つ入れてください',
           matches: [{ start: 3, end: 5 }],
+        },
+      ]),
+    )
+  })
+
+
+  /**
+   * 保護された終了タグをまたぐコロン前後の指摘でも、元の翻訳文字列上の位置を保持することを確認する。
+   *
+   * 操作:
+   * - コロン前に不要スペース、コロン後にスペース不足があり、両境界に終了タグが挟まる翻訳を確認する。
+   *
+   * 期待結果:
+   * - 前後それぞれの matches がタグを削除しない元文字列上の [start, end) を示す。
+   */
+  it('when colon spacing violations cross protected markup, should keep match ranges on the original translation', () => {
+    expect(
+      checkSpacingBetweenHalfAndFullWidth(
+        createEntry(0, 'Status', '<strong>Ads </strong>:<em></em>有効'),
+      ),
+    ).toEqual(
+      expect.arrayContaining([
+        {
+          styleGuideItem: '1-4 半角文字と全角文字の間のスペース',
+          message: '「:」の前のスペースは不要です',
+          matches: [{ start: 11, end: 21 }],
+        },
+        {
+          styleGuideItem: '1-4 半角文字と全角文字の間のスペース',
+          message: '「:」の後にスペースを1つ入れてください',
+          matches: [{ start: 20, end: 30 }],
         },
       ]),
     )
