@@ -14,12 +14,31 @@ const glossary: readonly GlossaryEntry[] = [
   { original: 'website', translation: 'サイト' },
 ]
 
+/**
+ * Glossary Check の公開入力となる1件の翻訳 entry を生成する。
+ *
+ * @param source singular / plural の原文。
+ * @param translations 確認対象の翻訳フォーム。
+ * @returns entryIndex 0 の翻訳 entry。
+ */
 const createEntry = (
   source: TranslationEntry['source'],
   translations: TranslationEntry['translations'],
 ): TranslationEntry => ({ entryIndex: 0, source, translations })
 
 describe('Japanese glossary check', () => {
+  /**
+   * 原文に Glossary 登録語がない場合は、翻訳内容にかかわらず Glossary Warning を生成しないことを確認する。
+   *
+   * 事前条件:
+   * - 原文に Glossary 登録語が含まれない。
+   *
+   * 操作:
+   * - Glossary Check を実行する。
+   *
+   * 期待結果:
+   * - Warning を返さない。
+   */
   it('when source has no glossary term, should return no warning', () => {
     expect(
       checkJapaneseGlossary(
@@ -72,6 +91,19 @@ describe('Japanese glossary check', () => {
     ).toEqual([])
   })
 
+  /**
+   * 長い Glossary 語句とその部分語が同じ原文範囲で重なる場合は、長い語句だけを確認対象にすることを確認する。
+   *
+   * 事前条件:
+   * - 原文に `single post` があり、`post` と範囲が重なる。
+   * - 翻訳は短い語句の候補だけを含み、長い語句の候補は含まない。
+   *
+   * 操作:
+   * - Glossary Check を実行する。
+   *
+   * 期待結果:
+   * - `single post` の Warning だけを返す。
+   */
   it('when a longer phrase overlaps a shorter term, should report only the longer phrase for that range', () => {
     const result = checkJapaneseGlossary(
       [
@@ -87,6 +119,19 @@ describe('Japanese glossary check', () => {
     expect(result[0]?.candidates[0]?.comment).toBe('投稿文脈')
   })
 
+  /**
+   * 同一原語に複数の登録訳語がある場合は、そのいずれかを満たせば Warning にしないことを確認する。
+   *
+   * 事前条件:
+   * - `post` に複数の登録訳語がある。
+   * - 翻訳がそのうち1候補を含む。
+   *
+   * 操作:
+   * - Glossary Check を実行する。
+   *
+   * 期待結果:
+   * - Warning を返さない。
+   */
   it('when any registered translation candidate exists, should not warn', () => {
     expect(
       checkJapaneseGlossary(
@@ -136,6 +181,21 @@ describe('Japanese glossary check', () => {
     ).toEqual([])
   })
 
+  /**
+   * singular / plural の双方で同じ Glossary term が見つかっても term 自体は重複させず、
+   * 各翻訳フォームは独立して成立判定することを確認する。
+   *
+   * 事前条件:
+   * - singular と plural の双方に `website` がある。
+   * - 1つ目の翻訳フォームは登録訳語を含み、2つ目は含まない。
+   *
+   * 操作:
+   * - Glossary Check を実行する。
+   *
+   * 期待結果:
+   * - 不一致の翻訳フォームだけ1件の Warning になる。
+   * - Warning は singular / plural 双方の一致位置を保持する。
+   */
   it('when singular and plural contain the same term, should deduplicate the term and check every translation form independently', () => {
     const result = checkJapaneseGlossary(
       [
