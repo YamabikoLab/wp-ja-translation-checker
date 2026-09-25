@@ -128,6 +128,22 @@ describe('finding Markdown copy', () => {
 
   /**
    * 事前条件:
+   * - Clipboard API を利用できない環境である。
+   *
+   * 操作:
+   * - 1件の指摘をコピーする。
+   *
+   * 期待結果:
+   * - 例外を発生させず、失敗結果を返す。
+   */
+  it('when clipboard API is unavailable, should return failure without throwing', async () => {
+    vi.stubGlobal('navigator', {})
+
+    await expect(copyFindingMarkdown(createFinding())).resolves.toBe('failure')
+  })
+
+  /**
+   * 事前条件:
    * - Clipboard API の書き込みが失敗する。
    *
    * 操作:
