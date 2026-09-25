@@ -75,10 +75,16 @@ export type RuleFilterOption = {
   count: number
 }
 
-/** 指摘一覧で選択可能な1ページあたりの表示件数。 */
+/**
+ * 指摘一覧で利用者が選択できる1ページあたりの表示件数。
+ *
+ * Result Presentation 内の表示量だけを変更し、確認結果そのものには影響しない。
+ */
 export const PAGE_SIZE_OPTIONS = [25, 50, 100] as const
 
-/** 指摘一覧の初期表示件数。 */
+/**
+ * 新しい確認結果を表示するときの1ページあたりの初期表示件数。
+ */
 export const DEFAULT_PAGE_SIZE = 50
 
 /** ページ番号の先頭・末尾に常時表示する件数。 */
@@ -337,6 +343,7 @@ function createPaginationItems(
     const previous = items[items.length - 1]
     const previousPage = typeof previous === 'number' ? previous : undefined
 
+    // 表示するページ範囲が連続しない場合だけ、省略された範囲があることを示す。
     if (previousPage !== undefined && page - previousPage > 1) {
       items.push('ellipsis')
     }
@@ -351,6 +358,8 @@ function createPaginationItems(
  * フィルター後の指摘一覧とページ状態から、現在ページの表示モデルを導出する。
  *
  * 元の指摘一覧は変更せず、ページ範囲、総ページ数、表示対象、ページ番号ナビゲーションを同じ入力から一貫して算出する。
+ * 保持中のページ番号がフィルター後の有効範囲を外れた場合は、利用可能な先頭または末尾ページへ補正する。
+ * 指摘が0件の場合は表示対象を空とし、現在ページは次の結果表示へ再利用できる1ページ目として扱う。
  *
  * @param findings ルールフィルター適用後の指摘一覧。
  * @param page Presentation が保持する1始まりの現在ページ。
