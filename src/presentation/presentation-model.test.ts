@@ -429,7 +429,7 @@ describe('Presentation result model', () => {
   })
 
   /**
-   * Glossary 結果を対応する entry と結び付け、Style Guide とは別の表示モデルとして保持することを確認する。
+   * Glossary 結果を対応する entry と結び付け、Style Guide と同じ共通表示モデルへ変換することを確認する。
    *
    * 事前条件:
    * - 正常完了結果に1件の Glossary Warning がある。
@@ -563,9 +563,11 @@ describe('Presentation result model', () => {
       ],
     }
     const findings = createFindings(result)
+    const options = createRuleFilterOptions(findings)
     const filtered = filterFindingsByRule(findings, 'Glossary')
     const model = createPaginationModel(filtered, 1, 25)
 
+    expect(options).toContainEqual({ styleGuideItem: 'Glossary', count: 1 })
     expect(filtered).toHaveLength(1)
     expect(filtered[0]?.kind).toBe('glossary')
     expect(model.totalCount).toBe(1)
