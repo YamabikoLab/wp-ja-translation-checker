@@ -75,6 +75,32 @@ export type RuleFilterOption = {
   count: number
 }
 
+/** 指摘一覧で選択可能な1ページあたりの表示件数。 */
+export const PAGE_SIZE_OPTIONS = [25, 50, 100] as const
+
+/** 指摘一覧の初期表示件数。 */
+export const DEFAULT_PAGE_SIZE = 50
+
+/** ページ番号の先頭・末尾に常時表示する件数。 */
+const EDGE_PAGE_COUNT = 3
+
+/** 現在ページの前後に表示するページ番号の件数。 */
+const SIBLING_PAGE_COUNT = 1
+
+/** ページ番号ナビゲーションに表示するページ番号または省略記号。 */
+export type PaginationItem = number | 'ellipsis'
+
+/** 指摘一覧の現在ページを表示するために必要な導出値。 */
+export type PaginationModel = {
+  currentPage: number
+  totalPages: number
+  rangeStart: number
+  rangeEnd: number
+  totalCount: number
+  visibleFindings: readonly Finding[]
+  items: readonly PaginationItem[]
+}
+
 /**
  * 完了後にフォーカスを移す Presentation 上の意味領域を表す。
  */
@@ -264,6 +290,94 @@ export function filterFindingsByRule(
   return findings.filter(
     (finding) => finding.styleGuideItem === selectedStyleGuideItem,
   )
+}
+
+/**
+ * 現在ページと総ページ数から、先頭・現在周辺・末尾を含むページ番号表示を導出する。
+ *
+ * @param currentPage 現在表示している1始まりのページ番号。
+ * @param totalPages フィルター後の総ページ数。
+ * @returns 連続しない範囲を省略記号で区切ったページ番号表示。
+ */
+function createPaginationItems(
+  currentPage: number,
+  totalPages: number,
+): readonly PaginationItem[] {
+  if (totalPages <= 1) {
+    return totalPages === 1 ? [1] : []
+  }
+
+  const visiblePages = new Set<number>()
+
+  // 先頭と末尾は現在位置にかかわらず一定数を表示し、一覧全体の端へ直接移動できる状態を保つ。
+  for (let page = 1; page <= Math.min(EDGE_PAGE_COUNT, totalPages); page += 1) {
+    visiblePages.add(page)
+  }
+  for (
+    let page = Math.max(1, totalPages - EDGE_PAGE_COUNT + 1);
+    page <= totalPages;
+    page += 1
+  ) {
+    visiblePages.add(page)
+  }
+
+  // 現在位置の前後は連続して確認できるよう、指定件数の隣接ページを表示する。
+  for (
+    let page = Math.max(1, currentPage - SIBLING_PAGE_COUNT);
+    page <= Math.min(totalPages, currentPage + SIBLING_PAGE_COUNT);
+    page += 1
+  ) {
+    visiblePages.add(page)
+  }
+
+  const pages = Array.from(visiblePages).sort((left, right) => left - right)
+  const items: PaginationItem[] = []
+
+  for (const page of pages) {
+    const previous = items[items.length - 1]
+    const previousPage = typeof previous === 'number' ? previous : undefined
+
+    if (previousPage !== undefined && page - previousPage > 1) {
+      items.push('ellipsis')
+    }
+
+    items.push(page)
+  }
+
+  return items
+}
+
+/**
+ * フィルター後の指摘一覧とページ状態から、現在ページの表示モデルを導出する。
+ *
+ * 元の指摘一覧は変更せず、ページ範囲、総ページ数、表示対象、ページ番号ナビゲーションを同じ入力から一貫して算出する。
+ *
+ * @param findings ルールフィルター適用後の指摘一覧。
+ * @param page Presentation が保持する1始まりの現在ページ。
+ * @param pageSize 1ページあたりの表示件数。
+ * @returns 現在ページの指摘一覧とページ移動表示に必要な値。
+ */
+export function createPaginationModel(
+  findings: readonly Finding[],
+  page: number,
+  pageSize: number,
+): PaginationModel {
+  const totalCount = findings.length
+  const totalPages = totalCount === 0 ? 0 : Math.ceil(totalCount / pageSize)
+  const currentPage =
+    totalPages === 0 ? 1 : Math.min(Math.max(page, 1), totalPages)
+  const startIndex = (currentPage - 1) * pageSize
+  const visibleFindings = findings.slice(startIndex, startIndex + pageSize)
+
+  return {
+    currentPage,
+    totalPages,
+    rangeStart: totalCount === 0 ? 0 : startIndex + 1,
+    rangeEnd: totalCount === 0 ? 0 : startIndex + visibleFindings.length,
+    totalCount,
+    visibleFindings,
+    items: createPaginationItems(currentPage, totalPages),
+  }
 }
 
 /**
