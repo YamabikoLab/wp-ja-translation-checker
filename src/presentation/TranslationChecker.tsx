@@ -246,7 +246,8 @@ export function TranslationChecker() {
         <p className={styles.version}>v{__APP_VERSION__}</p>
         <p className={styles.lead}>
           WordPress 日本語翻訳スタイルガイド（{STYLE_GUIDE_LAST_UPDATED}
-          最終更新）の対象ルールと、日本語 Glossary の登録訳語をブラウザー内で確認します。
+          最終更新）の対象ルールと、日本語 Glossary
+          の登録訳語をブラウザー内で確認します。
         </p>
         <p className={styles.privacy}>
           選択した翻訳内容は外部の確認サービスへ送信しません。
@@ -391,7 +392,8 @@ export function TranslationChecker() {
                 <p>{glossaryFindings.length}件の Warning</p>
               </div>
               <p className={styles.glossaryIntro}>
-                登録訳語と異なる可能性がある箇所です。文脈と Glossary の補足を確認してください。
+                登録訳語と異なる可能性がある箇所です。文脈と Glossary
+                の補足を確認してください。
               </p>
               <div className={styles.findingsList}>
                 {glossaryFindings.map((finding) => (

@@ -16,18 +16,16 @@ const GLOSSARY_URL =
  * @param finding 表示対象の Glossary Warning と対応 entry。
  * @returns Glossary 候補と参照先を含む確認カード。
  */
-export function GlossaryFindingCard({
-  finding,
-}: {
-  finding: GlossaryFinding
-}) {
+export function GlossaryFindingCard({ finding }: { finding: GlossaryFinding }) {
   const { result } = finding
 
   return (
     <article className={styles.finding}>
       <header className={styles.findingHeader}>
         <span className={styles.warningBadge}>Warning</span>
-        <p className={styles.findingMessage}>Glossary の訳語を確認してください</p>
+        <p className={styles.findingMessage}>
+          Glossary の訳語を確認してください
+        </p>
       </header>
       <div className={styles.glossaryContent}>
         <div>
@@ -38,7 +36,9 @@ export function GlossaryFindingCard({
           <h3>Glossary の候補</h3>
           <ul>
             {result.candidates.map((candidate, index) => (
-              <li key={`${candidate.translation}-${candidate.partOfSpeech ?? ''}-${index}`}>
+              <li
+                key={`${candidate.translation}-${candidate.partOfSpeech ?? ''}-${index}`}
+              >
                 <strong>{candidate.translation || '（訳文へ入れない）'}</strong>
                 {candidate.partOfSpeech !== undefined && (
                   <span> / {candidate.partOfSpeech}</span>

@@ -33,7 +33,9 @@ const isAsciiAlphaNumeric = (value: string | undefined): boolean =>
  * @param glossary 検証に利用する Glossary 登録行。
  * @returns 大小文字を無視した原語単位の候補集合。
  */
-function createTermGroups(glossary: readonly GlossaryEntry[]): readonly TermGroup[] {
+function createTermGroups(
+  glossary: readonly GlossaryEntry[],
+): readonly TermGroup[] {
   const groups = new Map<string, GlossaryEntry[]>()
 
   for (const entry of glossary) {

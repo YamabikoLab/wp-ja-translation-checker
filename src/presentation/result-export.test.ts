@@ -372,7 +372,6 @@ describe('Markdown result export', () => {
   })
 })
 
-
 describe('Glossary result export', () => {
   const glossaryFinding = {
     key: '0-glossary-0-0',
@@ -385,7 +384,9 @@ describe('Glossary result export', () => {
       entryIndex: 0,
       translationFormIndex: 0,
       originalTerm: 'website',
-      candidates: [{ original: 'website', translation: 'サイト', partOfSpeech: 'noun' }],
+      candidates: [
+        { original: 'website', translation: 'サイト', partOfSpeech: 'noun' },
+      ],
       currentTranslation: 'Web ページを見る',
       sourceMatches: [{ source: 'singular', start: 6, end: 13 }],
     },

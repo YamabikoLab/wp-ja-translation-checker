@@ -45,7 +45,9 @@ const decodeHtml = (text) =>
  * @returns 公式ページに含まれる Glossary entry。
  */
 const parseGlossary = (page) => {
-  const table = page.match(/<table[^>]*id=["']glossary["'][\s\S]*?<\/table>/i)?.[0]
+  const table = page.match(
+    /<table[^>]*id=["']glossary["'][\s\S]*?<\/table>/i,
+  )?.[0]
   if (table === undefined) return []
 
   const entries = []
