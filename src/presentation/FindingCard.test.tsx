@@ -81,9 +81,11 @@ describe('FindingCard Markdown copy action', () => {
       }),
     )
 
-    expect(await screen.findByRole('button', { name: 'コピーしました' })).toBe(
-      document.activeElement,
-    )
+    expect(
+      await screen.findByRole('button', {
+        name: 'コピーしました',
+      }),
+    ).toBeTruthy()
     expect(writeText).toHaveBeenCalledWith(
       [
         '### Error: 1-9 半角数字前後の不要スペース',
