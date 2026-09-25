@@ -1,7 +1,7 @@
 /**
- * 1件の翻訳チェック指摘について、Severity、原文・翻訳比較、修正案の再チェック、スタイルガイド参照と個別 Markdown コピーを提供する責任を持つ。
+ * Style Guide / Glossary を共通の1指摘カードとして表示し、原文・翻訳比較、修正案の再チェック、一次情報参照、Markdown コピーを提供する。
  *
- * 指摘一覧全体の絞り込みやページ状態は扱わず、受け取った1件の表示とその1件に閉じた操作だけを所有する。
+ * 指摘種別ごとの差分は根拠情報の表示だけに閉じ、一覧操作や修正操作は共通 Finding の契約を利用する。
  */
 
 import { useEffect, useState } from 'react'
@@ -13,16 +13,33 @@ import styles from './TranslationChecker.module.css'
 
 const STYLE_GUIDE_URL =
   'https://ja.wordpress.org/team/handbook/translation/translation-style-guide/'
+const GLOSSARY_URL =
+  'https://translate.wordpress.org/locale/ja/default/glossary/'
 
 /**
- * 1件の CheckMessage と、その指摘が属する entry の原文・翻訳を表示し、修正案の一時再チェックと同じ情報の Markdown コピーを提供する。
+ * 1件の共通 Finding を表示する。
  *
  * @param props 指摘表示に必要な属性。
  * @param props.finding 表示対象の1指摘。
- * @returns Severity、メッセージ、翻訳比較、修正案の再チェック、一次情報へのリンク、個別コピー操作を含む指摘。
+ * @returns 共通の比較・修正操作と、指摘種別に応じた根拠情報を含むカード。
  */
 export function FindingCard({ finding }: { finding: Finding }) {
-  const translation = finding.entry.translations[0]?.text ?? ''
+  const translation =
+    finding.entry.translations.find(
+      (form) => form.index === finding.translationFormIndex,
+    )?.text ?? ''
+  const singularMatches =
+    finding.kind === 'glossary'
+      ? finding.glossary.sourceMatches
+          .filter((match) => match.source === 'singular')
+          .map(({ start, end }) => ({ start, end }))
+      : []
+  const pluralMatches =
+    finding.kind === 'glossary'
+      ? finding.glossary.sourceMatches
+          .filter((match) => match.source === 'plural')
+          .map(({ start, end }) => ({ start, end }))
+      : []
   const [copyFeedback, setCopyFeedback] = useState<
     'success' | 'failure' | null
   >(null)
@@ -42,9 +59,7 @@ export function FindingCard({ finding }: { finding: Finding }) {
     }
   }, [copyFeedback])
 
-  /**
-   * 表示中の1指摘をコピーし、その結果だけをカード内の一時フィードバックとして反映する。
-   */
+  /** 表示中の1指摘をコピーし、その結果だけをカード内の一時フィードバックとして反映する。 */
   const handleMarkdownCopy = async () => {
     setCopyFeedback(await copyFindingMarkdown(finding))
   }
@@ -67,11 +82,17 @@ export function FindingCard({ finding }: { finding: Finding }) {
       <div className={styles.comparison}>
         <section className={styles.comparisonPanel}>
           <h3>原文</h3>
-          <ExpandableText text={finding.entry.source.singular} />
+          <ExpandableText
+            text={finding.entry.source.singular}
+            matches={singularMatches}
+          />
           {finding.entry.source.plural !== undefined && (
             <div className={styles.pluralSource}>
               <h4>複数形原文</h4>
-              <ExpandableText text={finding.entry.source.plural} />
+              <ExpandableText
+                text={finding.entry.source.plural}
+                matches={pluralMatches}
+              />
             </div>
           )}
         </section>
@@ -81,13 +102,44 @@ export function FindingCard({ finding }: { finding: Finding }) {
         </section>
       </div>
 
+      {finding.kind === 'glossary' && (
+        <div className={styles.glossaryContent}>
+          <div>
+            <h3>Glossary の候補</h3>
+            <ul>
+              {finding.glossary.candidates.map((candidate, index) => (
+                <li
+                  key={`${candidate.translation}-${candidate.partOfSpeech ?? ''}-${index}`}
+                >
+                  <strong>{candidate.translation || '（訳文へ入れない）'}</strong>
+                  {candidate.partOfSpeech !== undefined && (
+                    <span> / {candidate.partOfSpeech}</span>
+                  )}
+                  {candidate.comment !== undefined && <p>{candidate.comment}</p>}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
+
       <FindingCorrection finding={finding} />
 
       <div className={styles.findingFooter}>
         <p className={styles.guideReference}>
-          <span>スタイルガイド: {finding.styleGuideItem}</span>
-          <a href={STYLE_GUIDE_URL} target="_blank" rel="noreferrer">
-            WordPress 日本語翻訳スタイルガイドを確認
+          <span>
+            {finding.kind === 'glossary'
+              ? '確認項目: Glossary'
+              : `スタイルガイド: ${finding.styleGuideItem}`}
+          </span>
+          <a
+            href={finding.kind === 'glossary' ? GLOSSARY_URL : STYLE_GUIDE_URL}
+            target="_blank"
+            rel="noreferrer"
+          >
+            {finding.kind === 'glossary'
+              ? 'WordPress.org 日本語 Glossary を確認'
+              : 'WordPress 日本語翻訳スタイルガイドを確認'}
           </a>
         </p>
         <button
