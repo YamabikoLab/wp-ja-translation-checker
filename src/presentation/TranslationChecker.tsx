@@ -14,7 +14,6 @@ import {
 import { checkPo } from '@/check/check'
 import {
   createFindings,
-  createGlossaryFindings,
   createPaginationModel,
   createRuleFilterOptions,
   DEFAULT_PAGE_SIZE,
@@ -27,7 +26,6 @@ import {
 import { CheckScopeGuide } from './CheckScopeGuide'
 import { Feedback } from './Feedback'
 import { FindingCard } from './FindingCard'
-import { GlossaryFindingCard } from './GlossaryFindingCard'
 import { PaginationControls } from './PaginationControls'
 import { serializeCsv, serializeJson, serializeMarkdown } from './result-export'
 import styles from './TranslationChecker.module.css'
@@ -173,7 +171,7 @@ export function TranslationChecker() {
    */
   const handleCsvDownload = () => {
     downloadResult(
-      serializeCsv(findings, glossaryFindings),
+      serializeCsv(findings),
       'csv',
       'text/csv;charset=utf-8',
     )
@@ -189,7 +187,7 @@ export function TranslationChecker() {
     }
 
     downloadResult(
-      serializeJson(state.file.name, findings, glossaryFindings),
+      serializeJson(state.file.name, findings),
       'json',
       'application/json;charset=utf-8',
     )
@@ -214,7 +212,7 @@ export function TranslationChecker() {
 
     try {
       await navigator.clipboard.writeText(
-        serializeMarkdown(state.file.name, findings, glossaryFindings),
+        serializeMarkdown(state.file.name, findings),
       )
       setCopyFeedback('success')
     } catch {
@@ -227,10 +225,7 @@ export function TranslationChecker() {
   // 正常完了結果だけを Style Guide の表示モデルへ変換し、途中状態や確認不能結果は一覧化しない。
   const findings =
     state.status === 'success' ? createFindings(state.result) : []
-  // 正常完了結果だけを Glossary の表示モデルへ変換し、Style Guide の一覧とは分離して保持する。
-  const glossaryFindings =
-    state.status === 'success' ? createGlossaryFindings(state.result) : []
-  const summary = summarizeFindings(findings, glossaryFindings)
+  const summary = summarizeFindings(findings)
   const ruleFilterOptions = createRuleFilterOptions(findings)
   const filteredFindings = filterFindingsByRule(findings, selectedRule)
   const pagination = createPaginationModel(filteredFindings, page, pageSize)
