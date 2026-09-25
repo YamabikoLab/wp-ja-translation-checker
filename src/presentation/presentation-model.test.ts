@@ -6,7 +6,6 @@ import { describe, expect, it } from 'vitest'
 import type { CheckResult } from '@/check/check'
 import {
   createFindings,
-  createGlossaryFindings,
   createPaginationModel,
   createRuleFilterOptions,
   filterFindingsByRule,
@@ -456,11 +455,19 @@ describe('Presentation result model', () => {
       ],
     }
 
-    const glossaryFindings = createGlossaryFindings(result)
+    const findings = createFindings(result)
+    const glossaryFinding = findings.find(
+      (finding) => finding.kind === 'glossary',
+    )
 
-    expect(glossaryFindings).toHaveLength(1)
-    expect(glossaryFindings[0]?.entry).toBe(result.entries[0])
-    expect(glossaryFindings[0]?.result.originalTerm).toBe('settings')
+    expect(findings).toHaveLength(1)
+    expect(glossaryFinding?.entry).toBe(result.entries[0])
+    expect(glossaryFinding?.styleGuideItem).toBe('Glossary')
+    expect(
+      glossaryFinding?.kind === 'glossary'
+        ? glossaryFinding.glossary.originalTerm
+        : undefined,
+    ).toBe('settings')
   })
 
   /**
@@ -490,7 +497,7 @@ describe('Presentation result model', () => {
       ],
     }
 
-    expect(() => createGlossaryFindings(result)).toThrow(
+    expect(() => createFindings(result)).toThrow(
       'Glossary 結果の entryIndex 1 に対応する翻訳 entry がありません。',
     )
   })
@@ -522,13 +529,47 @@ describe('Presentation result model', () => {
       ],
     }
 
-    expect(
-      summarizeFindings(createFindings(result), createGlossaryFindings(result)),
-    ).toEqual({
+    expect(summarizeFindings(createFindings(result))).toEqual({
       errorCount: 1,
       warningCount: 1,
       totalCount: 2,
     })
+  })
+
+  /**
+   * Glossary Warning も通常ルールと同じフィルター・ページング対象になることを確認する。
+   *
+   * 事前条件:
+   * - Style Guide 指摘と Glossary Warning が同じ結果に含まれる。
+   *
+   * 操作:
+   * - Glossary で絞り込み、ページモデルを生成する。
+   *
+   * 期待結果:
+   * - Glossary の指摘だけが共通 Finding として残り、ページング対象になる。
+   */
+  it('when glossary warnings are filtered, should paginate them through the common finding model', () => {
+    const result = {
+      ...createSuccessResult(1, 0),
+      glossaryResults: [
+        {
+          entryIndex: 0,
+          translationFormIndex: 0,
+          originalTerm: 'settings',
+          candidates: [{ original: 'settings', translation: '設定' }],
+          currentTranslation: '全ての設定を保存して下さい',
+          sourceMatches: [{ source: 'singular' as const, start: 9, end: 17 }],
+        },
+      ],
+    }
+    const findings = createFindings(result)
+    const filtered = filterFindingsByRule(findings, 'Glossary')
+    const model = createPaginationModel(filtered, 1, 25)
+
+    expect(filtered).toHaveLength(1)
+    expect(filtered[0]?.kind).toBe('glossary')
+    expect(model.totalCount).toBe(1)
+    expect(model.visibleFindings).toEqual(filtered)
   })
 
   /**
