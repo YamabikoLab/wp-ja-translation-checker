@@ -1,7 +1,7 @@
 /**
- * Result Presentation が所有する画面状態、確認結果の表示モデル、長文表示の判定を定義する。
+ * Result Presentation が所有する画面状態と、確認結果の一覧表示に必要な表示モデルを定義する。
  *
- * Validation Core の結果を再判定せず、利用者から見える1回の確認状態と表示に必要な導出値だけを扱う。
+ * Validation Core の結果を再判定せず、ルール絞り込み、ページネーション、長文表示など、利用者へ結果を提示するための導出値だけを扱う。
  */
 
 import type { CheckResult } from '@/check/check'
