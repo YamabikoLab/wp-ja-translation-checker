@@ -412,7 +412,7 @@ export function TranslationChecker() {
               </div>
 
               <label className={styles.ruleFilter}>
-                <span>ルールで絞り込む</span>
+                <span>項目で絞り込む</span>
                 <select
                   value={selectedRule ?? ''}
                   onChange={(event) => {
@@ -421,7 +421,7 @@ export function TranslationChecker() {
                     setPage(1)
                   }}
                 >
-                  <option value="">すべてのルール</option>
+                  <option value="">すべての項目</option>
                   {ruleFilterOptions.map((option) => (
                     <option
                       key={option.styleGuideItem}
