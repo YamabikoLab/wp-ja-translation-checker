@@ -133,6 +133,58 @@ function getTranslation(entry: TranslationEntry): string | undefined {
 }
 
 /**
+ * 保護範囲を除いた表示本文上で、指定位置の外側にあるスペースと隣接文字を取得する。
+ *
+ * HTML 等の表示されない技術文字列は読み飛ばすが、本文側に実在するスペースは元文字列上の位置とともに保持する。
+ *
+ * @param text 確認対象の翻訳。
+ * @param protectedIndexes 技術文字列として判定対象外にする文字位置。
+ * @param startIndex 基準位置の直近から確認を開始する位置。
+ * @param direction 前方は 1、後方は -1。
+ * @param spacingCharacters スペースとして扱う文字集合。
+ * @returns 表示本文上の隣接文字と、その手前に存在するスペース位置。文字列境界の場合は undefined。
+ */
+function getVisibleAdjacentText(
+  text: string,
+  protectedIndexes: ReadonlySet<number>,
+  startIndex: number,
+  direction: 1 | -1,
+  spacingCharacters: ReadonlySet<string>,
+):
+  | { character: string; characterIndex: number; spacingIndexes: readonly number[] }
+  | undefined {
+  let index = startIndex
+  const spacingIndexes: number[] = []
+
+  // 表示されない保護範囲を除外し、本文側のスペースと最初の可視文字だけを取得する。
+  while (index >= 0 && index < text.length) {
+    if (protectedIndexes.has(index)) {
+      index += direction
+      continue
+    }
+
+    const character = text[index]
+    if (character === undefined) {
+      return undefined
+    }
+
+    if (spacingCharacters.has(character)) {
+      spacingIndexes.push(index)
+      index += direction
+      continue
+    }
+
+    return {
+      character,
+      characterIndex: index,
+      spacingIndexes,
+    }
+  }
+
+  return undefined
+}
+
+/**
  * 全角カンマ・ピリオドが数値表記内の符号か確認する。
  *
  * 数字に挟まれている場合は日本語の句読点ではなく、1-2 の半角表記対象として扱う。
@@ -389,32 +441,60 @@ export function checkSpacingBetweenHalfAndFullWidth(
     }
   }
 
-  // 日本語本文の区切りとして使われるコロンについて、前後のスペース規則を確認する。
+  // 日本語本文の区切りとして使われるコロンについて、表示されないマークアップを除いた前後のスペース規則を確認する。
   for (let index = 0; index < translation.length; index += 1) {
     if (translation[index] !== ':' || protectedIndexes.has(index)) {
       continue
     }
 
-    const previous = translation[index - 1] ?? ''
-    const next = translation[index + 1] ?? ''
-    if (/\d/u.test(previous) && /\d/u.test(next)) {
+    const before = getVisibleAdjacentText(
+      translation,
+      protectedIndexes,
+      index - 1,
+      -1,
+      spacingCharacters,
+    )
+    const after = getVisibleAdjacentText(
+      translation,
+      protectedIndexes,
+      index + 1,
+      1,
+      spacingCharacters,
+    )
+
+    if (
+      before !== undefined &&
+      after !== undefined &&
+      /\d/u.test(before.character) &&
+      /\d/u.test(after.character)
+    ) {
       continue
     }
 
-    if (spacingCharacters.has(previous)) {
-      colonBeforeMatches.push({ start: index - 1, end: index + 1 })
+    if (before !== undefined && before.spacingIndexes.length > 0) {
+      colonBeforeMatches.push({
+        start: Math.min(...before.spacingIndexes),
+        end: index + 1,
+      })
     }
 
-    const afterMissing = next !== '' && !validColonSpacingCharacters.has(next)
-    const afterMultiple =
-      validColonSpacingCharacters.has(next) &&
-      spacingCharacters.has(translation[index + 2] ?? '')
+    if (after !== undefined) {
+      const spacingCount = after.spacingIndexes.length
+      const hasInvalidSpacing = after.spacingIndexes.some(
+        (spacingIndex) =>
+          !validColonSpacingCharacters.has(translation[spacingIndex] ?? ''),
+      )
 
-    if (afterMissing || afterMultiple) {
-      colonAfterMatches.push({
-        start: index,
-        end: Math.min(translation.length, index + (afterMultiple ? 3 : 2)),
-      })
+      if (
+        spacingCount === 0 ||
+        spacingCount > 1 ||
+        hasInvalidSpacing
+      ) {
+        colonAfterMatches.push({
+          start: index,
+          end: after.characterIndex + 1,
+        })
+      }
     }
   }
 
