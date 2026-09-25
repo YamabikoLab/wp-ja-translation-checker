@@ -735,6 +735,31 @@ describe('Pagination', () => {
   })
 
   /**
+   * 1ページに収まる指摘では不要なページ移動候補を持たないことを確認する。
+   *
+   * 事前条件:
+   * - 50件以下の指摘がある。
+   *
+   * 操作:
+   * - 50件表示でページモデルを導出する。
+   *
+   * 期待結果:
+   * - 総ページ数は1ページとなる。
+   * - 表示対象はすべての指摘となる。
+   * - ページ番号モデルは現在ページの1だけを持つ。
+   */
+  it('when all findings fit on one page, should keep the complete list on page one without extra navigation pages', () => {
+    const source = createFindings(createSuccessResult(3, 2))
+    const model = createPaginationModel(source, 1, 50)
+
+    expect(model.totalPages).toBe(1)
+    expect(model.rangeStart).toBe(1)
+    expect(model.rangeEnd).toBe(5)
+    expect(model.visibleFindings).toEqual(source)
+    expect(model.items).toEqual([1])
+  })
+
+  /**
    * 表示件数を超える指摘をページ単位に分けられることを確認する。
    *
    * 事前条件:
@@ -755,6 +780,52 @@ describe('Pagination', () => {
     expect(model.rangeEnd).toBe(51)
     expect(model.visibleFindings).toHaveLength(1)
     expect(model.visibleFindings[0]?.key).toBe(source[50]?.key)
+  })
+
+  /**
+   * 保持中のページ番号がフィルター後の総ページ数を超えた場合の補正を確認する。
+   *
+   * 事前条件:
+   * - 以前は後方ページを表示していたが、フィルター後の指摘は2ページ分だけ残っている。
+   *
+   * 操作:
+   * - 有効範囲を超えるページ番号でページモデルを導出する。
+   *
+   * 期待結果:
+   * - 現在ページは利用可能な最終ページへ補正される。
+   * - 最終ページの指摘と表示範囲が返る。
+   */
+  it('when the requested page exceeds the filtered result range, should use the last available page', () => {
+    const source = createFindings(createSuccessResult(51, 0))
+    const model = createPaginationModel(source, 8, 50)
+
+    expect(model.currentPage).toBe(2)
+    expect(model.rangeStart).toBe(51)
+    expect(model.rangeEnd).toBe(51)
+    expect(model.visibleFindings).toEqual([source[50]])
+  })
+
+  /**
+   * 保持中のページ番号が1未満の場合の補正を確認する。
+   *
+   * 事前条件:
+   * - 指摘が複数ページ分存在する。
+   *
+   * 操作:
+   * - 1未満のページ番号でページモデルを導出する。
+   *
+   * 期待結果:
+   * - 現在ページは1ページ目へ補正される。
+   * - 1ページ目の指摘と表示範囲が返る。
+   */
+  it('when the requested page is below one, should use the first available page', () => {
+    const source = createFindings(createSuccessResult(51, 0))
+    const model = createPaginationModel(source, 0, 50)
+
+    expect(model.currentPage).toBe(1)
+    expect(model.rangeStart).toBe(1)
+    expect(model.rangeEnd).toBe(50)
+    expect(model.visibleFindings).toEqual(source.slice(0, 50))
   })
 
   /**
