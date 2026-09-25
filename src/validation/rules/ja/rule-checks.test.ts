@@ -1561,7 +1561,7 @@ describe('Japanese v1 rule 5', () => {
         styleGuideItem: '5. 中点「・」',
         message:
           '中点「・」は原則使用しません。別の表現に置き換えられないか確認してください',
-        matches: [{ start: 15, end: 16 }],
+        matches: [{ start: 16, end: 17 }],
       },
     ])
   })
