@@ -226,7 +226,6 @@ function FindingCard({ finding }: { finding: Finding }) {
   )
 }
 
-
 /**
  * 指摘一覧の現在範囲、表示件数、ページ移動を同じ操作領域として提供する。
  *
@@ -318,7 +317,10 @@ function PaginationControls({
 
         {totalPages > 1 && (
           <>
-            <nav className={styles.pageNavigation} aria-label="指摘一覧のページ移動">
+            <nav
+              className={styles.pageNavigation}
+              aria-label="指摘一覧のページ移動"
+            >
               <button
                 type="button"
                 aria-label="前のページ"
@@ -569,7 +571,11 @@ export function TranslationChecker() {
    * @param nextPageSize 新しい1ページあたりの表示件数。
    */
   const handlePageSizeChange = (nextPageSize: number) => {
-    if (!PAGE_SIZE_OPTIONS.includes(nextPageSize as (typeof PAGE_SIZE_OPTIONS)[number])) {
+    if (
+      !PAGE_SIZE_OPTIONS.includes(
+        nextPageSize as (typeof PAGE_SIZE_OPTIONS)[number],
+      )
+    ) {
       return
     }
 
