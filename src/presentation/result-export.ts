@@ -154,7 +154,8 @@ function getFindingText(finding: Finding): {
 /**
  * 現在の確認結果全体を UTF-8 BOM 付き CSV へ変換する。
  *
- * @param findings 正常完了した現在の確認結果全体。
+ * @param findings 正常完了した Style Guide の確認結果全体。
+ * @param glossaryFindings 正常完了した Glossary の確認結果全体。
  * @returns 1指摘を1行とした CSV 文字列。指摘0件の場合はヘッダーだけを返す。
  */
 export function serializeCsv(
@@ -191,8 +192,7 @@ export function serializeCsv(
       [
         'glossary',
         'Warning',
-        '',
-        finding.result.originalTerm,
+        'Glossary の訳語を確認してください',
         finding.entry.source.singular,
         finding.result.currentTranslation,
         String(finding.result.entryIndex),
@@ -223,8 +223,9 @@ export function serializeCsv(
  * 現在の確認結果全体を機械利用向け JSON へ変換する。
  *
  * @param fileName 確認対象の PO ファイル名。
- * @param findings 正常完了した現在の確認結果全体。
- * @returns file、summary、findings を持つ整形済み JSON 文字列。
+ * @param findings 正常完了した Style Guide の確認結果全体。
+ * @param glossaryFindings 正常完了した Glossary の確認結果全体。
+ * @returns file、summary、Style Guide と Glossary の各結果を持つ整形済み JSON 文字列。
  */
 export function serializeJson(
   fileName: string,
@@ -308,7 +309,8 @@ export function serializeFindingMarkdown(finding: Finding): string {
  * 現在の確認結果全体を人が共有して読める Markdown へ変換する。
  *
  * @param fileName 確認対象の PO ファイル名。
- * @param findings 正常完了した現在の確認結果全体。
+ * @param findings 正常完了した Style Guide の確認結果全体。
+ * @param glossaryFindings 正常完了した Glossary の確認結果全体。
  * @returns ファイル名、件数、各指摘を含む Markdown 文字列。
  */
 export function serializeMarkdown(
