@@ -58,12 +58,12 @@ type FindingBase = {
 }
 
 /** Style Guide の判定結果から生成する通常の指摘。 */
-export type StyleGuideFinding = FindingBase & {
+type StyleGuideFinding = FindingBase & {
   kind: 'style-guide'
 }
 
 /** Glossary の判定結果から生成し、候補情報と原文上の一致位置を保持する指摘。 */
-export type GlossaryFinding = FindingBase & {
+type GlossaryFinding = FindingBase & {
   kind: 'glossary'
   glossary: SuccessfulCheckResult['glossaryResults'][number]
 }
