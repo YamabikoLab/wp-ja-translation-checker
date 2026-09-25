@@ -104,6 +104,29 @@ describe('Japanese v1 check public interface', () => {
   })
 
   /**
+   * ルール 5 の中点が公開結果で Warning として集約されることを確認する。
+   *
+   * 操作:
+   * - 通常本文に中点を含む entry を日本語 v1 チェックへ渡す。
+   *
+   * 期待結果:
+   * - Error ではなく Warning にルール 5 の指摘が含まれる。
+   */
+  it('when a middle dot is found, should aggregate rule 5 as a warning', () => {
+    const result = getOnlyResult(
+      'Reorder rows and columns',
+      '行・列を並び替える',
+    )
+
+    expect(result.errors).toEqual([])
+    expect(result.warnings).toContainEqual({
+      styleGuideItem: '5. 中点「・」',
+      message:
+        '中点「・」は原則使用しません。別の表現に置き換えられないか確認してください',
+      matches: [{ start: 1, end: 2 }],
+    })
+  })
+  /**
    * 同じ入力に対する日本語 v1 チェックの決定性を確認する。
    *
    * 事前条件:

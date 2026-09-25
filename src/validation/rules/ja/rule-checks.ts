@@ -46,6 +46,7 @@ const STYLE_GUIDE = {
     '3-3 「XX are/is not allowed to...」を「〜する権限がありません」に統一',
   sorryPrefix: '3-4 「Sorry, ...」の Sorry を訳さない',
   recommendedExpressions: '3-6 「下さい / 全て / 既に」などの推奨表記',
+  middleDot: '5. 中点「・」',
 } as const
 
 const JAPANESE_CHARACTER =
@@ -991,6 +992,50 @@ export function checkSorryPrefix(
       matches: [{ start: 0, end: prefix.length }],
     },
   ]
+}
+
+/**
+ * スタイルガイド 5 の中点使用を確認する。
+ *
+ * 中点は文脈によって許容される場合があるため、通常本文に含まれる全角中点・半角中黒を
+ * 要確認の指摘として返す。技術的な表記として保護される範囲は対象外とする。
+ *
+ * @param entry 確認対象 entry。
+ * @returns 5 に該当する指摘。
+ */
+export function checkMiddleDot(
+  entry: TranslationEntry,
+): readonly CheckMessage[] {
+  const translation = getTranslation(entry)
+  if (translation === undefined) {
+    return []
+  }
+
+  const { protectedIndexes } = protectTechnicalText(translation)
+  const matches: CheckMessageMatch[] = []
+
+  // 通常本文に現れる中点は文脈確認が必要な同一指摘へまとめ、技術的な表記として保護される範囲は除外する。
+  for (let index = 0; index < translation.length; index += 1) {
+    if (protectedIndexes.has(index)) {
+      continue
+    }
+
+    const character = translation[index]
+    if (character === '・' || character === '･') {
+      matches.push({ start: index, end: index + character.length })
+    }
+  }
+
+  return matches.length === 0
+    ? []
+    : [
+        {
+          styleGuideItem: STYLE_GUIDE.middleDot,
+          message:
+            '中点「・」は原則使用しません。別の表現に置き換えられないか確認してください',
+          matches,
+        },
+      ]
 }
 
 /**

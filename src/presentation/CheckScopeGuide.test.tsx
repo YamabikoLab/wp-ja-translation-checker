@@ -23,7 +23,7 @@ describe('CheckScopeGuide', () => {
    * - 初期表示を確認する。
    *
    * 期待結果:
-   * - 案内内容が常時表示され、12項目をチェックすることと手動確認項目を確認できる。
+   * - 案内内容が常時表示され、13項目をチェックすることと手動確認項目を確認できる。
    */
   it('when first rendered, should show the check scope guidance without another interaction', () => {
     render(<CheckScopeGuide />)
@@ -31,7 +31,7 @@ describe('CheckScopeGuide', () => {
     expect(
       screen.getByRole('heading', { name: 'WTC のチェック範囲' }),
     ).toBeTruthy()
-    expect(screen.getByText('12項目をチェック')).toBeTruthy()
+    expect(screen.getByText('13項目をチェック')).toBeTruthy()
     expect(screen.getByText('手動で確認したい主な項目')).toBeTruthy()
   })
 
