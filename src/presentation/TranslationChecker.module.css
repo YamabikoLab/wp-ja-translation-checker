@@ -311,6 +311,117 @@
   font: inherit;
 }
 
+.paginationArea {
+  display: grid;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.paginationRange {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.paginationControls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 18px;
+}
+
+.pageSizeControl,
+.directPageControl {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-heading);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.pageSizeControl select,
+.directPageControl input {
+  box-sizing: border-box;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+}
+
+.pageSizeControl select {
+  padding: 7px 30px 7px 10px;
+  border-radius: var(--radius-medium);
+}
+
+.directPageControl input {
+  width: 64px;
+  padding: 7px 8px;
+  border-radius: var(--radius-medium);
+  text-align: center;
+}
+
+.pageNavigation {
+  display: inline-flex;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-medium);
+  background: var(--color-surface);
+}
+
+.pageNavigation button,
+.pageEllipsis {
+  display: grid;
+  min-width: 40px;
+  min-height: 38px;
+  place-items: center;
+  box-sizing: border-box;
+  border: 0;
+  border-left: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-heading);
+  font: inherit;
+  font-weight: 700;
+}
+
+.pageNavigation > :first-child {
+  border-left: 0;
+}
+
+.pageNavigation button {
+  cursor: pointer;
+}
+
+.pageNavigation button:hover:not(:disabled):not([aria-current='page']) {
+  background: var(--color-subtle);
+  color: var(--color-accent);
+}
+
+.pageNavigation button[aria-current='page'] {
+  background: var(--color-accent);
+  color: #fff;
+}
+
+.pageNavigation button:disabled {
+  cursor: not-allowed;
+  color: var(--color-muted);
+  opacity: 0.55;
+}
+
+.pageEllipsis {
+  color: var(--color-muted);
+}
+
+.pageNavigation button:focus-visible,
+.pageSizeControl select:focus-visible,
+.directPageControl input:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline: 3px solid var(--color-focus);
+  outline-offset: -3px;
+}
+
 .findingsList {
   display: grid;
   gap: 20px;
@@ -452,6 +563,16 @@
   .comparisonPanel + .comparisonPanel {
     border-top: 1px solid var(--color-border);
     border-left: 0;
+  }
+
+  .paginationControls {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .pageNavigation {
+    max-width: 100%;
+    overflow-x: auto;
   }
 
   .findingHeader {
