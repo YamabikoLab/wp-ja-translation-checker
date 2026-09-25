@@ -57,10 +57,12 @@ function createSuccessResult(
               errors: Array.from({ length: errorCount }, (_, index) => ({
                 styleGuideItem: `Error guide ${index + 1}`,
                 message: `Error message ${index + 1}`,
+                matches: [{ start: 0, end: 2 }],
               })),
               warnings: Array.from({ length: warningCount }, (_, index) => ({
                 styleGuideItem: `Warning guide ${index + 1}`,
                 message: `Warning message ${index + 1}`,
+                matches: [],
               })),
             },
           ],
@@ -397,6 +399,7 @@ describe('Presentation result model', () => {
       ),
     ).toBe(true)
     expect(findings[0]?.entry.source.plural).toBe('Save all setting groups')
+    expect(findings[0]?.matches).toEqual([{ start: 0, end: 2 }])
   })
 
   /**
@@ -580,6 +583,7 @@ describe('Rule filtering', () => {
         severity: 'Error' as const,
         message: 'Error 1',
         styleGuideItem: '1-1 日本語の句読点',
+        matches: [],
         entry,
       },
       {
@@ -587,6 +591,7 @@ describe('Rule filtering', () => {
         severity: 'Warning' as const,
         message: 'Warning 1',
         styleGuideItem: '3-2 View XX',
+        matches: [],
         entry,
       },
       {
@@ -594,6 +599,7 @@ describe('Rule filtering', () => {
         severity: 'Warning' as const,
         message: 'Warning 2',
         styleGuideItem: '1-1 日本語の句読点',
+        matches: [],
         entry,
       },
     ]
@@ -626,6 +632,7 @@ describe('Rule filtering', () => {
         severity: 'Error' as const,
         message: 'Error 1',
         styleGuideItem: '1-1 日本語の句読点',
+        matches: [],
         entry,
       },
       {
@@ -633,6 +640,7 @@ describe('Rule filtering', () => {
         severity: 'Warning' as const,
         message: 'Warning 1',
         styleGuideItem: '1-1 日本語の句読点',
+        matches: [],
         entry,
       },
       {
@@ -640,6 +648,7 @@ describe('Rule filtering', () => {
         severity: 'Error' as const,
         message: 'Error 2',
         styleGuideItem: '1-2 英数字・記号の半角表記',
+        matches: [],
         entry,
       },
     ]

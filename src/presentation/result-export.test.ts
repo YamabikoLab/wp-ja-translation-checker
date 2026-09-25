@@ -20,6 +20,7 @@ function createFinding(
     message: string
     source: string
     translation: string
+    matches: Finding['matches']
   }> = {},
 ): Finding {
   return {
@@ -27,6 +28,7 @@ function createFinding(
     severity: overrides.severity ?? 'Error',
     styleGuideItem: overrides.styleGuideItem ?? '1-1',
     message: overrides.message ?? '句読点を確認してください。',
+    matches: overrides.matches ?? [{ start: 5, end: 6 }],
     entry: {
       entryIndex: 0,
       source: {
@@ -149,6 +151,7 @@ describe('JSON result export', () => {
           message: '句読点を確認してください。',
           source: 'Hello, world',
           translation: 'こんにちは, 世界',
+          matches: [{ start: 5, end: 6 }],
         },
         {
           severity: 'warning',
@@ -156,6 +159,7 @@ describe('JSON result export', () => {
           message: '句読点を確認してください。',
           source: 'Hello, world',
           translation: 'こんにちは, 世界',
+          matches: [{ start: 5, end: 6 }],
         },
       ],
     })
@@ -209,7 +213,66 @@ describe('Markdown result export', () => {
     expect(markdown).toContain('### Error: 1-1')
     expect(markdown).toContain('### Error: 1-4')
     expect(markdown.match(/Hello, world/g)).toHaveLength(2)
-    expect(markdown.match(/こんにちは, 世界/g)).toHaveLength(2)
+    expect(markdown.match(/こんにちは\*\*,\*\* 世界/g)).toHaveLength(2)
+  })
+
+  /**
+   * 複数の一致箇所を Markdown だけで強調することを確認する。
+   *
+   * 事前条件:
+   * - 1つの指摘に複数の一致範囲がある。
+   *
+   * 操作:
+   * - Markdown / CSV / JSON へ変換する。
+   *
+   * 期待結果:
+   * - Markdown の翻訳だけが太字になり、CSV / JSON の翻訳文字列は元のままとなる。
+   */
+  it('when one finding has multiple matches, should decorate only the Markdown translation', () => {
+    const finding = createFinding({
+      translation: '全て保存して全て確認',
+      matches: [
+        { start: 0, end: 2 },
+        { start: 6, end: 8 },
+      ],
+    })
+
+    expect(serializeMarkdown('plugin-ja.po', [finding])).toContain(
+      '**全て**保存して**全て**確認',
+    )
+    expect(serializeCsv([finding])).toContain('全て保存して全て確認')
+    expect(
+      JSON.parse(serializeJson('plugin-ja.po', [finding])).findings[0],
+    ).toMatchObject({
+      translation: '全て保存して全て確認',
+      matches: [
+        { start: 0, end: 2 },
+        { start: 6, end: 8 },
+      ],
+    })
+  })
+
+  /**
+   * 前後空白を含む一致範囲でも Markdown の太字が成立することを確認する。
+   *
+   * 事前条件:
+   * - 一致範囲の先頭と末尾に空白が含まれる。
+   *
+   * 操作:
+   * - Markdown へ変換する。
+   *
+   * 期待結果:
+   * - 空白は太字記法の外に残し、実文字部分だけを太字にする。
+   */
+  it('when a Markdown match contains surrounding whitespace, should keep whitespace outside strong emphasis', () => {
+    const finding = createFinding({
+      translation: '設定 : 詳細',
+      matches: [{ start: 2, end: 5 }],
+    })
+
+    expect(serializeMarkdown('plugin-ja.po', [finding])).toContain(
+      '設定 **:** 詳細',
+    )
   })
 
   /**

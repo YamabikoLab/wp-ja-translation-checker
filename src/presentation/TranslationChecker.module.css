@@ -193,6 +193,24 @@
   font-weight: 800;
 }
 
+.counts .errorCount {
+  background: var(--color-error-background);
+}
+
+.errorCount dt,
+.errorCount dd {
+  color: var(--color-error);
+}
+
+.counts .warningCount {
+  background: var(--color-warning-background);
+}
+
+.warningCount dt,
+.warningCount dd {
+  color: var(--color-warning-text);
+}
+
 .noFindings {
   padding: 16px 18px;
   border-radius: var(--radius-medium);
@@ -360,6 +378,12 @@
   overflow-wrap: anywhere;
   white-space: pre-wrap;
   color: var(--color-text);
+}
+
+.ngMatch {
+  background: var(--color-error-background);
+  color: inherit;
+  font-weight: 700;
 }
 
 .textToggle {

@@ -95,6 +95,7 @@ describe('Japanese v1 check public interface', () => {
           {
             styleGuideItem: '3-6 「下さい / 全て / 既に」などの推奨表記',
             message: '「下さい」は「ください」と表記してください',
+            matches: [{ start: 7, end: 10 }],
           },
         ],
         warnings: [],

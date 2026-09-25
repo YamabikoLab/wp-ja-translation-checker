@@ -6,8 +6,10 @@
 
 import type { CheckResult } from '@/check/check'
 
+/** Check Orchestration が正常完了した場合の公開結果。 */
 type SuccessfulCheckResult = Extract<CheckResult, { status: 'success' }>
 
+/** 確認を完了できなかった理由と、利用者へ提示するために必要な入力情報。 */
 type FeedbackState =
   | {
       status: 'feedback'
@@ -52,6 +54,7 @@ export type Finding = {
   severity: 'Error' | 'Warning'
   message: string
   styleGuideItem: string
+  matches: SuccessfulCheckResult['results'][number]['errors'][number]['matches']
   entry: SuccessfulCheckResult['entries'][number]
 }
 
@@ -169,6 +172,7 @@ export function createFindings(
         severity: 'Error',
         message: message.message,
         styleGuideItem: message.styleGuideItem,
+        matches: message.matches,
         entry,
       })
     }
@@ -180,6 +184,7 @@ export function createFindings(
         severity: 'Warning',
         message: message.message,
         styleGuideItem: message.styleGuideItem,
+        matches: message.matches,
         entry,
       })
     }

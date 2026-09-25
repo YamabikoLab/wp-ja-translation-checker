@@ -23,6 +23,7 @@ import {
 import type { CheckMessage } from './rule-checks'
 
 type RuleCheck = (entry: TranslationEntry) => readonly CheckMessage[]
+type MessageWithoutMatches = Omit<CheckMessage, 'matches'>
 
 /**
  * 個別ルールテスト用の翻訳 entry を生成する。
@@ -54,8 +55,13 @@ function createEntry(
 function checkEntries(
   rule: RuleCheck,
   entries: readonly TranslationEntry[],
-): readonly CheckMessage[] {
-  return entries.flatMap((entry) => rule(entry))
+): readonly MessageWithoutMatches[] {
+  return entries.flatMap((entry) =>
+    rule(entry).map(({ styleGuideItem, message }) => ({
+      styleGuideItem,
+      message,
+    })),
+  )
 }
 
 /**
@@ -70,8 +76,13 @@ function getRuleMessages(
   rule: RuleCheck,
   source: string,
   translation: string,
-): readonly CheckMessage[] {
-  return rule(createEntry(7, source, translation))
+): readonly MessageWithoutMatches[] {
+  return rule(createEntry(7, source, translation)).map(
+    ({ styleGuideItem, message }) => ({
+      styleGuideItem,
+      message,
+    }),
+  )
 }
 
 describe('Japanese v1 rule 1-1', () => {
@@ -183,6 +194,30 @@ describe('Japanese v1 rule 1-1', () => {
         ),
       ]),
     ).toEqual([])
+  })
+
+  /**
+   * 同一指摘に複数の該当箇所がある場合の位置情報を確認する。
+   *
+   * 操作:
+   * - UTF-16 で2 code unit の絵文字に続けて、同じ不適切な句読点を2箇所含む翻訳を確認する。
+   *
+   * 期待結果:
+   * - 1件の CheckMessage に2箇所の [start, end) が UTF-16 code unit offset で保持される。
+   */
+  it('when the same punctuation finding occurs multiple times, should keep every UTF-16 match range in one message', () => {
+    expect(
+      checkJapanesePunctuation(createEntry(7, 'Message', '😀設定，保存，完了')),
+    ).toEqual([
+      {
+        styleGuideItem: '1-1 日本語の句読点',
+        message: '日本語の句読点は「、」「。」を使用してください',
+        matches: [
+          { start: 4, end: 5 },
+          { start: 7, end: 8 },
+        ],
+      },
+    ])
   })
 })
 
@@ -854,6 +889,7 @@ describe('Japanese v1 rule 1-8', () => {
     ).toContainEqual({
       styleGuideItem: '1-8 文末括弧と句点の位置',
       message: '文末の句点は丸括弧の外に置いてください',
+      matches: [{ start: 6, end: 8 }],
     })
   })
 })
@@ -1198,5 +1234,110 @@ describe('Japanese v1 rule 3-6', () => {
           item.message === '「全て」は「すべて」と表記してください',
       ),
     ).toHaveLength(1)
+  })
+})
+
+describe('Japanese v1 match ranges', () => {
+  /**
+   * 同じ 1-4 の指摘内容に該当する複数箇所を、1件の指摘へまとめて位置情報として保持することを確認する。
+   *
+   * 操作:
+   * - 半角英字と日本語の境界違反を同じ文中に2箇所含む翻訳を確認する。
+   *
+   * 期待結果:
+   * - 同じ表示メッセージの指摘は1件となる。
+   * - 2箇所それぞれの [start, end) が UTF-16 code unit offset で保持される。
+   */
+  it('when the same spacing boundary violation occurs multiple times, should keep all match ranges in one rule 1-4 message', () => {
+    expect(
+      checkSpacingBetweenHalfAndFullWidth(
+        createEntry(0, 'Settings', '😀A設定とA設定'),
+      ),
+    ).toContainEqual({
+      styleGuideItem: '1-4 半角文字と全角文字の間のスペース',
+      message: '「A」と「設」の間に半角スペースを入れてください',
+      matches: [
+        { start: 2, end: 4 },
+        { start: 6, end: 8 },
+      ],
+    })
+  })
+
+  /**
+   * コロン前後の異なる 1-4 指摘が、それぞれ自分の問題箇所だけを位置情報として持つことを確認する。
+   *
+   * 操作:
+   * - コロン前に不要スペースがあり、コロン後の必要スペースがない翻訳を確認する。
+   *
+   * 期待結果:
+   * - 前側と後側の指摘が別々に返る。
+   * - 各指摘の matches が対応する境界だけを示す。
+   */
+  it('when colon spacing has separate before and after violations, should keep distinct match ranges for each rule 1-4 message', () => {
+    expect(
+      checkSpacingBetweenHalfAndFullWidth(
+        createEntry(0, 'Status', '状態 :有効'),
+      ),
+    ).toEqual(
+      expect.arrayContaining([
+        {
+          styleGuideItem: '1-4 半角文字と全角文字の間のスペース',
+          message: '「:」の前のスペースは不要です',
+          matches: [{ start: 2, end: 4 }],
+        },
+        {
+          styleGuideItem: '1-4 半角文字と全角文字の間のスペース',
+          message: '「:」の後にスペースを1つ入れてください',
+          matches: [{ start: 3, end: 5 }],
+        },
+      ]),
+    )
+  })
+
+  /**
+   * 同じ推奨外表記が複数回現れる場合に、3-6 の指摘件数を増やさず全箇所を位置情報へまとめることを確認する。
+   *
+   * 操作:
+   * - UTF-16 で2 code unit の絵文字に続けて「全て」を2箇所含む翻訳を確認する。
+   *
+   * 期待結果:
+   * - 「全て」に対する指摘は1件だけ返る。
+   * - 2箇所の位置が UTF-16 code unit offset で保持される。
+   */
+  it('when one recommended expression appears multiple times, should keep every UTF-16 range in one rule 3-6 message', () => {
+    expect(
+      checkRecommendedExpressions(
+        createEntry(0, 'Save all', '😀全て保存、全て確認'),
+      ),
+    ).toContainEqual({
+      styleGuideItem: '3-6 「下さい / 全て / 既に」などの推奨表記',
+      message: '「全て」は「すべて」と表記してください',
+      matches: [
+        { start: 2, end: 4 },
+        { start: 7, end: 9 },
+      ],
+    })
+  })
+
+  /**
+   * 翻訳内の単一箇所へ機械的に限定できない Warning では、誤った強調位置を生成しないことを確認する。
+   *
+   * 操作:
+   * - 3-2 の確認対象となる View の翻訳を確認する。
+   *
+   * 期待結果:
+   * - Warning 自体は返る。
+   * - matches は空配列となる。
+   */
+  it('when a warning applies to the translation expression as a whole, should not invent a match range', () => {
+    expect(
+      checkViewExpression(createEntry(0, 'View posts', '投稿を閲覧')),
+    ).toEqual([
+      {
+        styleGuideItem: '3-2 「View XX」を「〜を表示 (する)」に統一',
+        message: '「View XX」の訳し方を確認してください',
+        matches: [],
+      },
+    ])
   })
 })

@@ -8,6 +8,16 @@
 import type { TranslationEntry } from '@/po/interpret-po'
 
 /**
+ * 翻訳内で検出した1箇所の一致範囲を表す。
+ */
+export type CheckMessageMatch = {
+  /** 指摘箇所の開始位置。entry.translations[0].text に対する UTF-16 code unit offset。 */
+  start: number
+  /** 指摘箇所の終了位置。対象範囲に含まない UTF-16 code unit offset。 */
+  end: number
+}
+
+/**
  * 1件の指摘で利用者へ提示する最小情報を表す。
  */
 export type CheckMessage = {
@@ -15,6 +25,8 @@ export type CheckMessage = {
   styleGuideItem: string
   /** 利用者が確認する指摘内容。 */
   message: string
+  /** 同一の指摘内容として扱う翻訳内の該当箇所。 */
+  matches: readonly CheckMessageMatch[]
 }
 
 /**
@@ -151,41 +163,43 @@ function isNumericFullWidthPunctuation(text: string, index: number): boolean {
  * @param entry 確認対象 entry。
  * @returns 1-1 に該当する指摘。
  */
+
 export function checkJapanesePunctuation(
   entry: TranslationEntry,
 ): readonly CheckMessage[] {
   const translation = getTranslation(entry)
-  // 日本語訳が存在しない entry は、1-1 の判定対象にできないため指摘しない。
   if (translation === undefined) {
     return []
   }
 
   const { protectedIndexes } = protectTechnicalText(translation)
+  const matches: CheckMessageMatch[] = []
 
-  // 技術文字列を除く本文で、明確に代替句読点と判断できる文字だけを確認する。
+  // 技術文字列を除く本文で、明確に代替句読点と判断できる文字をすべて同一指摘へまとめる。
   for (let index = 0; index < translation.length; index += 1) {
-    // 技術文字列内部は、日本語本文の句読点として評価しない。
     if (protectedIndexes.has(index)) {
       continue
     }
 
     const character = translation[index]
-    // 数値表記として明確な全角カンマ・ピリオドを除き、代替句読点だけを 1-1 の対象とする。
     if (
       character !== undefined &&
       ['，', '．', '､', '｡'].includes(character) &&
       !isNumericFullWidthPunctuation(translation, index)
     ) {
-      return [
-        {
-          styleGuideItem: STYLE_GUIDE.punctuation,
-          message: '日本語の句読点は「、」「。」を使用してください',
-        },
-      ]
+      matches.push({ start: index, end: index + character.length })
     }
   }
 
-  return []
+  return matches.length === 0
+    ? []
+    : [
+        {
+          styleGuideItem: STYLE_GUIDE.punctuation,
+          message: '日本語の句読点は「、」「。」を使用してください',
+          matches,
+        },
+      ]
 }
 
 /**
@@ -196,39 +210,37 @@ export function checkJapanesePunctuation(
  * @param entry 確認対象 entry。
  * @returns 1-2 に該当する指摘。
  */
+
 export function checkHalfWidthCharacters(
   entry: TranslationEntry,
 ): readonly CheckMessage[] {
   const translation = getTranslation(entry)
-  // 日本語訳が存在しない entry は、1-2 の判定対象にできないため指摘しない。
   if (translation === undefined) {
     return []
   }
 
   const { protectedIndexes } = protectTechnicalText(translation)
-  const messages: CheckMessage[] = []
-  const seen = new Set<string>()
+  const matchesByKey = new Map<
+    string,
+    { character: string; expected: string; matches: CheckMessageMatch[] }
+  >()
 
-  // 技術文字列を除く本文から、半角表記へ置き換え可能な全角 ASCII 文字を確認する。
+  // 同じ全角文字の複数箇所は同一指摘へまとめ、異なる文字は別の指摘として維持する。
   for (let index = 0; index < translation.length; index += 1) {
-    // 技術文字列内部は、日本語本文の全半角規則として評価しない。
     if (protectedIndexes.has(index)) {
       continue
     }
 
     const character = translation[index]
-    // 判定対象の文字を取得できない場合は指摘を生成しない。
     if (character === undefined) {
       continue
     }
 
     const codePoint = character.codePointAt(0)
-    // 半角 ASCII に対応する全角文字だけを 1-2 の候補とする。
     if (codePoint === undefined || codePoint < 0xff01 || codePoint > 0xff5e) {
       continue
     }
 
-    // 日本語の句読点と丸括弧は個別ルールへ委ねるが、数値表記内の全角カンマ・ピリオドは 1-2 で扱う。
     if (
       ['（', '）'].includes(character) ||
       (['，', '．'].includes(character) &&
@@ -239,19 +251,24 @@ export function checkHalfWidthCharacters(
 
     const expected = String.fromCodePoint(codePoint - 0xfee0)
     const key = `${character}:${expected}`
-    // 同じ翻訳内の同一表記は1件の指摘へまとめ、同じ内容を重複表示しない。
-    if (seen.has(key)) {
-      continue
-    }
+    const match = { start: index, end: index + character.length }
+    const existing = matchesByKey.get(key)
 
-    seen.add(key)
-    messages.push({
-      styleGuideItem: STYLE_GUIDE.halfWidth,
-      message: `「${character}」は半角の「${expected}」で表記してください`,
-    })
+    if (existing !== undefined) {
+      existing.matches.push(match)
+    } else {
+      matchesByKey.set(key, { character, expected, matches: [match] })
+    }
   }
 
-  return messages
+  return Array.from(
+    matchesByKey.values(),
+    ({ character, expected, matches }) => ({
+      styleGuideItem: STYLE_GUIDE.halfWidth,
+      message: `「${character}」は半角の「${expected}」で表記してください`,
+      matches,
+    }),
+  )
 }
 
 /**
@@ -260,11 +277,11 @@ export function checkHalfWidthCharacters(
  * @param entry 確認対象 entry。
  * @returns 1-4 に該当する指摘。
  */
+
 export function checkSpacingBetweenHalfAndFullWidth(
   entry: TranslationEntry,
 ): readonly CheckMessage[] {
   const translation = getTranslation(entry)
-  // 日本語訳が存在しない entry は、1-4 の判定対象にできないため指摘しない。
   if (translation === undefined) {
     return []
   }
@@ -276,19 +293,15 @@ export function checkSpacingBetweenHalfAndFullWidth(
   const messages: CheckMessage[] = []
   const spacingCharacters = new Set([' ', '\u00a0', '　'])
   const validColonSpacingCharacters = new Set([' ', '　'])
-  let invalidBoundary:
-    | {
-        left: string
-        right: string
-        spaceCount: number
-        hasInvalidBoundarySpace: boolean
-      }
-    | undefined
+  const invalidBoundaryMatches: CheckMessageMatch[] = []
+  let invalidBoundaryMessage: string | undefined
+  const unnecessarySymbolMatches: CheckMessageMatch[] = []
   let unnecessarySymbol: string | undefined
+  const colonBeforeMatches: CheckMessageMatch[] = []
+  const colonAfterMatches: CheckMessageMatch[] = []
 
   // 数字以外の半角文字と日本語文字の境界が、半角スペース1つで区切られているか確認する。
   for (let index = 0; index < spacingText.length - 1; index += 1) {
-    // 技術文字列内部から始まる境界は、日本語本文のスペース規則として評価しない。
     if (protectedIndexes.has(index)) {
       continue
     }
@@ -298,21 +311,17 @@ export function checkSpacingBetweenHalfAndFullWidth(
     let spaceCount = 0
     let hasInvalidBoundarySpace = false
 
-    // 境界に存在する空白を確認し、通常の半角スペース以外を含む場合は 1-4 の不適合として扱う。
     while (spacingCharacters.has(spacingText[rightIndex] ?? '')) {
       spaceCount += 1
       hasInvalidBoundarySpace ||= spacingText[rightIndex] !== ' '
       rightIndex += 1
     }
 
-    // 技術文字列へ接続する境界は、本文同士のスペース規則として断定しない。
     if (protectedIndexes.has(rightIndex)) {
       continue
     }
 
     const right = spacingText[rightIndex] ?? ''
-
-    // 丸括弧・コロン・句読点等は個別規則または例外があるため、通常の半角・全角境界判定から除外する。
     if (
       left === '(' ||
       right === ')' ||
@@ -333,100 +342,111 @@ export function checkSpacingBetweenHalfAndFullWidth(
     const leftJapanese = JAPANESE_CHARACTER.test(left)
     const rightJapanese = JAPANESE_CHARACTER.test(right)
 
-    // 数字を除く半角文字と日本語文字の境界は、半角スペースがちょうど1つの場合だけ正常とする。
     if (
       ((leftHalf && rightJapanese) || (leftJapanese && rightHalf)) &&
       (spaceCount !== 1 || hasInvalidBoundarySpace)
     ) {
-      invalidBoundary = {
-        left,
-        right,
-        spaceCount,
-        hasInvalidBoundarySpace,
+      const message =
+        spaceCount === 0
+          ? `「${left}」と「${right}」の間に半角スペースを入れてください`
+          : `「${left}」と「${right}」の間の半角スペースは1つにしてください`
+
+      // 従来どおり最初の指摘内容だけを1件として返し、同じ内容の後続箇所だけを位置情報へまとめる。
+      if (invalidBoundaryMessage === undefined) {
+        invalidBoundaryMessage = message
       }
-      break
+      if (invalidBoundaryMessage === message) {
+        invalidBoundaryMatches.push({ start: index, end: rightIndex + 1 })
+      }
     }
   }
 
-  // 日本語の句読点・かぎ括弧の前後にはスペースを置かない。
+  // 日本語の句読点・かぎ括弧の前後にある不要スペースを、同じ記号の指摘へまとめる。
   for (let index = 0; index < translation.length; index += 1) {
-    // 技術文字列内部の記号は、日本語本文のスペース規則として評価しない。
     if (protectedIndexes.has(index)) {
       continue
     }
 
     const character = translation[index]
-    // スペース禁止の日本語記号に隣接する空白がある場合だけ、不要なスペースとして扱う。
     if (
       character !== undefined &&
       NO_SPACE_JAPANESE_PUNCTUATION.has(character) &&
       (spacingCharacters.has(translation[index - 1] ?? '') ||
         spacingCharacters.has(translation[index + 1] ?? ''))
     ) {
-      unnecessarySymbol = character
-      break
+      if (unnecessarySymbol === undefined) {
+        unnecessarySymbol = character
+      }
+      if (unnecessarySymbol === character) {
+        const start = spacingCharacters.has(translation[index - 1] ?? '')
+          ? index - 1
+          : index
+        const end = spacingCharacters.has(translation[index + 1] ?? '')
+          ? index + 2
+          : index + 1
+        unnecessarySymbolMatches.push({ start, end })
+      }
     }
   }
 
-  let colonBefore = false
-  let colonAfterMissing = false
-  let colonAfterMultiple = false
-
   // 日本語本文の区切りとして使われるコロンについて、前後のスペース規則を確認する。
   for (let index = 0; index < translation.length; index += 1) {
-    // コロン以外、または技術文字列内部のコロンは 1-4 の対象にしない。
     if (translation[index] !== ':' || protectedIndexes.has(index)) {
       continue
     }
 
     const previous = translation[index - 1] ?? ''
     const next = translation[index + 1] ?? ''
-
-    // 時刻のような数字同士を結ぶコロンは、日本語本文の区切り記号として扱わない。
     if (/\d/u.test(previous) && /\d/u.test(next)) {
       continue
     }
 
-    // コロン前には空白を置かず、後には半角または全角スペースのどちらか1つを置く。
-    colonBefore ||= spacingCharacters.has(previous)
-    colonAfterMissing ||= next !== '' && !validColonSpacingCharacters.has(next)
-    colonAfterMultiple ||=
+    if (spacingCharacters.has(previous)) {
+      colonBeforeMatches.push({ start: index - 1, end: index + 1 })
+    }
+
+    const afterMissing = next !== '' && !validColonSpacingCharacters.has(next)
+    const afterMultiple =
       validColonSpacingCharacters.has(next) &&
       spacingCharacters.has(translation[index + 2] ?? '')
+
+    if (afterMissing || afterMultiple) {
+      colonAfterMatches.push({
+        start: index,
+        end: Math.min(translation.length, index + (afterMultiple ? 3 : 2)),
+      })
+    }
   }
 
-  // 通常の半角・全角文字境界でスペースの過不足を検出した場合は、その境界を1件の指摘として返す。
-  if (invalidBoundary !== undefined) {
+  if (invalidBoundaryMessage !== undefined) {
     messages.push({
       styleGuideItem: STYLE_GUIDE.halfFullSpacing,
-      message:
-        invalidBoundary.spaceCount === 0
-          ? `「${invalidBoundary.left}」と「${invalidBoundary.right}」の間に半角スペースを入れてください`
-          : `「${invalidBoundary.left}」と「${invalidBoundary.right}」の間の半角スペースは1つにしてください`,
+      message: invalidBoundaryMessage,
+      matches: invalidBoundaryMatches,
     })
   }
 
-  // スペース禁止記号の前後に空白を検出した場合は、その記号について1件の指摘を返す。
   if (unnecessarySymbol !== undefined) {
     messages.push({
       styleGuideItem: STYLE_GUIDE.halfFullSpacing,
       message: `「${unnecessarySymbol}」の前後のスペースは不要です`,
+      matches: unnecessarySymbolMatches,
     })
   }
 
-  // コロンの直前に空白が存在する場合は、不要なスペースとして指摘する。
-  if (colonBefore) {
+  if (colonBeforeMatches.length > 0) {
     messages.push({
       styleGuideItem: STYLE_GUIDE.halfFullSpacing,
       message: '「:」の前のスペースは不要です',
+      matches: colonBeforeMatches,
     })
   }
 
-  // コロンの直後が半角または全角スペース1つでない場合は、必要なスペースの不足または過剰として指摘する。
-  if (colonAfterMissing || colonAfterMultiple) {
+  if (colonAfterMatches.length > 0) {
     messages.push({
       styleGuideItem: STYLE_GUIDE.halfFullSpacing,
       message: '「:」の後にスペースを1つ入れてください',
+      matches: colonAfterMatches,
     })
   }
 
@@ -441,54 +461,47 @@ export function checkSpacingBetweenHalfAndFullWidth(
  * @param entry 確認対象 entry。
  * @returns 1-5 に該当する指摘。
  */
+
 export function checkParenthesesSpacing(
   entry: TranslationEntry,
 ): readonly CheckMessage[] {
   const translation = getTranslation(entry)
-  // 日本語訳が存在しない entry は、1-5 の判定対象にできないため指摘しない。
   if (translation === undefined) {
     return []
   }
 
   const { protectedIndexes } = protectTechnicalText(translation)
   const messages: CheckMessage[] = []
-  let hasFullWidthParentheses = false
+  const fullWidthMatches: CheckMessageMatch[] = []
+  const invalidOuterSpacingMatches: CheckMessageMatch[] = []
 
-  // 技術文字列を除く本文で、全角丸括弧が使われていないか確認する。
+  // 技術文字列を除く本文で使われた全角丸括弧を、1件の指摘へまとめる。
   for (let index = 0; index < translation.length; index += 1) {
-    // 技術文字列内部の丸括弧は、日本語本文の丸括弧規則として評価しない。
     if (protectedIndexes.has(index)) {
       continue
     }
 
     const character = translation[index]
-    // 本文で全角丸括弧を検出した場合は、半角丸括弧へ統一する対象とする。
     if (character === '（' || character === '）') {
-      hasFullWidthParentheses = true
-      break
+      fullWidthMatches.push({ start: index, end: index + character.length })
     }
   }
 
-  // 全角丸括弧が1つ以上あれば、同じルール内で1件の指摘としてまとめる。
-  if (hasFullWidthParentheses) {
+  if (fullWidthMatches.length > 0) {
     messages.push({
       styleGuideItem: STYLE_GUIDE.parentheses,
       message: '丸括弧は半角の「( )」を使用してください',
+      matches: fullWidthMatches,
     })
   }
 
-  let invalidOuterSpacing = false
-
   // 半角丸括弧の外側が、例外を除いて半角スペース1つになっているか確認する。
   for (let index = 0; index < translation.length; index += 1) {
-    // 技術文字列内部の丸括弧は、日本語本文の外側スペース規則として評価しない。
     if (protectedIndexes.has(index)) {
       continue
     }
 
     const character = translation[index]
-
-    // 文字列先頭以外の開き括弧では、本文側の直前に必要な外側スペースがあるか確認する。
     if (character === '(' && index > 0) {
       const outside = getOuterParenthesesSpacing(
         translation,
@@ -496,18 +509,18 @@ export function checkParenthesesSpacing(
         index - 1,
         -1,
       )
-      // 例外記号に隣接しない本文側では、外側スペースが半角1つでなければ 1-5 の対象とする。
       if (
         outside !== undefined &&
         !OUTER_PARENTHESES_SPACE_EXCEPTIONS.has(outside.character) &&
         outside.spaceCount !== 1
       ) {
-        invalidOuterSpacing = true
-        break
+        invalidOuterSpacingMatches.push({
+          start: Math.max(0, index - Math.max(1, outside.spaceCount)),
+          end: index + 1,
+        })
       }
     }
 
-    // 文字列末尾以外の閉じ括弧では、本文側の直後に必要な外側スペースがあるか確認する。
     if (character === ')' && index < translation.length - 1) {
       const outside = getOuterParenthesesSpacing(
         translation,
@@ -515,24 +528,28 @@ export function checkParenthesesSpacing(
         index + 1,
         1,
       )
-      // 閉じ括弧直後の句点等の例外を除き、本文側の外側スペースが半角1つでなければ 1-5 の対象とする。
       if (
         outside !== undefined &&
         outside.character !== '。' &&
         !OUTER_PARENTHESES_SPACE_EXCEPTIONS.has(outside.character) &&
         outside.spaceCount !== 1
       ) {
-        invalidOuterSpacing = true
-        break
+        invalidOuterSpacingMatches.push({
+          start: index,
+          end: Math.min(
+            translation.length,
+            index + Math.max(2, outside.spaceCount + 1),
+          ),
+        })
       }
     }
   }
 
-  // 外側スペースの不適合が1箇所以上あれば、同じルール内で1件の指摘としてまとめる。
-  if (invalidOuterSpacing) {
+  if (invalidOuterSpacingMatches.length > 0) {
     messages.push({
       styleGuideItem: STYLE_GUIDE.parentheses,
       message: '丸括弧の外側は半角スペース1つにしてください',
+      matches: invalidOuterSpacingMatches,
     })
   }
 
@@ -590,44 +607,51 @@ function getOuterParenthesesSpacing(
  * @param entry 確認対象 entry。
  * @returns 1-6 に該当する指摘。
  */
+
 export function checkInnerParenthesesSpacing(
   entry: TranslationEntry,
 ): readonly CheckMessage[] {
   const translation = getTranslation(entry)
-  // 日本語訳が存在しない entry は、1-6 の判定対象にできないため指摘しない。
   if (translation === undefined) {
     return []
   }
 
   const { protectedIndexes } = protectTechnicalText(translation)
+  const matches: CheckMessageMatch[] = []
 
-  // 技術文字列を除く本文で、丸括弧の直後・直前に空白がないか確認する。
+  // 技術文字列を除く本文で、丸括弧の内側にある不要スペースをすべて同一指摘へまとめる。
   for (let index = 0; index < translation.length; index += 1) {
-    // 技術文字列内部の丸括弧は、日本語本文の内側スペース規則として評価しない。
     if (protectedIndexes.has(index)) {
       continue
     }
 
     const character = translation[index]
-    // 本文中の丸括弧について、保護範囲を除いた直後または直前に空白がある場合だけ 1-6 とする。
     if (
-      (character === '(' &&
-        !protectedIndexes.has(index + 1) &&
-        /\s/u.test(translation[index + 1] ?? '')) ||
-      (character === ')' &&
-        !protectedIndexes.has(index - 1) &&
-        /\s/u.test(translation[index - 1] ?? ''))
+      character === '(' &&
+      !protectedIndexes.has(index + 1) &&
+      /\s/u.test(translation[index + 1] ?? '')
     ) {
-      return [
-        {
-          styleGuideItem: STYLE_GUIDE.innerParenthesesSpacing,
-          message: '丸括弧の内側のスペースは削除してください',
-        },
-      ]
+      matches.push({ start: index + 1, end: index + 2 })
+    }
+
+    if (
+      character === ')' &&
+      !protectedIndexes.has(index - 1) &&
+      /\s/u.test(translation[index - 1] ?? '')
+    ) {
+      matches.push({ start: index - 1, end: index })
     }
   }
 
-  return []
+  return matches.length === 0
+    ? []
+    : [
+        {
+          styleGuideItem: STYLE_GUIDE.innerParenthesesSpacing,
+          message: '丸括弧の内側のスペースは削除してください',
+          matches,
+        },
+      ]
 }
 
 /**
@@ -636,20 +660,20 @@ export function checkInnerParenthesesSpacing(
  * @param entry 確認対象 entry。
  * @returns 1-7 に該当する指摘。
  */
+
 export function checkPeriodInsideParentheses(
   entry: TranslationEntry,
 ): readonly CheckMessage[] {
   const translation = getTranslation(entry)
-  // 日本語訳が存在しない entry は、1-7 の判定対象にできないため指摘しない。
   if (translation === undefined) {
     return []
   }
 
   const { protectedIndexes } = protectTechnicalText(translation)
+  const matches: CheckMessageMatch[] = []
 
-  // 文末全体の「。)」は 1-8 に委ね、それ以外の括弧直前句点だけを確認する。
+  // 文末全体の「。)」は 1-8 に委ね、それ以外の括弧直前句点を同一指摘へまとめる。
   for (let index = 0; index < translation.length - 1; index += 1) {
-    // 技術文字列外の「。)」が翻訳全体の末尾ではない場合だけ、括弧内末尾の不要句点として扱う。
     if (
       translation[index] === '。' &&
       translation[index + 1] === ')' &&
@@ -657,16 +681,19 @@ export function checkPeriodInsideParentheses(
       !protectedIndexes.has(index + 1) &&
       index + 1 !== translation.length - 1
     ) {
-      return [
-        {
-          styleGuideItem: STYLE_GUIDE.periodInsideParentheses,
-          message: '丸括弧内の末尾の句点は削除してください',
-        },
-      ]
+      matches.push({ start: index, end: index + 1 })
     }
   }
 
-  return []
+  return matches.length === 0
+    ? []
+    : [
+        {
+          styleGuideItem: STYLE_GUIDE.periodInsideParentheses,
+          message: '丸括弧内の末尾の句点は削除してください',
+          matches,
+        },
+      ]
 }
 
 /**
@@ -675,11 +702,11 @@ export function checkPeriodInsideParentheses(
  * @param entry 確認対象 entry。
  * @returns 1-8 に該当する指摘。
  */
+
 export function checkSentenceEndingParentheses(
   entry: TranslationEntry,
 ): readonly CheckMessage[] {
   const translation = getTranslation(entry)
-  // 1-8 は、翻訳が存在し、翻訳全体が「。)」で終わる場合だけを明示的な判定対象とする。
   if (translation === undefined || !/。\)$/u.test(translation)) {
     return []
   }
@@ -688,7 +715,6 @@ export function checkSentenceEndingParentheses(
   const periodIndex = translation.length - 2
   const closingParenthesisIndex = translation.length - 1
 
-  // 文末の「。)」が技術文字列内部にある場合は、日本語本文の句点位置として指摘しない。
   if (
     protectedIndexes.has(periodIndex) ||
     protectedIndexes.has(closingParenthesisIndex)
@@ -700,6 +726,7 @@ export function checkSentenceEndingParentheses(
     {
       styleGuideItem: STYLE_GUIDE.sentenceEndingParentheses,
       message: '文末の句点は丸括弧の外に置いてください',
+      matches: [{ start: periodIndex, end: closingParenthesisIndex + 1 }],
     },
   ]
 }
@@ -712,11 +739,11 @@ export function checkSentenceEndingParentheses(
  * @param entry 確認対象 entry。
  * @returns 1-9 に該当する指摘。
  */
+
 export function checkNumberSpacing(
   entry: TranslationEntry,
 ): readonly CheckMessage[] {
   const translation = getTranslation(entry)
-  // 日本語訳が存在しない entry は、1-9 の判定対象にできないため指摘しない。
   if (translation === undefined) {
     return []
   }
@@ -728,13 +755,12 @@ export function checkNumberSpacing(
     `(?:(${numericToken}) +(${japanese})|(${japanese}) +(${numericToken}))`,
     'gu',
   )
+  const matches: CheckMessageMatch[] = []
 
-  // 数字が識別子・バージョン・寸法等の技術表現の一部ではなく、日本語本文との境界にある場合だけ指摘する。
   for (const match of translation.matchAll(pattern)) {
     const value = match[0]
     const start = match.index
     const numeric = match[1] ?? match[4]
-    // 数字または数値プレースホルダーを特定できない候補は、1-9 の対象として扱わない。
     if (numeric === undefined) {
       continue
     }
@@ -744,31 +770,30 @@ export function checkNumberSpacing(
     const numericEnd = numericStart + numeric.length
     const isPlaceholder = numeric.startsWith('%')
 
-    // コード等の保護された技術文字列内部にある数字は、日本語本文との境界として扱わない。
     if (protectedIndexes.has(numericStart)) {
       continue
     }
 
-    // 数値プレースホルダーは常に数字相当として扱い、通常の数字だけ技術トークンへの埋め込みを追加確認する。
     if (!isPlaceholder) {
       const before = translation[numericStart - 1] ?? ''
       const after = translation[numericEnd] ?? ''
-
-      // ASCII の識別子、バージョン、規格番号、寸法等に埋め込まれた数字は単独の数字として扱わない。
       if (/[A-Za-z0-9_.-]/u.test(before) || /[A-Za-z0-9_.-]/u.test(after)) {
         continue
       }
     }
 
-    return [
-      {
-        styleGuideItem: STYLE_GUIDE.numberSpacing,
-        message: '半角数字と日本語の間のスペースは削除してください',
-      },
-    ]
+    matches.push({ start, end: start + value.length })
   }
 
-  return []
+  return matches.length === 0
+    ? []
+    : [
+        {
+          styleGuideItem: STYLE_GUIDE.numberSpacing,
+          message: '半角数字と日本語の間のスペースは削除してください',
+          matches,
+        },
+      ]
 }
 
 /**
@@ -779,11 +804,11 @@ export function checkNumberSpacing(
  * @param entry 確認対象 entry。
  * @returns 3-2 に該当する指摘。
  */
+
 export function checkViewExpression(
   entry: TranslationEntry,
 ): readonly CheckMessage[] {
   const translation = getTranslation(entry)
-  // 3-2 は、日本語訳が存在し、原文が動詞の「View XX」と明確に判断できる場合だけ確認する。
   if (
     translation === undefined ||
     !/^View\s+\S+/u.test(entry.source.singular)
@@ -791,7 +816,6 @@ export function checkViewExpression(
     return []
   }
 
-  // 主動作が「〜を表示（する）」として訳されている場合は、3-2 の推奨表現を満たす。
   if (/を表示(?:する)?/u.test(translation) && !/の表示/u.test(translation)) {
     return []
   }
@@ -800,6 +824,7 @@ export function checkViewExpression(
     {
       styleGuideItem: STYLE_GUIDE.viewExpression,
       message: '「View XX」の訳し方を確認してください',
+      matches: [],
     },
   ]
 }
@@ -810,15 +835,14 @@ export function checkViewExpression(
  * @param entry 確認対象 entry。
  * @returns 3-3 に該当する指摘。
  */
+
 export function checkNotAllowedExpression(
   entry: TranslationEntry,
 ): readonly CheckMessage[] {
   const translation = getTranslation(entry)
-  // v1 では、権限主体と明確に判断できる代表的な人・利用者の表現に対象を限定し、物や値の制約表現は指摘しない。
   const permissionSource =
     /\b(?:you|users?|administrators?|editors?|authors?|contributors?|subscribers?|customers?|members?)\s+(?:is|are) not allowed to\b/iu
 
-  // 3-3 は、対象の権限不足構文が存在し、翻訳が既定の権限表現を満たしていない場合だけ Warning とする。
   if (
     translation === undefined ||
     !permissionSource.test(entry.source.singular) ||
@@ -831,6 +855,7 @@ export function checkNotAllowedExpression(
     {
       styleGuideItem: STYLE_GUIDE.notAllowedExpression,
       message: '「not allowed to ...」の訳し方を確認してください',
+      matches: [],
     },
   ]
 }
@@ -841,16 +866,19 @@ export function checkNotAllowedExpression(
  * @param entry 確認対象 entry。
  * @returns 3-4 に該当する指摘。
  */
+
 export function checkSorryPrefix(
   entry: TranslationEntry,
 ): readonly CheckMessage[] {
   const translation = getTranslation(entry)
-  // 3-4 は、原文が「Sorry, ...」で始まり、翻訳先頭に v1 対象の謝罪表現が残る場合だけ Warning とする。
-  if (
-    translation === undefined ||
-    !/^Sorry,\s*/u.test(entry.source.singular) ||
-    !APOLOGY_PREFIXES.some((prefix) => translation.startsWith(prefix))
-  ) {
+  if (translation === undefined || !/^Sorry,\s*/u.test(entry.source.singular)) {
+    return []
+  }
+
+  const prefix = APOLOGY_PREFIXES.find((candidate) =>
+    translation.startsWith(candidate),
+  )
+  if (prefix === undefined) {
     return []
   }
 
@@ -858,6 +886,7 @@ export function checkSorryPrefix(
     {
       styleGuideItem: STYLE_GUIDE.sorryPrefix,
       message: '先頭の「Sorry,」に対応する謝罪表現を削除してください',
+      matches: [{ start: 0, end: prefix.length }],
     },
   ]
 }
@@ -870,11 +899,11 @@ export function checkSorryPrefix(
  * @param entry 確認対象 entry。
  * @returns 3-6 に該当する指摘。
  */
+
 export function checkRecommendedExpressions(
   entry: TranslationEntry,
 ): readonly CheckMessage[] {
   const translation = getTranslation(entry)
-  // 日本語訳が存在しない entry は、3-6 の判定対象にできないため指摘しない。
   if (translation === undefined) {
     return []
   }
@@ -887,23 +916,29 @@ export function checkRecommendedExpressions(
   ] as const
   const messages: CheckMessage[] = []
 
-  // 同じ推奨表記が複数あっても1件にまとめ、技術文字列外に実在する場合だけ指摘する。
+  // 表記ごとに1件の指摘を維持し、同じ表記の複数箇所を matches にまとめる。
   for (const [detected, expected] of recommendations) {
+    const matches: CheckMessageMatch[] = []
     let detectedIndex = translation.indexOf(detected)
 
-    // 技術文字列内部だけに現れる推奨表記は対象外とし、本文側に同じ表記がある場合はそこまで確認を続ける。
-    while (detectedIndex !== -1 && protectedIndexes.has(detectedIndex)) {
+    while (detectedIndex !== -1) {
+      if (!protectedIndexes.has(detectedIndex)) {
+        matches.push({
+          start: detectedIndex,
+          end: detectedIndex + detected.length,
+        })
+      }
       detectedIndex = translation.indexOf(
         detected,
         detectedIndex + detected.length,
       )
     }
 
-    // 技術文字列外の本文で対象表記を1箇所以上検出した場合は、その表記について1件の指摘を返す。
-    if (detectedIndex !== -1) {
+    if (matches.length > 0) {
       messages.push({
         styleGuideItem: STYLE_GUIDE.recommendedExpressions,
         message: `「${detected}」は「${expected}」と表記してください`,
+        matches,
       })
     }
   }
