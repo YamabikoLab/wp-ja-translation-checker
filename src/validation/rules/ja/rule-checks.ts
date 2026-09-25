@@ -8,7 +8,7 @@
 import type { TranslationEntry } from '@/po/interpret-po'
 
 /**
- * 1件の指摘で利用者へ提示する最小情報を表す。
+ * 翻訳内で検出した1箇所の一致範囲を表す。
  */
 export type CheckMessageMatch = {
   /** 指摘箇所の開始位置。entry.translations[0].text に対する UTF-16 code unit offset。 */
@@ -750,7 +750,7 @@ export function checkNumberSpacing(
   const numericToken = '(?:\\d+|%\\d*\\$?d)'
   const japanese = '[\\p{Script=Han}\\p{Script=Hiragana}\\p{Script=Katakana}]'
   const pattern = new RegExp(
-    `(?:((${numericToken})) +(${japanese})|(${japanese}) +((${numericToken})))`,
+    `(?:(${numericToken}) +(${japanese})|(${japanese}) +(${numericToken}))`,
     'gu',
   )
   const matches: CheckMessageMatch[] = []
@@ -758,7 +758,7 @@ export function checkNumberSpacing(
   for (const match of translation.matchAll(pattern)) {
     const value = match[0]
     const start = match.index
-    const numeric = match[2] ?? match[5]
+    const numeric = match[1] ?? match[4]
     if (numeric === undefined) {
       continue
     }
