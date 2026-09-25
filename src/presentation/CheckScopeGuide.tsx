@@ -26,7 +26,7 @@ export function CheckScopeGuide() {
     >
       <div className={styles.scopeGuideHeader}>
         <h3 id="check-scope-guide-title">WTC のチェック範囲</h3>
-        <span className={styles.scopeGuideSummaryNote}>12項目をチェック</span>
+        <span className={styles.scopeGuideSummaryNote}>13項目をチェック</span>
       </div>
 
       <div className={styles.scopeGuideContent}>
