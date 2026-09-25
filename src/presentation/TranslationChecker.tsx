@@ -281,11 +281,7 @@ function PaginationControls({
 
     editingRef.current = false
 
-    if (
-      Number.isInteger(nextPage) &&
-      nextPage >= 1 &&
-      nextPage <= totalPages
-    ) {
+    if (Number.isInteger(nextPage) && nextPage >= 1 && nextPage <= totalPages) {
       setPageDraft(String(nextPage))
       onPageChange(nextPage)
       return
