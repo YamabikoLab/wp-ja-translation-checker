@@ -3,7 +3,7 @@
  */
 
 /**
- * 1件の翻訳修正案について、編集、既存ルールによる再チェック、結果確認、キャンセルを React の利用者操作から確認する。
+ * 1件の翻訳修正案について、編集、Style Guide / Glossary の共通再チェック、結果確認、キャンセルを React の利用者操作から確認する。
  */
 
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
