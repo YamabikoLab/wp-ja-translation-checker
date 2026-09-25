@@ -100,7 +100,6 @@ export function TranslationChecker() {
     const file = state.file
 
     // 同一 File の確認がすでに進行中なら、重複した非同期処理を開始しない。
-    // 入力差し替え後の古い完了処理が、新しい File の進行中状態を解除しないよう一致時だけクリアする。
     if (activeFileRef.current === file) {
       return
     }
@@ -147,8 +146,6 @@ export function TranslationChecker() {
     mediaType: string,
   ) => {
     // 正常完了結果がない状態では、過去または途中のデータを保存対象にしない。
-    // 正常完了結果がない状態では JSON 出力を開始しない。
-    // 正常完了結果がない状態では Markdown コピーを開始しない。
     if (state.status !== 'success') {
       return
     }
@@ -222,7 +219,7 @@ export function TranslationChecker() {
 
   // ファイル未選択状態だけ現在入力を持たないものとして表示用状態へ変換する。
   const selectedFile = state.status === 'no-file' ? null : state.file
-  // 正常完了結果だけを Style Guide の表示モデルへ変換し、途中状態や確認不能結果は一覧化しない。
+  // 正常完了結果だけを Style Guide / Glossary 共通の表示モデルへ変換し、途中状態や確認不能結果は一覧化しない。
   const findings =
     state.status === 'success' ? createFindings(state.result) : []
   const summary = summarizeFindings(findings)
@@ -402,29 +399,8 @@ export function TranslationChecker() {
             </div>
           </section>
 
-          {/* Glossary Warning が存在する場合だけ、Style Guide と分離した確認領域を表示する。 */}
-          {glossaryFindings.length > 0 && (
-            <section
-              className={styles.findingsSection}
-              aria-labelledby="glossary-findings-title"
-            >
-              <div className={styles.findingsHeading}>
-                <h2 id="glossary-findings-title">Glossary の確認</h2>
-                <p>{glossaryFindings.length}件の Warning</p>
-              </div>
-              <p className={styles.glossaryIntro}>
-                登録訳語と異なる可能性がある箇所です。文脈と Glossary
-                の補足を確認してください。
-              </p>
-              <div className={styles.findingsList}>
-                {glossaryFindings.map((finding) => (
-                  <GlossaryFindingCard key={finding.key} finding={finding} />
-                ))}
-              </div>
-            </section>
-          )}
+          {/* Style Guide と Glossary の共通指摘が存在する場合だけ、同じ一覧操作を表示する。 */}
 
-          {/* Style Guide 指摘が存在する場合だけ、既存の指摘一覧と絞り込み操作を表示する。 */}
           {findings.length > 0 && (
             <section
               className={styles.findingsSection}
