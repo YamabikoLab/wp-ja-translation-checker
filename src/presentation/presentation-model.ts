@@ -218,7 +218,7 @@ export function createFindings(
         styleGuideItem: message.styleGuideItem,
         matches: message.matches,
         entry,
-        translationFormIndex: 0,
+        translationFormIndex: entry.translations[0]?.index ?? 0,
       })
     }
 
@@ -232,7 +232,7 @@ export function createFindings(
         styleGuideItem: message.styleGuideItem,
         matches: message.matches,
         entry,
-        translationFormIndex: 0,
+        translationFormIndex: entry.translations[0]?.index ?? 0,
       })
     }
   }
