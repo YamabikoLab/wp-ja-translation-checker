@@ -1507,11 +1507,7 @@ describe('Japanese v1 rule 5', () => {
   it('when multiple middle dots appear, should keep every UTF-16 match range in one warning', () => {
     expect(
       checkMiddleDot(
-        createEntry(
-          0,
-          'Reorder items',
-          '😀行・列と項目･設定を並び替える',
-        ),
+        createEntry(0, 'Reorder items', '😀行・列と項目･設定を並び替える'),
       ),
     ).toEqual([
       {
