@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest'
 import type { CheckResult } from '@/check/check'
 import {
   createFindings,
+  createPaginationModel,
   createRuleFilterOptions,
   filterFindingsByRule,
   getCollapsedText,
@@ -705,5 +706,203 @@ describe('Rule filtering', () => {
       totalCount: 3,
     })
     expect(filtered).toHaveLength(1)
+  })
+})
+
+
+describe('Pagination', () => {
+  /**
+   * 0件では空の表示範囲とページ番号を返すことを確認する。
+   *
+   * 事前条件:
+   * - フィルター後の指摘が0件である。
+   *
+   * 操作:
+   * - 50件表示でページモデルを導出する。
+   *
+   * 期待結果:
+   * - 総ページ数は0、表示範囲は0件、表示対象も空となる。
+   */
+  it('when no findings remain, should return an empty pagination model', () => {
+    expect(createPaginationModel([], 1, 50)).toEqual({
+      currentPage: 1,
+      totalPages: 0,
+      rangeStart: 0,
+      rangeEnd: 0,
+      totalCount: 0,
+      visibleFindings: [],
+      items: [],
+    })
+  })
+
+  /**
+   * 表示件数を超える指摘をページ単位に分けられることを確認する。
+   *
+   * 事前条件:
+   * - 51件の指摘がある。
+   *
+   * 操作:
+   * - 50件表示で2ページ目を導出する。
+   *
+   * 期待結果:
+   * - 2ページ目には51件目だけが表示され、範囲も51–51となる。
+   */
+  it('when findings exceed the page size by one, should show the remaining finding on the second page', () => {
+    const source = createFindings(createSuccessResult(51, 0))
+    const model = createPaginationModel(source, 2, 50)
+
+    expect(model.totalPages).toBe(2)
+    expect(model.rangeStart).toBe(51)
+    expect(model.rangeEnd).toBe(51)
+    expect(model.visibleFindings).toHaveLength(1)
+    expect(model.visibleFindings[0]?.key).toBe(source[50]?.key)
+  })
+
+  /**
+   * 25 / 50 / 100件の各表示件数で総ページ数が正しく導出されることを確認する。
+   *
+   * 事前条件:
+   * - 101件の指摘がある。
+   *
+   * 操作:
+   * - 各表示件数でページモデルを導出する。
+   *
+   * 期待結果:
+   * - 25件では5ページ、50件では3ページ、100件では2ページとなる。
+   */
+  it('when page size changes, should derive the total pages from 25, 50, or 100 findings per page', () => {
+    const source = createFindings(createSuccessResult(101, 0))
+
+    expect(createPaginationModel(source, 1, 25).totalPages).toBe(5)
+    expect(createPaginationModel(source, 1, 50).totalPages).toBe(3)
+    expect(createPaginationModel(source, 1, 100).totalPages).toBe(2)
+  })
+
+  /**
+   * 多数ページの中間では先頭・現在周辺・末尾だけを表示することを確認する。
+   *
+   * 事前条件:
+   * - 25ページ分の指摘がある。
+   *
+   * 操作:
+   * - 17ページ目のページ番号モデルを導出する。
+   *
+   * 期待結果:
+   * - 1 2 3 … 16 17 18 … 23 24 25 の順になる。
+   */
+  it('when the current page is in the middle, should show edge pages, sibling pages, and ellipses', () => {
+    const source = createFindings(createSuccessResult(25, 0))
+
+    expect(createPaginationModel(source, 17, 1).items).toEqual([
+      1,
+      2,
+      3,
+      'ellipsis',
+      16,
+      17,
+      18,
+      'ellipsis',
+      23,
+      24,
+      25,
+    ])
+  })
+
+  /**
+   * 先頭付近では連続範囲へ不要な省略記号を入れないことを確認する。
+   *
+   * 事前条件:
+   * - 8ページ分の指摘がある。
+   *
+   * 操作:
+   * - 2ページ目のページ番号モデルを導出する。
+   *
+   * 期待結果:
+   * - 先頭3ページは連続表示し、末尾との間だけを省略する。
+   */
+  it('when the current page is near the start, should avoid an unnecessary leading ellipsis', () => {
+    const source = createFindings(createSuccessResult(8, 0))
+
+    expect(createPaginationModel(source, 2, 1).items).toEqual([
+      1,
+      2,
+      3,
+      'ellipsis',
+      6,
+      7,
+      8,
+    ])
+  })
+
+  /**
+   * 末尾付近では連続範囲へ不要な省略記号を入れないことを確認する。
+   *
+   * 事前条件:
+   * - 8ページ分の指摘がある。
+   *
+   * 操作:
+   * - 7ページ目のページ番号モデルを導出する。
+   *
+   * 期待結果:
+   * - 末尾3ページは連続表示し、先頭との間だけを省略する。
+   */
+  it('when the current page is near the end, should avoid an unnecessary trailing ellipsis', () => {
+    const source = createFindings(createSuccessResult(8, 0))
+
+    expect(createPaginationModel(source, 7, 1).items).toEqual([
+      1,
+      2,
+      3,
+      'ellipsis',
+      6,
+      7,
+      8,
+    ])
+  })
+
+  /**
+   * 総ページ数が少ない場合は全ページを連続表示できることを確認する。
+   *
+   * 事前条件:
+   * - 6ページ分の指摘がある。
+   *
+   * 操作:
+   * - 中間ページのページ番号モデルを導出する。
+   *
+   * 期待結果:
+   * - 省略記号を使わず1〜6ページをすべて表示する。
+   */
+  it('when all page ranges touch, should show every page without ellipses', () => {
+    const source = createFindings(createSuccessResult(6, 0))
+
+    expect(createPaginationModel(source, 4, 1).items).toEqual([
+      1, 2, 3, 4, 5, 6,
+    ])
+  })
+
+  /**
+   * ルールフィルター後の件数だけをページ分割対象にできることを確認する。
+   *
+   * 事前条件:
+   * - 全体には複数ルールの指摘がある。
+   *
+   * 操作:
+   * - 1ルールで絞り込んだ後にページモデルを導出する。
+   *
+   * 期待結果:
+   * - 元の指摘数ではなく、フィルター後の指摘数を総件数として扱う。
+   */
+  it('when a rule filter is applied first, should paginate only the filtered findings', () => {
+    const source = createFindings(createSuccessResult(3, 2))
+    const filtered = filterFindingsByRule(
+      source,
+      source[0]?.styleGuideItem ?? null,
+    )
+
+    const model = createPaginationModel(filtered, 1, 25)
+
+    expect(source).toHaveLength(5)
+    expect(model.totalCount).toBe(1)
+    expect(model.visibleFindings).toEqual(filtered)
   })
 })
