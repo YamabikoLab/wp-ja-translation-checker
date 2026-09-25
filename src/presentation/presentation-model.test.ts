@@ -71,6 +71,37 @@ function createSuccessResult(
   }
 }
 
+describe('Finding presentation', () => {
+  /**
+   * 空の先頭 plural フォームを除外した後も、Style Guide 指摘を実際の検査対象フォームへ結び付けることを確認する。
+   *
+   * 事前条件:
+   * - 元の msgstr[0] は空で、解釈済み翻訳には元の msgstr[1] だけが残っている。
+   * - Style Guide の指摘がその entry に対して存在する。
+   *
+   * 操作:
+   * - 正常完了結果から表示用の指摘一覧を生成する。
+   *
+   * 期待結果:
+   * - Style Guide 指摘は元の msgstr[1] を表す translationFormIndex 1 を保持する。
+   */
+  it('when the first plural form is empty, should keep the checked translation form index for Style Guide findings', () => {
+    const result = createSuccessResult(1, 0)
+    result.entries[0] = {
+      ...result.entries[0],
+      translations: [{ index: 1, text: '検査対象の翻訳' }],
+    }
+
+    const findings = createFindings(result)
+
+    expect(findings).toHaveLength(1)
+    expect(findings[0]).toMatchObject({
+      kind: 'style-guide',
+      translationFormIndex: 1,
+    })
+  })
+})
+
 describe('Presentation state', () => {
   /**
    * ファイル未選択状態では確認を開始できないことを確認する。
