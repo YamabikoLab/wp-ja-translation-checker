@@ -3,10 +3,10 @@
  */
 
 /**
- * WTC のチェック範囲案内が、初期状態を邪魔せず必要な情報へ到達できることを React の表示境界から確認する。
+ * WTC のチェック範囲案内が、結果画面で常時確認でき必要な情報へ到達できることを React の表示境界から確認する。
  */
 
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { CheckScopeGuide } from './CheckScopeGuide'
 
@@ -23,16 +23,16 @@ describe('CheckScopeGuide', () => {
    * - 初期表示を確認する。
    *
    * 期待結果:
-   * - 案内は閉じた状態で表示され、12項目をチェックすることを確認できる。
+   * - 案内内容が常時表示され、12項目をチェックすることと手動確認項目を確認できる。
    */
-  it('when first rendered, should keep the guidance collapsed and show the checked-rule count', () => {
+  it('when first rendered, should show the check scope guidance without another interaction', () => {
     render(<CheckScopeGuide />)
 
-    const summary = screen.getByText('WTC のチェック範囲').closest('summary')
-    const details = summary?.closest('details')
-
-    expect(details?.open).toBe(false)
+    expect(
+      screen.getByRole('heading', { name: 'WTC のチェック範囲' }),
+    ).toBeTruthy()
     expect(screen.getByText('12項目をチェック')).toBeTruthy()
+    expect(screen.getByText('手動で確認したい主な項目')).toBeTruthy()
   })
 
   /**
@@ -47,8 +47,6 @@ describe('CheckScopeGuide', () => {
    */
   it('when guidance content is inspected, should expose the three check categories and detail links', () => {
     render(<CheckScopeGuide />)
-
-    fireEvent.click(screen.getByText('WTC のチェック範囲'))
 
     expect(screen.getByText('✅ 自動チェック')).toBeTruthy()
     expect(screen.getByText('△ 一部チェック')).toBeTruthy()
