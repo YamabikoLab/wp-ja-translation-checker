@@ -523,10 +523,7 @@ describe('Presentation result model', () => {
     }
 
     expect(
-      summarizeFindings(
-        createFindings(result),
-        createGlossaryFindings(result),
-      ),
+      summarizeFindings(createFindings(result), createGlossaryFindings(result)),
     ).toEqual({
       errorCount: 1,
       warningCount: 1,

@@ -101,7 +101,7 @@ export const JAPANESE_GLOSSARY: readonly GlossaryEntry[] = [
     translation: '本当に〜してもよいですか ?',
     partOfSpeech: 'expression',
     comment:
-      '文頭に「本当に」、文末に「してもよいですか ?」\nAre you sure you want to delete the settings? → 本当に設定を削除してもよいですか ?',
+      '文頭に「本当に」、文末に「してもよいですか ?」 Are you sure you want to delete the settings? → 本当に設定を削除してもよいですか ?',
   },
   {
     original: 'area',
@@ -130,16 +130,16 @@ export const JAPANESE_GLOSSARY: readonly GlossaryEntry[] = [
     partOfSpeech: 'noun',
   },
   {
-    original: 'author',
-    translation: '作成者',
-    partOfSpeech: 'noun',
-    comment: 'テーマ・プラグインの作者',
-  },
-  {
     original: 'Author',
     translation: '投稿者',
     partOfSpeech: 'noun',
     comment: 'ブログ投稿またはコメントを作成したユーザー',
+  },
+  {
+    original: 'author',
+    translation: '作成者',
+    partOfSpeech: 'noun',
+    comment: 'テーマ・プラグインの作者',
   },
   {
     original: 'Authorization header',
@@ -203,12 +203,12 @@ export const JAPANESE_GLOSSARY: readonly GlossaryEntry[] = [
   },
   {
     original: 'cart',
-    translation: 'お買い物カゴ',
+    translation: 'カート',
     partOfSpeech: 'noun',
   },
   {
     original: 'cart',
-    translation: 'カート',
+    translation: 'お買い物カゴ',
     partOfSpeech: 'noun',
   },
   {
@@ -282,13 +282,13 @@ export const JAPANESE_GLOSSARY: readonly GlossaryEntry[] = [
   },
   {
     original: 'comment',
-    translation: 'コメント',
-    partOfSpeech: 'noun',
+    translation: 'コメントする',
+    partOfSpeech: 'verb',
   },
   {
     original: 'comment',
-    translation: 'コメントする',
-    partOfSpeech: 'verb',
+    translation: 'コメント',
+    partOfSpeech: 'noun',
   },
   {
     original: 'computer',
@@ -388,17 +388,17 @@ export const JAPANESE_GLOSSARY: readonly GlossaryEntry[] = [
   },
   {
     original: 'deactivate',
-    translation: '停止する',
-    partOfSpeech: 'verb',
-  },
-  {
-    original: 'deactivate',
     translation: '無効化',
     partOfSpeech: 'verb',
   },
   {
+    original: 'deactivate',
+    translation: '停止する',
+    partOfSpeech: 'verb',
+  },
+  {
     original: 'default',
-    translation: 'デフォルト',
+    translation: '初期設定',
     partOfSpeech: 'noun',
   },
   {
@@ -408,7 +408,7 @@ export const JAPANESE_GLOSSARY: readonly GlossaryEntry[] = [
   },
   {
     original: 'default',
-    translation: '初期設定',
+    translation: 'デフォルト',
     partOfSpeech: 'noun',
   },
   {
@@ -692,12 +692,12 @@ export const JAPANESE_GLOSSARY: readonly GlossaryEntry[] = [
   },
   {
     original: 'invalid',
-    translation: '不正な',
+    translation: '無効',
     partOfSpeech: 'adjective',
   },
   {
     original: 'invalid',
-    translation: '無効',
+    translation: '不正な',
     partOfSpeech: 'adjective',
   },
   {
@@ -778,12 +778,12 @@ export const JAPANESE_GLOSSARY: readonly GlossaryEntry[] = [
   },
   {
     original: 'meta',
-    translation: 'メタ',
+    translation: 'メタ情報',
     partOfSpeech: 'noun',
   },
   {
     original: 'meta',
-    translation: 'メタ情報',
+    translation: 'メタ',
     partOfSpeech: 'noun',
   },
   {
@@ -855,12 +855,12 @@ export const JAPANESE_GLOSSARY: readonly GlossaryEntry[] = [
   },
   {
     original: 'option',
-    translation: 'オプション',
+    translation: '設定',
     partOfSpeech: 'noun',
   },
   {
     original: 'option',
-    translation: '設定',
+    translation: 'オプション',
     partOfSpeech: 'noun',
   },
   {
@@ -902,22 +902,22 @@ export const JAPANESE_GLOSSARY: readonly GlossaryEntry[] = [
   },
   {
     original: 'permission',
-    translation: 'パーミッション',
-    partOfSpeech: 'noun',
-  },
-  {
-    original: 'permission',
     translation: '権限',
     partOfSpeech: 'noun',
   },
   {
-    original: 'ping',
-    translation: 'ping',
+    original: 'permission',
+    translation: 'パーミッション',
     partOfSpeech: 'noun',
   },
   {
     original: 'ping',
     translation: 'ピンバック',
+    partOfSpeech: 'noun',
+  },
+  {
+    original: 'ping',
+    translation: 'ping',
     partOfSpeech: 'noun',
   },
   {
@@ -1063,12 +1063,12 @@ export const JAPANESE_GLOSSARY: readonly GlossaryEntry[] = [
   },
   {
     original: 'required',
-    translation: '必要',
+    translation: '必須',
     partOfSpeech: 'adjective',
   },
   {
     original: 'required',
-    translation: '必須',
+    translation: '必要',
     partOfSpeech: 'adjective',
   },
   {
@@ -1192,12 +1192,12 @@ export const JAPANESE_GLOSSARY: readonly GlossaryEntry[] = [
   },
   {
     original: 'status',
-    translation: 'ステータス',
+    translation: '状態',
     partOfSpeech: 'noun',
   },
   {
     original: 'status',
-    translation: '状態',
+    translation: 'ステータス',
     partOfSpeech: 'noun',
   },
   {
@@ -1234,15 +1234,15 @@ export const JAPANESE_GLOSSARY: readonly GlossaryEntry[] = [
   },
   {
     original: 'subtitle',
-    translation: 'サブタイトル',
-    partOfSpeech: 'noun',
-    comment: '副次的な見出し',
-  },
-  {
-    original: 'subtitle',
     translation: '字幕',
     partOfSpeech: 'noun',
     comment: '動画などの字幕',
+  },
+  {
+    original: 'subtitle',
+    translation: 'サブタイトル',
+    partOfSpeech: 'noun',
+    comment: '副次的な見出し',
   },
   {
     original: 'Subversion',
@@ -1295,17 +1295,17 @@ export const JAPANESE_GLOSSARY: readonly GlossaryEntry[] = [
   },
   {
     original: 'term',
+    translation: '項目',
+    partOfSpeech: 'noun',
+  },
+  {
+    original: 'term',
     translation: '単語',
     partOfSpeech: 'noun',
   },
   {
     original: 'term',
     translation: '語句',
-    partOfSpeech: 'noun',
-  },
-  {
-    original: 'term',
-    translation: '項目',
     partOfSpeech: 'noun',
   },
   {
@@ -1329,7 +1329,7 @@ export const JAPANESE_GLOSSARY: readonly GlossaryEntry[] = [
     translation: 'フィードバック',
     partOfSpeech: 'noun',
     comment:
-      '"%1$s thought on “%2$s”" などの場合、コメントだけではなくピンバックを含むこともあるので「コメント」とは訳さない。Consistency Tool に同じフレーズが存在する可能性があります。',
+      '"%1$s thought on &ldquo;%2$s&rdquo;" などの場合、コメントだけではなくピンバックを含むこともあるので「コメント」とは訳さない。Consistency Tool に同じフレーズが存在する可能性があります。',
   },
   {
     original: 'Toolbar',
@@ -1415,12 +1415,12 @@ export const JAPANESE_GLOSSARY: readonly GlossaryEntry[] = [
   },
   {
     original: 'valid',
-    translation: '有効',
+    translation: '正しい',
     partOfSpeech: 'adjective',
   },
   {
     original: 'valid',
-    translation: '正しい',
+    translation: '有効',
     partOfSpeech: 'adjective',
   },
   {
@@ -1435,15 +1435,15 @@ export const JAPANESE_GLOSSARY: readonly GlossaryEntry[] = [
   },
   {
     original: 'view',
+    translation: '表示',
+    partOfSpeech: 'verb',
+  },
+  {
+    original: 'view',
     translation: 'ビュー',
     partOfSpeech: 'noun',
     comment:
       'ほとんどの場合は「表示」と訳すが、タブビューやリストビューなどの表示形式の慣用名などの例外ではこちらでも可。',
-  },
-  {
-    original: 'view',
-    translation: '表示',
-    partOfSpeech: 'verb',
   },
   {
     original: 'web server',

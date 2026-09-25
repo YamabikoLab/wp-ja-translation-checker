@@ -70,22 +70,14 @@ describe('Japanese glossary check', () => {
   it('when glossary term differs only by ASCII case or appears inside another alphanumeric word, should match only the standalone term', () => {
     expect(
       checkJapaneseGlossary(
-        [
-          createEntry({ singular: 'POST' }, [
-            { index: 0, text: '投稿' },
-          ]),
-        ],
+        [createEntry({ singular: 'POST' }, [{ index: 0, text: '投稿' }])],
         glossary,
       ),
     ).toEqual([])
 
     expect(
       checkJapaneseGlossary(
-        [
-          createEntry({ singular: 'poster' }, [
-            { index: 0, text: 'ポスター' },
-          ]),
-        ],
+        [createEntry({ singular: 'poster' }, [{ index: 0, text: 'ポスター' }])],
         glossary,
       ),
     ).toEqual([])
