@@ -1341,4 +1341,3 @@ describe('Japanese v1 match ranges', () => {
     ])
   })
 })
-
