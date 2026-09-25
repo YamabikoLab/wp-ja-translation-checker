@@ -192,6 +192,7 @@ export function serializeCsv(
       [
         'glossary',
         'Warning',
+        '',
         'Glossary の訳語を確認してください',
         finding.entry.source.singular,
         finding.result.currentTranslation,
