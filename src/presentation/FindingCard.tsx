@@ -18,7 +18,7 @@ const STYLE_GUIDE_URL =
  *
  * @param props 指摘表示に必要な属性。
  * @param props.finding 表示対象の1指摘。
- * @returns Severity、メッセージ、翻訳比較、一次情報へのリンクを含む指摘。
+ * @returns Severity、メッセージ、翻訳比較、一次情報へのリンク、個別コピー操作を含む指摘。
  */
 export function FindingCard({ finding }: { finding: Finding }) {
   const translation = finding.entry.translations[0]?.text ?? ''
