@@ -473,11 +473,11 @@ export function TranslationChecker() {
             </div>
 
             <dl className={styles.counts}>
-              <div>
+              <div className={styles.errorCount}>
                 <dt>Error</dt>
                 <dd>{summary.errorCount}件</dd>
               </div>
-              <div>
+              <div className={styles.warningCount}>
                 <dt>Warning</dt>
                 <dd>{summary.warningCount}件</dd>
               </div>
