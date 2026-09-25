@@ -15,11 +15,11 @@ const STYLE_GUIDE_URL =
   'https://ja.wordpress.org/team/handbook/translation/translation-style-guide/'
 
 /**
- * 1件の CheckMessage と、その指摘が属する entry の原文・翻訳を表示し、同じ情報を Markdown としてコピーできる操作を提供する。
+ * 1件の CheckMessage と、その指摘が属する entry の原文・翻訳を表示し、修正案の一時再チェックと同じ情報の Markdown コピーを提供する。
  *
  * @param props 指摘表示に必要な属性。
  * @param props.finding 表示対象の1指摘。
- * @returns Severity、メッセージ、翻訳比較、一次情報へのリンク、個別コピー操作を含む指摘。
+ * @returns Severity、メッセージ、翻訳比較、修正案の再チェック、一次情報へのリンク、個別コピー操作を含む指摘。
  */
 export function FindingCard({ finding }: { finding: Finding }) {
   const translation = finding.entry.translations[0]?.text ?? ''
