@@ -1,7 +1,7 @@
 /**
  * 原文または翻訳を長文時に折りたたみ、翻訳の問題箇所を視覚的に強調して表示する責任を持つ。
  *
- * 展開状態と一致範囲の表示調整をこのコンポーネント内に閉じ、確認結果そのものは変更しない。
+ * 展開状態と一致範囲の表示調整をこのコンポーネント内に閉じ、Style Guide の翻訳箇所と Glossary の原文箇所を同じ強調表示で扱う。
  */
 
 import { useState } from 'react'
@@ -13,7 +13,7 @@ import styles from './TranslationChecker.module.css'
  *
  * @param props 文字列表示に必要な属性。
  * @param props.text 表示対象の文字列。
- * @param props.matches 翻訳内の一致範囲。原文表示では省略可能。
+ * @param props.matches 表示文字列内で強調する一致範囲。強調不要の場合は省略可能。
  * @returns 長文時だけ展開操作を持つ文字列表示。
  */
 export function ExpandableText({
@@ -54,7 +54,7 @@ export function ExpandableText({
   const content = []
   let cursor = 0
 
-  // 元の翻訳文字列を順番どおり保持し、一致範囲だけを視覚的な強調へ変換する。
+  // 元の表示文字列を順番どおり保持し、指摘対象の一致範囲だけを視覚的な強調へ変換する。
   for (const [index, match] of normalizedMatches.entries()) {
     content.push(displayedText.slice(cursor, match.start))
     content.push(
