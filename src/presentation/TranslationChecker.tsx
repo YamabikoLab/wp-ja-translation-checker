@@ -115,7 +115,7 @@ function ExpandableText({
       end: Math.min(end, originalVisibleEnd),
     }))
     .filter(({ start, end }) => start < end)
-    .toSorted((left, right) => left.start - right.start || left.end - right.end)
+    .sort((left, right) => left.start - right.start || left.end - right.end)
   const normalizedMatches: Array<Finding['matches'][number]> = []
 
   // 重複・隣接する範囲を1つへまとめ、同じ文字を欠落・重複させずに表示する。
