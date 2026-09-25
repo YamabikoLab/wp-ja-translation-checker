@@ -1,5 +1,5 @@
 /**
- * Result Presentation の状態遷移、CheckMessage 単位の表示モデル、長文判定を確認する。
+ * Result Presentation の状態遷移と、指摘一覧の絞り込み・ページ分割・長文表示に関する主要な表示モデルを確認する。
  */
 
 import { describe, expect, it } from 'vitest'
