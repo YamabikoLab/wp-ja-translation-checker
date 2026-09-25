@@ -234,7 +234,7 @@ describe('Markdown result export', () => {
       translation: '全て保存して全て確認',
       matches: [
         { start: 0, end: 2 },
-        { start: 7, end: 9 },
+        { start: 6, end: 8 },
       ],
     })
 
