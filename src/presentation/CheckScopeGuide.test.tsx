@@ -52,17 +52,17 @@ describe('CheckScopeGuide', () => {
     expect(screen.getByText('△ 一部チェック')).toBeTruthy()
     expect(screen.getByText('👀 手動確認')).toBeTruthy()
     expect(
-      screen.getByRole('link', { name: '詳しい対応状況を見る' }),
-    ).toHaveAttribute(
-      'href',
-      'https://github.com/YamabikoLab/wp-translation-checker#check-scope',
-    )
+      screen
+        .getByRole('link', { name: '詳しい対応状況を見る' })
+        .getAttribute('href'),
+    ).toBe('https://github.com/YamabikoLab/wp-translation-checker#check-scope')
     expect(
-      screen.getByRole('link', {
-        name: 'WordPress 日本語翻訳スタイルガイドを見る',
-      }),
-    ).toHaveAttribute(
-      'href',
+      screen
+        .getByRole('link', {
+          name: 'WordPress 日本語翻訳スタイルガイドを見る',
+        })
+        .getAttribute('href'),
+    ).toBe(
       'https://ja.wordpress.org/team/handbook/translation/translation-style-guide/',
     )
   })
