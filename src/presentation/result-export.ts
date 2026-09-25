@@ -51,6 +51,31 @@ function normalizeMatches(
 }
 
 /**
+ * Markdown の太字として成立するよう、一致文字列の前後空白を装飾の外へ出す。
+ *
+ * 空白だけの一致範囲は装飾せず、元の文字列をそのまま保持する。
+ *
+ * @param matchedText 一致範囲から取得した翻訳文字列。
+ * @returns 前後空白を保持しつつ、実文字部分だけを太字にした Markdown 文字列。
+ */
+function formatMarkdownMatch(matchedText: string): string {
+  const leadingWhitespace = matchedText.match(/^\s*/u)?.[0] ?? ''
+  const trailingWhitespace = matchedText.match(/\s*$/u)?.[0] ?? ''
+  const contentStart = leadingWhitespace.length
+  const contentEnd = matchedText.length - trailingWhitespace.length
+
+  if (contentStart >= contentEnd) {
+    return matchedText
+  }
+
+  return (
+    leadingWhitespace +
+    `**${matchedText.slice(contentStart, contentEnd)}**` +
+    trailingWhitespace
+  )
+}
+
+/**
  * Markdown で確認しやすいよう、翻訳の一致範囲だけを太字で表現する。
  *
  * @param text 出力対象の翻訳。
@@ -73,7 +98,7 @@ function formatMarkdownTranslation(
   // 元文字列の順序を維持したまま、一致範囲だけに表示用の Markdown 記法を付与する。
   for (const match of normalized) {
     parts.push(text.slice(cursor, match.start))
-    parts.push(`**${text.slice(match.start, match.end)}**`)
+    parts.push(formatMarkdownMatch(text.slice(match.start, match.end)))
     cursor = match.end
   }
 
