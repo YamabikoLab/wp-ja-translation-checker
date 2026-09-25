@@ -2,7 +2,7 @@
  * TranslationChecker の画面固有スタイル。
  *
  * 色など画面全体で共有する値は index.css の CSS Custom Properties を参照し、
- * 入力・結果概要・指摘一覧のレイアウトと見た目だけをこの component に閉じる。
+ * 入力・結果概要・指摘一覧・ページ移動操作のレイアウトと見た目だけをこの component に閉じる。
  */
 
 .page {
