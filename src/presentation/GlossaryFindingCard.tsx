@@ -39,10 +39,13 @@ export function GlossaryFindingCard({ finding }: { finding: GlossaryFinding }) {
               <li
                 key={`${candidate.translation}-${candidate.partOfSpeech ?? ''}-${index}`}
               >
+                {/* 空訳語は Glossary 上で「訳文へ入れない」ことを意味するため、空欄ではなく判断可能な文言として表示する。 */}
                 <strong>{candidate.translation || '（訳文へ入れない）'}</strong>
+                {/* 品詞が登録されている候補だけ補足表示し、未登録を推測で埋めない。 */}
                 {candidate.partOfSpeech !== undefined && (
                   <span> / {candidate.partOfSpeech}</span>
                 )}
+                {/* Glossary の補足がある候補だけ文脈情報として表示し、未登録の説明は生成しない。 */}
                 {candidate.comment !== undefined && <p>{candidate.comment}</p>}
               </li>
             ))}
