@@ -47,9 +47,7 @@ describe('FindingCorrection', () => {
   it('when correction starts, should show the current translation as the editable draft', () => {
     render(<FindingCorrection finding={createFinding()} />)
 
-    fireEvent.click(
-      screen.getByRole('button', { name: '修正して再チェック' }),
-    )
+    fireEvent.click(screen.getByRole('button', { name: '修正して再チェック' }))
 
     expect(
       (screen.getByRole('textbox', { name: '翻訳' }) as HTMLTextAreaElement)
@@ -60,9 +58,7 @@ describe('FindingCorrection', () => {
   it('when a corrected translation is rechecked, should report that no issue was found', () => {
     render(<FindingCorrection finding={createFinding()} />)
 
-    fireEvent.click(
-      screen.getByRole('button', { name: '修正して再チェック' }),
-    )
+    fireEvent.click(screen.getByRole('button', { name: '修正して再チェック' }))
     fireEvent.change(screen.getByRole('textbox', { name: '翻訳' }), {
       target: { value: 'WordPress のテーブル' },
     })
@@ -76,9 +72,7 @@ describe('FindingCorrection', () => {
   it('when an invalid translation is rechecked, should show the issue returned by the existing rules', () => {
     render(<FindingCorrection finding={createFinding()} />)
 
-    fireEvent.click(
-      screen.getByRole('button', { name: '修正して再チェック' }),
-    )
+    fireEvent.click(screen.getByRole('button', { name: '修正して再チェック' }))
     fireEvent.click(screen.getByRole('button', { name: '再チェック' }))
 
     expect(
@@ -92,9 +86,7 @@ describe('FindingCorrection', () => {
   it('when editing is cancelled, should discard the draft and return to the original card action', () => {
     render(<FindingCorrection finding={createFinding()} />)
 
-    fireEvent.click(
-      screen.getByRole('button', { name: '修正して再チェック' }),
-    )
+    fireEvent.click(screen.getByRole('button', { name: '修正して再チェック' }))
     fireEvent.change(screen.getByRole('textbox', { name: '翻訳' }), {
       target: { value: '一時的な修正案' },
     })
@@ -109,9 +101,7 @@ describe('FindingCorrection', () => {
   it('when a checked draft is edited again, should clear the previous result until rechecked', () => {
     render(<FindingCorrection finding={createFinding()} />)
 
-    fireEvent.click(
-      screen.getByRole('button', { name: '修正して再チェック' }),
-    )
+    fireEvent.click(screen.getByRole('button', { name: '修正して再チェック' }))
     fireEvent.change(screen.getByRole('textbox', { name: '翻訳' }), {
       target: { value: 'WordPress のテーブル' },
     })

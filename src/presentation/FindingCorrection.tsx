@@ -102,7 +102,8 @@ export function FindingCorrection({ finding }: { finding: Finding }) {
         <div>
           <h3 id={`correction-title-${finding.key}`}>修正案を再チェック</h3>
           <p>
-            ここでの修正は確認用です。元の PO ファイルや全体の確認結果は変更しません。
+            ここでの修正は確認用です。元の PO
+            ファイルや全体の確認結果は変更しません。
           </p>
         </div>
       </div>

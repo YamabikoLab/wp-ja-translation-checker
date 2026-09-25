@@ -178,9 +178,7 @@ describe('FindingCard correction action', () => {
       />,
     )
 
-    fireEvent.click(
-      screen.getByRole('button', { name: '修正して再チェック' }),
-    )
+    fireEvent.click(screen.getByRole('button', { name: '修正して再チェック' }))
 
     expect(
       (screen.getByRole('textbox', { name: '翻訳' }) as HTMLTextAreaElement)
