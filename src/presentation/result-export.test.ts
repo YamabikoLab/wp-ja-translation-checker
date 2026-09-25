@@ -4,7 +4,12 @@
 
 import { describe, expect, it } from 'vitest'
 import type { Finding } from './presentation-model'
-import { serializeCsv, serializeJson, serializeMarkdown } from './result-export'
+import {
+  serializeCsv,
+  serializeFindingMarkdown,
+  serializeJson,
+  serializeMarkdown,
+} from './result-export'
 
 /**
  * 出力テスト用の1指摘を生成する。
@@ -184,6 +189,74 @@ describe('JSON result export', () => {
       },
       findings: [],
     })
+  })
+})
+
+describe('Finding Markdown export', () => {
+  /**
+   * 事前条件:
+   * - Error の指摘に複数の一致範囲と改行を含む原文・翻訳がある。
+   *
+   * 操作:
+   * - 1件の指摘を Markdown へ変換する。
+   *
+   * 期待結果:
+   * - 既存の全件 Markdown と同じ構成で情報と改行を保持し、全一致箇所を強調する。
+   */
+  it('when an error finding contains multiple matches and line breaks, should serialize one complete finding', () => {
+    const finding = createFinding({
+      styleGuideItem: '1-9 半角数字前後の不要スペース',
+      message: '半角数字と日本語の間のスペースは削除してください\n再確認してください。',
+      source: 'Line 1\nLine 2',
+      translation: '項目 1 と項目 2',
+      matches: [
+        { start: 2, end: 5 },
+        { start: 8, end: 11 },
+      ],
+    })
+
+    expect(serializeFindingMarkdown(finding)).toBe(
+      [
+        '### Error: 1-9 半角数字前後の不要スペース',
+        '',
+        '半角数字と日本語の間のスペースは削除してください',
+        '再確認してください。',
+        '',
+        '**原文**',
+        '',
+        'Line 1',
+        'Line 2',
+        '',
+        '**翻訳**',
+        '',
+        '項目 **1** と項目 **2**',
+      ].join('\n'),
+    )
+  })
+
+  /**
+   * 事前条件:
+   * - Warning の指摘がある。
+   *
+   * 操作:
+   * - 1件の指摘と全件 Markdown を生成する。
+   *
+   * 期待結果:
+   * - Finding 単位の出力が全件 Markdown 内の1件分と一致し、独立したスタイルガイド節を追加しない。
+   */
+  it('when a warning finding is serialized, should match the finding section used by full Markdown export', () => {
+    const finding = createFinding({
+      severity: 'Warning',
+      styleGuideItem: '3-4 文脈確認',
+      message: '文脈を確認してください。',
+      matches: [],
+    })
+    const findingMarkdown = serializeFindingMarkdown(finding)
+    const fullMarkdown = serializeMarkdown('plugin-ja.po', [finding])
+
+    expect(findingMarkdown).toContain('### Warning: 3-4 文脈確認')
+    expect(findingMarkdown).not.toContain('**スタイルガイド**')
+    expect(fullMarkdown).toContain(findingMarkdown)
   })
 })
 
