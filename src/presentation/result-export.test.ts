@@ -216,7 +216,6 @@ describe('Markdown result export', () => {
     expect(markdown.match(/こんにちは, 世界/g)).toHaveLength(2)
   })
 
-
   /**
    * 複数の一致箇所を Markdown だけで強調することを確認する。
    *
@@ -242,7 +241,9 @@ describe('Markdown result export', () => {
       '**全て**保存して**全て**確認',
     )
     expect(serializeCsv([finding])).toContain('全て保存して全て確認')
-    expect(JSON.parse(serializeJson('plugin-ja.po', [finding])).findings[0]).toMatchObject({
+    expect(
+      JSON.parse(serializeJson('plugin-ja.po', [finding])).findings[0],
+    ).toMatchObject({
       translation: '全て保存して全て確認',
       matches: [
         { start: 0, end: 2 },

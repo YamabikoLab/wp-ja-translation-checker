@@ -140,7 +140,10 @@ function ExpandableText({
   for (const [index, match] of normalizedMatches.entries()) {
     content.push(displayedText.slice(cursor, match.start))
     content.push(
-      <mark className={styles.ngMatch} key={`${match.start}-${match.end}-${index}`}>
+      <mark
+        className={styles.ngMatch}
+        key={`${match.start}-${match.end}-${index}`}
+      >
         {displayedText.slice(match.start, match.end)}
       </mark>,
     )

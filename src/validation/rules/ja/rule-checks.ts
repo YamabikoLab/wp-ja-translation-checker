@@ -378,10 +378,12 @@ export function checkSpacingBetweenHalfAndFullWidth(
         unnecessarySymbol = character
       }
       if (unnecessarySymbol === character) {
-        const start =
-          spacingCharacters.has(translation[index - 1] ?? '') ? index - 1 : index
-        const end =
-          spacingCharacters.has(translation[index + 1] ?? '') ? index + 2 : index + 1
+        const start = spacingCharacters.has(translation[index - 1] ?? '')
+          ? index - 1
+          : index
+        const end = spacingCharacters.has(translation[index + 1] ?? '')
+          ? index + 2
+          : index + 1
         unnecessarySymbolMatches.push({ start, end })
       }
     }
@@ -869,10 +871,7 @@ export function checkSorryPrefix(
   entry: TranslationEntry,
 ): readonly CheckMessage[] {
   const translation = getTranslation(entry)
-  if (
-    translation === undefined ||
-    !/^Sorry,\s*/u.test(entry.source.singular)
-  ) {
+  if (translation === undefined || !/^Sorry,\s*/u.test(entry.source.singular)) {
     return []
   }
 
