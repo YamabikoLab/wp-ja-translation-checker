@@ -859,11 +859,6 @@
   }
 }
 
-.glossaryIntro {
-  margin: 0 0 16px;
-  color: var(--color-muted);
-}
-
 .glossaryContent {
   display: grid;
   gap: 18px;
