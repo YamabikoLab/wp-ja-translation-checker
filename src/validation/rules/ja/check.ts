@@ -22,8 +22,6 @@ import {
 } from './rule-checks'
 import type { CheckMessage } from './rule-checks'
 
-export type { CheckMessage } from './rule-checks'
-
 /**
  * 1つの翻訳 entry で検出された Error / Warning を表す。
  */

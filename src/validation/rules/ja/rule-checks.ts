@@ -10,7 +10,7 @@ import type { TranslationEntry } from '@/po/interpret-po'
 /**
  * 翻訳内で検出した1箇所の一致範囲を表す。
  */
-export type CheckMessageMatch = {
+type CheckMessageMatch = {
   /** 指摘箇所の開始位置。entry.translations[0].text に対する UTF-16 code unit offset。 */
   start: number
   /** 指摘箇所の終了位置。対象範囲に含まない UTF-16 code unit offset。 */

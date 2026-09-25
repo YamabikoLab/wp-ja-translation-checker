@@ -2,6 +2,12 @@ name: PR Validation
 
 on:
   workflow_dispatch:
+    inputs:
+      run_knip:
+        description: Run Knip
+        required: false
+        default: true
+        type: boolean
 
 permissions:
   contents: read
@@ -30,3 +36,10 @@ jobs:
 
       - name: Validate
         run: npm run validate
+
+      - name: Audit dependencies
+        run: npm run audit
+
+      - name: Knip
+        if: ${{ inputs.run_knip }}
+        run: npm run knip
