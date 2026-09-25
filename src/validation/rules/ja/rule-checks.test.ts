@@ -1236,3 +1236,109 @@ describe('Japanese v1 rule 3-6', () => {
     ).toHaveLength(1)
   })
 })
+
+describe('Japanese v1 match ranges', () => {
+  /**
+   * 同じ 1-4 の指摘内容に該当する複数箇所を、1件の指摘へまとめて位置情報として保持することを確認する。
+   *
+   * 操作:
+   * - 半角英字と日本語の境界違反を同じ文中に2箇所含む翻訳を確認する。
+   *
+   * 期待結果:
+   * - 同じ表示メッセージの指摘は1件となる。
+   * - 2箇所それぞれの [start, end) が UTF-16 code unit offset で保持される。
+   */
+  it('when the same spacing boundary violation occurs multiple times, should keep all match ranges in one rule 1-4 message', () => {
+    expect(
+      checkSpacingBetweenHalfAndFullWidth(
+        createEntry(0, 'Settings', 'WordPress設定とPlugin設定'),
+      ),
+    ).toContainEqual({
+      styleGuideItem: '1-4 半角文字と全角文字の間のスペース',
+      message: '「s」と「設」の間に半角スペースを入れてください',
+      matches: [
+        { start: 8, end: 10 },
+        { start: 16, end: 18 },
+      ],
+    })
+  })
+
+  /**
+   * コロン前後の異なる 1-4 指摘が、それぞれ自分の問題箇所だけを位置情報として持つことを確認する。
+   *
+   * 操作:
+   * - コロン前に不要スペースがあり、コロン後の必要スペースがない翻訳を確認する。
+   *
+   * 期待結果:
+   * - 前側と後側の指摘が別々に返る。
+   * - 各指摘の matches が対応する境界だけを示す。
+   */
+  it('when colon spacing has separate before and after violations, should keep distinct match ranges for each rule 1-4 message', () => {
+    expect(
+      checkSpacingBetweenHalfAndFullWidth(
+        createEntry(0, 'Status', '状態 :有効'),
+      ),
+    ).toEqual(
+      expect.arrayContaining([
+        {
+          styleGuideItem: '1-4 半角文字と全角文字の間のスペース',
+          message: '「:」の前のスペースは不要です',
+          matches: [{ start: 2, end: 4 }],
+        },
+        {
+          styleGuideItem: '1-4 半角文字と全角文字の間のスペース',
+          message: '「:」の後にスペースを1つ入れてください',
+          matches: [{ start: 3, end: 5 }],
+        },
+      ]),
+    )
+  })
+
+  /**
+   * 同じ推奨外表記が複数回現れる場合に、3-6 の指摘件数を増やさず全箇所を位置情報へまとめることを確認する。
+   *
+   * 操作:
+   * - UTF-16 で2 code unit の絵文字に続けて「全て」を2箇所含む翻訳を確認する。
+   *
+   * 期待結果:
+   * - 「全て」に対する指摘は1件だけ返る。
+   * - 2箇所の位置が UTF-16 code unit offset で保持される。
+   */
+  it('when one recommended expression appears multiple times, should keep every UTF-16 range in one rule 3-6 message', () => {
+    expect(
+      checkRecommendedExpressions(
+        createEntry(0, 'Save all', '😀全て保存、全て確認'),
+      ),
+    ).toContainEqual({
+      styleGuideItem: '3-6 「下さい / 全て / 既に」などの推奨表記',
+      message: '「全て」は「すべて」と表記してください',
+      matches: [
+        { start: 2, end: 4 },
+        { start: 7, end: 9 },
+      ],
+    })
+  })
+
+  /**
+   * 翻訳内の単一箇所へ機械的に限定できない Warning では、誤った強調位置を生成しないことを確認する。
+   *
+   * 操作:
+   * - 3-2 の確認対象となる View の翻訳を確認する。
+   *
+   * 期待結果:
+   * - Warning 自体は返る。
+   * - matches は空配列となる。
+   */
+  it('when a warning applies to the translation expression as a whole, should not invent a match range', () => {
+    expect(
+      checkViewExpression(createEntry(0, 'View posts', '投稿を閲覧')),
+    ).toEqual([
+      {
+        styleGuideItem: '3-2 「View XX」を「〜を表示 (する)」に統一',
+        message: '「View XX」の訳し方を確認してください',
+        matches: [],
+      },
+    ])
+  })
+})
+
