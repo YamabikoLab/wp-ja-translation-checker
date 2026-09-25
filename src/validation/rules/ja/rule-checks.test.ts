@@ -471,6 +471,68 @@ describe('Japanese v1 rule 1-4', () => {
   })
 
   /**
+   * URL がコロン直後に続く場合も、URL 自体を非表示文字列として読み飛ばさないことを確認する。
+   *
+   * 操作:
+   * - ラベル用コロンの直後にスペースなしで URL が続く翻訳を確認する。
+   *
+   * 期待結果:
+   * - コロン後のスペース不足が 1-4 として返る。
+   */
+  it('when a URL follows a colon without a space, should report rule 1-4', () => {
+    expect(
+      getRuleMessages(
+        checkSpacingBetweenHalfAndFullWidth,
+        'URL',
+        'URL:https://example.com',
+      ),
+    ).toContainEqual({
+      styleGuideItem: '1-4 半角文字と全角文字の間のスペース',
+      message: '「:」の後にスペースを1つ入れてください',
+    })
+  })
+
+  /**
+   * プレースホルダーがコロン直後に続く場合も、表示本文上の文字として境界判定することを確認する。
+   *
+   * 操作:
+   * - ラベル用コロンの直後にスペースなしで文字列プレースホルダーが続く翻訳を確認する。
+   *
+   * 期待結果:
+   * - コロン後のスペース不足が 1-4 として返る。
+   */
+  it('when a placeholder follows a colon without a space, should report rule 1-4', () => {
+    expect(
+      getRuleMessages(checkSpacingBetweenHalfAndFullWidth, 'Value', '値:%s'),
+    ).toContainEqual({
+      styleGuideItem: '1-4 半角文字と全角文字の間のスペース',
+      message: '「:」の後にスペースを1つ入れてください',
+    })
+  })
+
+  /**
+   * URL の後ろにあるコロン前スペースも、URL を読み飛ばさず検出することを確認する。
+   *
+   * 操作:
+   * - URL とコロンの間に不要なスペースを含む翻訳を確認する。
+   *
+   * 期待結果:
+   * - コロン前の不要スペースが 1-4 として返る。
+   */
+  it('when a URL is followed by a spaced colon, should report rule 1-4', () => {
+    expect(
+      getRuleMessages(
+        checkSpacingBetweenHalfAndFullWidth,
+        'URL',
+        'https://example.com :',
+      ),
+    ).toContainEqual({
+      styleGuideItem: '1-4 半角文字と全角文字の間のスペース',
+      message: '「:」の前のスペースは不要です',
+    })
+  })
+
+  /**
    * コロン前の全角スペースも不要なスペースとして 1-4 で検出することを確認する。
    *
    * 操作:
@@ -568,6 +630,123 @@ describe('Japanese v1 rule 1-4', () => {
         createEntry(0, 'User ID', 'ユーザー ID:　username'),
       ]),
     ).toEqual([])
+  })
+
+  /**
+   * 終了タグをまたいだコロン後の半角スペースを、表示本文上の正しいスペースとして扱うことを確認する。
+   *
+   * 操作:
+   * - コロン直後に終了タグがあり、その後に半角スペース1つと日本語本文が続く翻訳を確認する。
+   *
+   * 期待結果:
+   * - 1-4 の指摘は返らない。
+   */
+  it('when one trailing space follows a colon across protected markup, should not report rule 1-4', () => {
+    expect(
+      checkEntries(checkSpacingBetweenHalfAndFullWidth, [
+        createEntry(0, 'Ads', '<strong>Ads:</strong> Google 広告'),
+      ]),
+    ).toEqual([])
+  })
+
+  /**
+   * テンプレートマークアップをまたいだコロン後の半角スペースも、表示本文上の正しいスペースとして扱うことを確認する。
+   *
+   * 操作:
+   * - コロン直後に終了テンプレートマークアップがあり、その後に半角スペース1つと日本語本文が続く翻訳を確認する。
+   *
+   * 期待結果:
+   * - 1-4 の指摘は返らない。
+   */
+  it('when one trailing space follows a colon across template markup, should not report rule 1-4', () => {
+    expect(
+      checkEntries(checkSpacingBetweenHalfAndFullWidth, [
+        createEntry(0, 'Ads', '{{Link}}Ads:{{/Link}} Google 広告'),
+      ]),
+    ).toEqual([])
+  })
+
+  /**
+   * 終了タグをまたいでもコロン後にスペースがなければ 1-4 として検出することを確認する。
+   *
+   * 操作:
+   * - コロン直後に終了タグがあり、その後へ日本語本文が直接続く翻訳を確認する。
+   *
+   * 期待結果:
+   * - コロン後へスペースを1つ入れる指摘が返る。
+   */
+  it('when a colon lacks trailing space across protected markup, should report rule 1-4', () => {
+    expect(
+      getRuleMessages(
+        checkSpacingBetweenHalfAndFullWidth,
+        'Ads',
+        '<strong>Ads:</strong>Google 広告',
+      ),
+    ).toContainEqual({
+      styleGuideItem: '1-4 半角文字と全角文字の間のスペース',
+      message: '「:」の後にスペースを1つ入れてください',
+    })
+  })
+
+  /**
+   * 終了タグをまたいだコロン後の複数スペースを 1-4 として検出することを確認する。
+   *
+   * 操作:
+   * - コロン直後に終了タグがあり、その後に半角スペース2つと本文が続く翻訳を確認する。
+   *
+   * 期待結果:
+   * - コロン後のスペースを1つにするための既存メッセージが返る。
+   */
+  it('when multiple trailing spaces follow a colon across protected markup, should report rule 1-4', () => {
+    expect(
+      getRuleMessages(
+        checkSpacingBetweenHalfAndFullWidth,
+        'Ads',
+        '<strong>Ads:</strong>  Google 広告',
+      ),
+    ).toContainEqual({
+      styleGuideItem: '1-4 半角文字と全角文字の間のスペース',
+      message: '「:」の後にスペースを1つ入れてください',
+    })
+  })
+
+  /**
+   * 終了タグをまたいだコロン前に不要スペースがなければ正常とすることを確認する。
+   *
+   * 操作:
+   * - 可視本文の末尾とコロンの間に終了タグだけが存在する翻訳を確認する。
+   *
+   * 期待結果:
+   * - コロン前の不要スペースは指摘されない。
+   */
+  it('when no leading space exists before a colon across protected markup, should not report rule 1-4', () => {
+    expect(
+      checkEntries(checkSpacingBetweenHalfAndFullWidth, [
+        createEntry(0, 'Ads', '<strong>Ads</strong>: value'),
+      ]),
+    ).toEqual([])
+  })
+
+  /**
+   * 終了タグをまたいだコロン前の不要スペースを 1-4 として検出することを確認する。
+   *
+   * 操作:
+   * - 可視本文末尾に半角スペースがあり、その後に終了タグとコロンが続く翻訳を確認する。
+   *
+   * 期待結果:
+   * - コロン前のスペース不要が案内される。
+   */
+  it('when a leading space exists before a colon across protected markup, should report rule 1-4', () => {
+    expect(
+      getRuleMessages(
+        checkSpacingBetweenHalfAndFullWidth,
+        'Ads',
+        '<strong>Ads </strong>: value',
+      ),
+    ).toContainEqual({
+      styleGuideItem: '1-4 半角文字と全角文字の間のスペース',
+      message: '「:」の前のスペースは不要です',
+    })
   })
 
   /**
@@ -724,6 +903,49 @@ describe('Japanese v1 rule 1-5', () => {
     expect(
       checkParenthesesSpacing(createEntry(0, 'Field', '%(field)sの範囲')),
     ).toEqual([])
+  })
+
+  /**
+   * 文字列プレースホルダー直後の丸括弧外側に半角スペース1つがある場合を正常とすることを確認する。
+   *
+   * 操作:
+   * - 文字列プレースホルダーの直後に半角スペース1つと丸括弧が続く翻訳を確認する。
+   *
+   * 期待結果:
+   * - プレースホルダーを非表示文字列のように読み飛ばさず、1-5 の指摘は返らない。
+   */
+  it('when a placeholder is separated from an opening parenthesis by one space, should not report rule 1-5', () => {
+    expect(
+      checkEntries(checkParenthesesSpacing, [
+        createEntry(
+          0,
+          'Top seller this month %1$s (%2$d sale)',
+          '今月の上位売上 %1$s (%2$d販売)',
+        ),
+      ]),
+    ).toEqual([])
+  })
+
+  /**
+   * 文字列プレースホルダー直後の丸括弧外側スペースが不足する場合を 1-5 として検出することを確認する。
+   *
+   * 操作:
+   * - 文字列プレースホルダーと開き丸括弧が直接接する翻訳を確認する。
+   *
+   * 期待結果:
+   * - 丸括弧外側のスペース不足として 1-5 の指摘が返る。
+   */
+  it('when a placeholder touches an opening parenthesis, should report rule 1-5', () => {
+    expect(
+      getRuleMessages(
+        checkParenthesesSpacing,
+        'Top seller this month %1$s (%2$d sale)',
+        '今月の上位売上 %1$s(%2$d販売)',
+      ),
+    ).toContainEqual({
+      styleGuideItem: '1-5 半角丸括弧と前後スペース',
+      message: '丸括弧の外側は半角スペース1つにしてください',
+    })
   })
 
   /**
@@ -1289,6 +1511,36 @@ describe('Japanese v1 match ranges', () => {
           styleGuideItem: '1-4 半角文字と全角文字の間のスペース',
           message: '「:」の後にスペースを1つ入れてください',
           matches: [{ start: 3, end: 5 }],
+        },
+      ]),
+    )
+  })
+
+  /**
+   * 保護された終了タグをまたぐコロン前後の指摘でも、元の翻訳文字列上の位置を保持することを確認する。
+   *
+   * 操作:
+   * - コロン前に不要スペース、コロン後にスペース不足があり、両境界に終了タグが挟まる翻訳を確認する。
+   *
+   * 期待結果:
+   * - 前後それぞれの matches がタグを削除しない元文字列上の [start, end) を示す。
+   */
+  it('when colon spacing violations cross protected markup, should keep match ranges on the original translation', () => {
+    expect(
+      checkSpacingBetweenHalfAndFullWidth(
+        createEntry(0, 'Status', '<strong>Ads </strong>:<em></em>有効'),
+      ),
+    ).toEqual(
+      expect.arrayContaining([
+        {
+          styleGuideItem: '1-4 半角文字と全角文字の間のスペース',
+          message: '「:」の前のスペースは不要です',
+          matches: [{ start: 11, end: 22 }],
+        },
+        {
+          styleGuideItem: '1-4 半角文字と全角文字の間のスペース',
+          message: '「:」の後にスペースを1つ入れてください',
+          matches: [{ start: 21, end: 32 }],
         },
       ]),
     )

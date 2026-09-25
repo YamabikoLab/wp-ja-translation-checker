@@ -79,11 +79,12 @@ const APOLOGY_PREFIXES = [
 ] as const
 
 /**
- * 日本語本文の表記規則から除外する技術文字列の位置情報を表す。
+ * 日本語本文の表記規則から除外する技術文字列と、表示本文から除外するマークアップの位置情報を表す。
  */
 type ProtectedText = {
   text: string
   protectedIndexes: ReadonlySet<number>
+  hiddenMarkupIndexes: ReadonlySet<number>
 }
 
 /**
@@ -91,35 +92,51 @@ type ProtectedText = {
  * 明示的に判別できる代表的な技術文字列の位置を保護する。
  *
  * @param text 確認対象の翻訳。
- * @returns 元文字列と、本文ルールの判定対象外にする文字位置。
+ * @returns 元文字列と、本文ルールの判定対象外にする文字位置、および表示本文から除外するマークアップ位置。
  */
 function protectTechnicalText(text: string): ProtectedText {
   const protectedIndexes = new Set<number>()
+  const hiddenMarkupIndexes = new Set<number>()
   const patterns = [
-    /https?:\/\/[^\s]+/giu,
-    /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/giu,
-    /<[^>]+>/gu,
-    /\{\{\/?[A-Za-z][A-Za-z0-9_-]*\}\}/gu,
-    /%(?:\d+\$)?s/gu,
-    /%\([A-Za-z0-9_.-]+\)s/gu,
-    /(?:[A-Za-z_][A-Za-z0-9_]*|%(?:\d+\$)?s)\(\)/gu,
-    /`[^`]+`/gu,
-    /(?:[A-Z]:\\|\/)\S+/giu,
+    { pattern: /https?:\/\/[^\s]+/giu, hiddenMarkup: false },
+    {
+      pattern: /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/giu,
+      hiddenMarkup: false,
+    },
+    { pattern: /<[^>]+>/gu, hiddenMarkup: true },
+    {
+      pattern: /\{\{\/?[A-Za-z][A-Za-z0-9_-]*\}\}/gu,
+      hiddenMarkup: true,
+    },
+    { pattern: /%(?:\d+\$)?s/gu, hiddenMarkup: false },
+    { pattern: /%\([A-Za-z0-9_.-]+\)s/gu, hiddenMarkup: false },
+    {
+      pattern: /(?:[A-Za-z_][A-Za-z0-9_]*|%(?:\d+\$)?s)\(\)/gu,
+      hiddenMarkup: false,
+    },
+    { pattern: /`[^`]+`/gu, hiddenMarkup: false },
+    {
+      pattern: /(?:[A-Z]:\\|\/(?![A-Za-z][A-Za-z0-9_-]*>))\S+/giu,
+      hiddenMarkup: false,
+    },
   ]
 
   // 明示的に技術文字列と判断できる範囲だけを保護し、周囲の日本語本文は通常どおり確認する。
-  for (const pattern of patterns) {
+  for (const { pattern, hiddenMarkup } of patterns) {
     for (const match of text.matchAll(pattern)) {
       const start = match.index
       const value = match[0]
 
       for (let index = start; index < start + value.length; index += 1) {
         protectedIndexes.add(index)
+        if (hiddenMarkup) {
+          hiddenMarkupIndexes.add(index)
+        }
       }
     }
   }
 
-  return { text, protectedIndexes }
+  return { text, protectedIndexes, hiddenMarkupIndexes }
 }
 
 /**
@@ -130,6 +147,62 @@ function protectTechnicalText(text: string): ProtectedText {
  */
 function getTranslation(entry: TranslationEntry): string | undefined {
   return entry.translations[0]?.text
+}
+
+/**
+ * 表示されないマークアップを除いた表示本文上で、指定位置の外側にあるスペースと隣接文字を取得する。
+ *
+ * HTML タグやテンプレートマークアップなど表示されない範囲だけを読み飛ばし、URL やプレースホルダーなどの可視な技術文字列は本文上の文字として扱う。
+ *
+ * @param text 確認対象の翻訳。
+ * @param hiddenMarkupIndexes 表示本文から除外するマークアップの文字位置。
+ * @param startIndex 基準位置の直近から確認を開始する位置。
+ * @param direction 前方は 1、後方は -1。
+ * @param spacingCharacters スペースとして扱う文字集合。
+ * @returns 表示本文上の隣接文字と、その手前に存在するスペース位置。文字列境界の場合は undefined。
+ */
+function getVisibleAdjacentText(
+  text: string,
+  hiddenMarkupIndexes: ReadonlySet<number>,
+  startIndex: number,
+  direction: 1 | -1,
+  spacingCharacters: ReadonlySet<string>,
+):
+  | {
+      character: string
+      characterIndex: number
+      spacingIndexes: readonly number[]
+    }
+  | undefined {
+  let index = startIndex
+  const spacingIndexes: number[] = []
+
+  // 表示されないマークアップだけを除外し、本文側のスペースと最初の可視文字を取得する。
+  while (index >= 0 && index < text.length) {
+    if (hiddenMarkupIndexes.has(index)) {
+      index += direction
+      continue
+    }
+
+    const character = text[index]
+    if (character === undefined) {
+      return undefined
+    }
+
+    if (spacingCharacters.has(character)) {
+      spacingIndexes.push(index)
+      index += direction
+      continue
+    }
+
+    return {
+      character,
+      characterIndex: index,
+      spacingIndexes,
+    }
+  }
+
+  return undefined
 }
 
 /**
@@ -286,7 +359,8 @@ export function checkSpacingBetweenHalfAndFullWidth(
     return []
   }
 
-  const { protectedIndexes } = protectTechnicalText(translation)
+  const { protectedIndexes, hiddenMarkupIndexes } =
+    protectTechnicalText(translation)
   const spacingText = translation.replace(/%\d*\$?d/gu, (value) =>
     '0'.repeat(value.length),
   )
@@ -389,32 +463,58 @@ export function checkSpacingBetweenHalfAndFullWidth(
     }
   }
 
-  // 日本語本文の区切りとして使われるコロンについて、前後のスペース規則を確認する。
+  // 日本語本文の区切りとして使われるコロンについて、表示されないマークアップを除いた前後のスペース規則を確認する。
   for (let index = 0; index < translation.length; index += 1) {
     if (translation[index] !== ':' || protectedIndexes.has(index)) {
       continue
     }
 
-    const previous = translation[index - 1] ?? ''
-    const next = translation[index + 1] ?? ''
-    if (/\d/u.test(previous) && /\d/u.test(next)) {
+    const before = getVisibleAdjacentText(
+      translation,
+      hiddenMarkupIndexes,
+      index - 1,
+      -1,
+      spacingCharacters,
+    )
+    const after = getVisibleAdjacentText(
+      translation,
+      hiddenMarkupIndexes,
+      index + 1,
+      1,
+      spacingCharacters,
+    )
+
+    if (
+      before !== undefined &&
+      after !== undefined &&
+      before.spacingIndexes.length === 0 &&
+      after.spacingIndexes.length === 0 &&
+      /\d/u.test(before.character) &&
+      /\d/u.test(after.character)
+    ) {
       continue
     }
 
-    if (spacingCharacters.has(previous)) {
-      colonBeforeMatches.push({ start: index - 1, end: index + 1 })
+    if (before !== undefined && before.spacingIndexes.length > 0) {
+      colonBeforeMatches.push({
+        start: Math.min(...before.spacingIndexes),
+        end: index + 1,
+      })
     }
 
-    const afterMissing = next !== '' && !validColonSpacingCharacters.has(next)
-    const afterMultiple =
-      validColonSpacingCharacters.has(next) &&
-      spacingCharacters.has(translation[index + 2] ?? '')
+    if (after !== undefined) {
+      const spacingCount = after.spacingIndexes.length
+      const hasInvalidSpacing = after.spacingIndexes.some(
+        (spacingIndex) =>
+          !validColonSpacingCharacters.has(translation[spacingIndex] ?? ''),
+      )
 
-    if (afterMissing || afterMultiple) {
-      colonAfterMatches.push({
-        start: index,
-        end: Math.min(translation.length, index + (afterMultiple ? 3 : 2)),
-      })
+      if (spacingCount === 0 || spacingCount > 1 || hasInvalidSpacing) {
+        colonAfterMatches.push({
+          start: index,
+          end: after.characterIndex + 1,
+        })
+      }
     }
   }
 
@@ -470,7 +570,8 @@ export function checkParenthesesSpacing(
     return []
   }
 
-  const { protectedIndexes } = protectTechnicalText(translation)
+  const { protectedIndexes, hiddenMarkupIndexes } =
+    protectTechnicalText(translation)
   const messages: CheckMessage[] = []
   const fullWidthMatches: CheckMessageMatch[] = []
   const invalidOuterSpacingMatches: CheckMessageMatch[] = []
@@ -505,7 +606,7 @@ export function checkParenthesesSpacing(
     if (character === '(' && index > 0) {
       const outside = getOuterParenthesesSpacing(
         translation,
-        protectedIndexes,
+        hiddenMarkupIndexes,
         index - 1,
         -1,
       )
@@ -524,7 +625,7 @@ export function checkParenthesesSpacing(
     if (character === ')' && index < translation.length - 1) {
       const outside = getOuterParenthesesSpacing(
         translation,
-        protectedIndexes,
+        hiddenMarkupIndexes,
         index + 1,
         1,
       )
@@ -557,27 +658,28 @@ export function checkParenthesesSpacing(
 }
 
 /**
- * 丸括弧の外側について、マークアップ等の保護範囲を除いた表示本文側の隣接文字とスペース数を取得する。
+ * 丸括弧の外側について、表示されないマークアップを除いた表示本文側の隣接文字とスペース数を取得する。
+ *
+ * URL やプレースホルダーなどの可視な技術文字列は、丸括弧との表示上の境界を判定する文字として扱う。
  *
  * @param text 対象文字列。
- * @param protectedIndexes 技術文字列として判定対象外にする文字位置。
+ * @param hiddenMarkupIndexes 表示本文から除外するマークアップの文字位置。
  * @param startIndex 丸括弧の外側直近から確認を開始する位置。
  * @param direction 前方は 1、後方は -1。
  * @returns 表示本文側の文字と、その手前に存在する半角スペース数。文字列境界の場合は undefined。
  */
 function getOuterParenthesesSpacing(
   text: string,
-  protectedIndexes: ReadonlySet<number>,
+  hiddenMarkupIndexes: ReadonlySet<number>,
   startIndex: number,
   direction: 1 | -1,
 ): { character: string; spaceCount: number } | undefined {
   let index = startIndex
   let spaceCount = 0
 
-  // HTML 等の表示されない保護範囲を飛ばしつつ、本文側に実在するスペースだけを数える。
+  // 表示されないマークアップだけを飛ばし、可視な技術文字列を含む本文上の境界を確認する。
   while (index >= 0 && index < text.length) {
-    // マークアップ等の保護範囲は表示本文の隣接文字として扱わない。
-    if (protectedIndexes.has(index)) {
+    if (hiddenMarkupIndexes.has(index)) {
       index += direction
       continue
     }

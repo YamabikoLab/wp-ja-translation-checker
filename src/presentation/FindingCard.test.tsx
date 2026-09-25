@@ -3,7 +3,7 @@
  */
 
 /**
- * 1件の指摘表示について、利用者が個別 Markdown コピーを操作した結果を React の表示境界から確認する。
+ * 1件の指摘表示について、個別 Markdown コピーと修正案の再チェック開始を React の利用者操作から確認する。
  *
  * Clipboard API は jsdom では提供されないため、このブラウザー境界だけをテストダブルで置き換える。
  */
@@ -164,5 +164,77 @@ describe('FindingCard Markdown copy action', () => {
     expect(writeText.mock.calls[0]?.[0]).not.toContain(
       '1-9 半角数字前後の不要スペース',
     )
+  })
+})
+
+describe('FindingCard correction action', () => {
+  /**
+   * 指摘カードから修正操作を開始したとき、その指摘の翻訳を編集対象として確認できることを確認する。
+   *
+   * 操作:
+   * - 「修正して再チェック」を押す。
+   *
+   * 期待結果:
+   * - 対象指摘の翻訳が入力欄に表示される。
+   */
+  it('when correction starts from a finding card, should show an editable draft for that finding', () => {
+    render(
+      <FindingCard
+        finding={createFinding({
+          translation: 'WordPressのテーブル',
+          source: 'WordPress Table',
+        })}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: '修正して再チェック' }))
+
+    expect(
+      (screen.getByRole('textbox', { name: '翻訳' }) as HTMLTextAreaElement)
+        .value,
+    ).toBe('WordPressのテーブル')
+  })
+
+  /**
+   * 修正案を再チェックしても、元の確認結果をコピーする操作の内容が書き換わらないことを確認する。
+   *
+   * 事前条件:
+   * - 元の指摘には「WordPressのテーブル」という翻訳が含まれている。
+   *
+   * 操作:
+   * - 修正案を「WordPress のテーブル」に変更して再チェックする。
+   * - その後「Markdownをコピー」を押す。
+   *
+   * 期待結果:
+   * - コピー内容には元の翻訳が含まれる。
+   * - 一時的な修正案はコピー内容へ反映されない。
+   */
+  it('when a correction is rechecked, should keep Markdown copy based on the original finding', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    vi.stubGlobal('navigator', { clipboard: { writeText } })
+    render(
+      <FindingCard
+        finding={createFinding({
+          translation: 'WordPressのテーブル',
+          source: 'WordPress Table',
+          message: '「s」と「の」の間に半角スペースを入れてください',
+          styleGuideItem: '1-4 半角文字と全角文字の間のスペース',
+          matches: [{ start: 8, end: 10 }],
+        })}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: '修正して再チェック' }))
+    fireEvent.change(screen.getByRole('textbox', { name: '翻訳' }), {
+      target: { value: 'WordPress のテーブル' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: '再チェック' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Markdownをコピー' }))
+
+    await screen.findByRole('button', { name: 'コピーしました' })
+
+    expect(writeText).toHaveBeenCalledTimes(1)
+    expect(writeText.mock.calls[0]?.[0]).toContain('WordPres**sの**テーブル')
+    expect(writeText.mock.calls[0]?.[0]).not.toContain('WordPress のテーブル')
   })
 })
