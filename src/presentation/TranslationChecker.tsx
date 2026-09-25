@@ -183,6 +183,7 @@ export function TranslationChecker() {
    * 現在の確認結果全体を JSON として保存する。
    */
   const handleJsonDownload = () => {
+    // 正常完了結果がない状態では JSON 出力を開始しない。
     if (state.status !== 'success') {
       return
     }
@@ -200,6 +201,7 @@ export function TranslationChecker() {
    * Clipboard API を利用できない場合や書き込みに失敗した場合は、成功扱いにせず利用者へ通知する。
    */
   const handleMarkdownCopy = async () => {
+    // 正常完了結果がない状態では Markdown コピーを開始しない。
     if (state.status !== 'success') {
       return
     }
@@ -220,9 +222,12 @@ export function TranslationChecker() {
     }
   }
 
+  // ファイル未選択状態だけ現在入力を持たないものとして表示用状態へ変換する。
   const selectedFile = state.status === 'no-file' ? null : state.file
+  // 正常完了結果だけを Style Guide の表示モデルへ変換し、途中状態や確認不能結果は一覧化しない。
   const findings =
     state.status === 'success' ? createFindings(state.result) : []
+  // 正常完了結果だけを Glossary の表示モデルへ変換し、Style Guide の一覧とは分離して保持する。
   const glossaryFindings =
     state.status === 'success' ? createGlossaryFindings(state.result) : []
   const summary = summarizeFindings(findings, glossaryFindings)
@@ -236,8 +241,7 @@ export function TranslationChecker() {
    * @param nextPageSize 新しい1ページあたりの表示件数。
    */
   const handlePageSizeChange = (nextPageSize: number) => {
-    // 画面で提供している表示件数だけを共有状態へ採用する。
-    // 画面が提供していない表示件数は Presentation 状態へ取り込まない。
+    // 画面で提供していない表示件数は Presentation 状態へ取り込まない。
     if (
       !PAGE_SIZE_OPTIONS.includes(
         nextPageSize as (typeof PAGE_SIZE_OPTIONS)[number],
@@ -290,12 +294,14 @@ export function TranslationChecker() {
           </p>
         )}
 
+        {/* 入力未選択または確認進行中は、新しい確認を開始できない状態として操作を無効化する。 */}
         <button
           type="button"
           className={styles.checkButton}
           disabled={selectedFile === null || state.status === 'checking'}
           onClick={handleCheck}
         >
+          {/* 進行中は操作名ではなく現在状態を示し、重複操作を促さない。 */}
           {state.status === 'checking' ? '確認中…' : '確認する'}
         </button>
 
@@ -439,6 +445,7 @@ export function TranslationChecker() {
                 <select
                   value={selectedRule ?? ''}
                   onChange={(event) => {
+                    // 空の選択値は「すべてのルール」を表す null へ戻す。
                     setSelectedRule(event.target.value || null)
                     setPage(1)
                   }}
