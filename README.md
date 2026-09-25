@@ -77,7 +77,7 @@ This table is a user-facing summary. A result with no Error or Warning means tha
 | 3-8   | Endings and punctuation in headings, lists, and buttons          | 👀 Manual check    | -        |
 | 4-1   | Long vowel marks in katakana words                               | 👀 Manual check    | -        |
 | 4-2   | Long vowel rules for compound words                              | 👀 Manual check    | -        |
-| 5     | Middle dot `・`                                                  | 👀 Manual check    | -        |
+| 5     | Middle dot `・`                                                  | △ Partial check    | Warning  |
 | 6     | `WordPress`, feature names, theme names, and plugin names        | 👀 Manual check    | -        |
 | 7     | Japanese date and time notation                                  | 👀 Manual check    | -        |
 | 8     | Placeholders                                                     | 👀 Manual check    | -        |
