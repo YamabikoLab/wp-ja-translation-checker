@@ -27,12 +27,14 @@ function createFinding(
 ): Finding {
   return {
     key: overrides.key ?? '0-error-0',
+    kind: 'style-guide',
     severity: overrides.severity ?? 'Error',
     styleGuideItem:
       overrides.styleGuideItem ?? '1-9 半角数字前後の不要スペース',
     message:
       overrides.message ?? '半角数字と日本語の間のスペースは削除してください。',
     matches: overrides.matches ?? [{ start: 2, end: 4 }],
+    translationFormIndex: 0,
     entry: {
       entryIndex: 0,
       source: {
