@@ -18,6 +18,12 @@ type TermGroup = {
   candidates: readonly GlossaryEntry[]
 }
 
+/**
+ * Glossary term の単語境界判定に用いる ASCII 英数字かどうかを返す。
+ *
+ * @param value 原文または Glossary term の1文字。
+ * @returns ASCII 英数字の場合は true。
+ */
 const isAsciiAlphaNumeric = (value: string | undefined): boolean =>
   value !== undefined && /^[A-Za-z0-9]$/.test(value)
 
@@ -65,6 +71,7 @@ function findSourceTerms(
   const occupied = new Array<boolean>(text.length).fill(false)
   const found: Array<{ group: TermGroup; match: GlossarySourceMatch }> = []
 
+  // 長い語句から原文へ割り当て、同一範囲を短い部分語で重複指摘しない。
   for (const group of groups) {
     let from = 0
     while (from <= lower.length - group.normalized.length) {
@@ -115,6 +122,7 @@ export function checkJapaneseGlossary(
       { group: TermGroup; matches: GlossarySourceMatch[] }
     >()
 
+    // singular / plural の双方で見つかった同一 term を1つの確認対象へまとめる。
     for (const item of detected) {
       const current = byTerm.get(item.group.normalized)
       if (current === undefined) {
@@ -127,12 +135,14 @@ export function checkJapaneseGlossary(
       }
     }
 
+    // 1つの Glossary term について、登録された全候補を同じ判断材料として扱う。
     for (const { group, matches } of byTerm.values()) {
       const usableCandidates = group.candidates.filter(
         (candidate) => candidate.translation !== '',
       )
       if (usableCandidates.length === 0) continue
 
+      // plural form 間で成立条件を共有せず、各翻訳フォームを独立して確認する。
       for (const translationForm of entry.translations) {
         const matchesGlossary = usableCandidates.some((candidate) =>
           translationForm.text.includes(candidate.translation),
