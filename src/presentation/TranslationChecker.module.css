@@ -858,3 +858,38 @@
     margin-left: 20px;
   }
 }
+
+
+.glossaryIntro {
+  margin: 0 0 16px;
+  color: var(--color-muted);
+}
+
+.glossaryContent {
+  display: grid;
+  gap: 18px;
+  padding: 22px 24px;
+}
+
+.glossaryContent h3,
+.glossaryContent p,
+.glossaryContent ul {
+  margin: 0;
+}
+
+.glossaryContent h3 {
+  margin-bottom: 8px;
+  color: var(--color-heading);
+  font-size: 0.9rem;
+}
+
+.glossaryContent ul {
+  display: grid;
+  gap: 10px;
+  padding-left: 1.4rem;
+}
+
+.glossaryContent li p {
+  margin-top: 4px;
+  color: var(--color-muted);
+}

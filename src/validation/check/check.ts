@@ -5,6 +5,9 @@
  * Presentation が1つの公開入口から確認全体の結果を受け取れるようにする。
  */
 
+import { checkJapaneseGlossary } from '@/glossary/ja/check'
+import { JAPANESE_GLOSSARY } from '@/glossary/ja/glossary-data'
+import type { GlossaryCheckResult } from '@/glossary/ja/glossary'
 import { resolveLocale } from '@/locale/resolve-locale'
 import { interpretPo } from '@/po/interpret-po'
 import type { TranslationEntry } from '@/po/interpret-po'
@@ -22,6 +25,7 @@ export type CheckResult =
       status: 'success'
       entries: readonly TranslationEntry[]
       results: readonly TranslationCheckResult[]
+      glossaryResults: readonly GlossaryCheckResult[]
     }
   | {
       status: 'invalid-po'
@@ -68,5 +72,6 @@ export function checkPo(source: string): CheckResult {
     status: 'success',
     entries: document.entries,
     results: check(document.entries),
+    glossaryResults: checkJapaneseGlossary(document.entries, JAPANESE_GLOSSARY),
   }
 }

@@ -14,6 +14,7 @@ import {
 import { checkPo } from '@/check/check'
 import {
   createFindings,
+  createGlossaryFindings,
   createPaginationModel,
   createRuleFilterOptions,
   DEFAULT_PAGE_SIZE,
@@ -26,6 +27,7 @@ import {
 import { CheckScopeGuide } from './CheckScopeGuide'
 import { Feedback } from './Feedback'
 import { FindingCard } from './FindingCard'
+import { GlossaryFindingCard } from './GlossaryFindingCard'
 import { PaginationControls } from './PaginationControls'
 import { serializeCsv, serializeJson, serializeMarkdown } from './result-export'
 import styles from './TranslationChecker.module.css'
@@ -160,7 +162,7 @@ export function TranslationChecker() {
    * 現在の確認結果全体を CSV として保存する。
    */
   const handleCsvDownload = () => {
-    downloadResult(serializeCsv(findings), 'csv', 'text/csv;charset=utf-8')
+    downloadResult(serializeCsv(findings, glossaryFindings), 'csv', 'text/csv;charset=utf-8')
   }
 
   /**
@@ -172,7 +174,7 @@ export function TranslationChecker() {
     }
 
     downloadResult(
-      serializeJson(state.file.name, findings),
+      serializeJson(state.file.name, findings, glossaryFindings),
       'json',
       'application/json;charset=utf-8',
     )
@@ -195,7 +197,7 @@ export function TranslationChecker() {
 
     try {
       await navigator.clipboard.writeText(
-        serializeMarkdown(state.file.name, findings),
+        serializeMarkdown(state.file.name, findings, glossaryFindings),
       )
       setCopyFeedback('success')
     } catch {
@@ -206,7 +208,9 @@ export function TranslationChecker() {
   const selectedFile = state.status === 'no-file' ? null : state.file
   const findings =
     state.status === 'success' ? createFindings(state.result) : []
-  const summary = summarizeFindings(findings)
+  const glossaryFindings =
+    state.status === 'success' ? createGlossaryFindings(state.result) : []
+  const summary = summarizeFindings(findings, glossaryFindings)
   const ruleFilterOptions = createRuleFilterOptions(findings)
   const filteredFindings = filterFindingsByRule(findings, selectedRule)
   const pagination = createPaginationModel(filteredFindings, page, pageSize)
@@ -372,6 +376,26 @@ export function TranslationChecker() {
               )}
             </div>
           </section>
+
+          {glossaryFindings.length > 0 && (
+            <section
+              className={styles.findingsSection}
+              aria-labelledby="glossary-findings-title"
+            >
+              <div className={styles.findingsHeading}>
+                <h2 id="glossary-findings-title">Glossary の確認</h2>
+                <p>{glossaryFindings.length}件の Warning</p>
+              </div>
+              <p className={styles.glossaryIntro}>
+                登録訳語と異なる可能性がある箇所です。文脈と Glossary の補足を確認してください。
+              </p>
+              <div className={styles.findingsList}>
+                {glossaryFindings.map((finding) => (
+                  <GlossaryFindingCard key={finding.key} finding={finding} />
+                ))}
+              </div>
+            </section>
+          )}
 
           {findings.length > 0 && (
             <section

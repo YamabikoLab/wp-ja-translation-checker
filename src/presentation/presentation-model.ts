@@ -61,6 +61,13 @@ export type Finding = {
 /**
  * 確認結果概要で表示する Severity ごとの件数を表す。
  */
+/** 利用者へ表示する1件の Glossary Warning。 */
+export type GlossaryFinding = {
+  key: string
+  entry: SuccessfulCheckResult['entries'][number]
+  result: SuccessfulCheckResult['glossaryResults'][number]
+}
+
 export type FindingSummary = {
   errorCount: number
   warningCount: number
@@ -226,6 +233,31 @@ export function createFindings(
 }
 
 /**
+ * Glossary Check の結果を、表示対象 entry と結び付ける。
+ *
+ * @param result Check Orchestration が返した正常完了結果。
+ * @returns Glossary Warning と翻訳 entry の対応一覧。
+ */
+export function createGlossaryFindings(
+  result: SuccessfulCheckResult,
+): readonly GlossaryFinding[] {
+  return result.glossaryResults.map((glossaryResult, index) => {
+    const entry = result.entries[glossaryResult.entryIndex]
+    if (entry === undefined || entry.entryIndex !== glossaryResult.entryIndex) {
+      throw new Error(
+        `Glossary 結果の entryIndex ${glossaryResult.entryIndex} に対応する翻訳 entry がありません。`,
+      )
+    }
+
+    return {
+      key: `${glossaryResult.entryIndex}-glossary-${glossaryResult.translationFormIndex}-${index}`,
+      entry,
+      result: glossaryResult,
+    }
+  })
+}
+
+/**
  * CheckMessage 単位の指摘一覧から結果概要の件数を導出する。
  *
  * @param findings 表示対象の指摘一覧。
@@ -233,6 +265,7 @@ export function createFindings(
  */
 export function summarizeFindings(
   findings: readonly Finding[],
+  glossaryFindings: readonly GlossaryFinding[] = [],
 ): FindingSummary {
   let errorCount = 0
   let warningCount = 0
@@ -245,6 +278,8 @@ export function summarizeFindings(
       warningCount += 1
     }
   }
+
+  warningCount += glossaryFindings.length
 
   return {
     errorCount,

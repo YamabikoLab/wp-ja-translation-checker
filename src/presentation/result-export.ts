@@ -5,7 +5,7 @@
  * ルール判定、Severity 決定、locale 判定は行わない。
  */
 
-import type { Finding } from './presentation-model'
+import type { Finding, GlossaryFinding } from './presentation-model'
 
 const CSV_BOM = '\uFEFF'
 
@@ -107,6 +107,7 @@ function formatMarkdownTranslation(
 }
 
 const CSV_HEADERS = [
+  'type',
   'severity',
   'styleGuideItem',
   'message',
@@ -150,7 +151,10 @@ function getFindingText(finding: Finding): {
  * @param findings 正常完了した現在の確認結果全体。
  * @returns 1指摘を1行とした CSV 文字列。指摘0件の場合はヘッダーだけを返す。
  */
-export function serializeCsv(findings: readonly Finding[]): string {
+export function serializeCsv(
+  findings: readonly Finding[],
+  glossaryFindings: readonly GlossaryFinding[] = [],
+): string {
   const rows = [CSV_HEADERS.join(',')]
 
   // 利用者向けの1指摘を1行として、表示と同じ順序で CSV へ出力する。
@@ -158,11 +162,27 @@ export function serializeCsv(findings: readonly Finding[]): string {
     const { source, translation } = getFindingText(finding)
     rows.push(
       [
+        'style-guide',
         finding.severity,
         finding.styleGuideItem,
         finding.message,
         source,
         translation,
+      ]
+        .map(escapeCsvField)
+        .join(','),
+    )
+  }
+
+  for (const finding of glossaryFindings) {
+    rows.push(
+      [
+        'glossary',
+        'Warning',
+        '',
+        finding.result.originalTerm,
+        finding.entry.source.singular,
+        finding.result.currentTranslation,
       ]
         .map(escapeCsvField)
         .join(','),
@@ -182,6 +202,7 @@ export function serializeCsv(findings: readonly Finding[]): string {
 export function serializeJson(
   fileName: string,
   findings: readonly Finding[],
+  glossaryFindings: readonly GlossaryFinding[] = [],
 ): string {
   let errors = 0
   let warnings = 0
@@ -205,11 +226,22 @@ export function serializeJson(
     }
   })
 
+  warnings += glossaryFindings.length
+
   return JSON.stringify(
     {
       file: fileName,
       summary: { errors, warnings },
       findings: exportedFindings,
+      glossaryFindings: glossaryFindings.map((finding) => ({
+        severity: 'warning',
+        type: 'glossary',
+        entryIndex: finding.result.entryIndex,
+        translationFormIndex: finding.result.translationFormIndex,
+        originalTerm: finding.result.originalTerm,
+        candidates: finding.result.candidates,
+        currentTranslation: finding.result.currentTranslation,
+      })),
     },
     null,
     2,
@@ -254,11 +286,12 @@ export function serializeFindingMarkdown(finding: Finding): string {
 export function serializeMarkdown(
   fileName: string,
   findings: readonly Finding[],
+  glossaryFindings: readonly GlossaryFinding[] = [],
 ): string {
   const errorCount = findings.filter(
     (finding) => finding.severity === 'Error',
   ).length
-  const warningCount = findings.length - errorCount
+  const warningCount = findings.length - errorCount + glossaryFindings.length
   const lines = [
     '## WTC チェック結果',
     '',
@@ -268,7 +301,7 @@ export function serializeMarkdown(
     '',
   ]
 
-  if (findings.length === 0) {
+  if (findings.length === 0 && glossaryFindings.length === 0) {
     lines.push(
       '正常に確認が完了し、v1 の対象ルールでは指摘がありませんでした。',
     )
@@ -278,6 +311,21 @@ export function serializeMarkdown(
   // 共有先でも1指摘ごとの情報を追えるよう、表示と同じ順序で Finding 単位の共通形式を利用する。
   for (const finding of findings) {
     lines.push(serializeFindingMarkdown(finding), '')
+  }
+
+  for (const finding of glossaryFindings) {
+    lines.push(
+      '### Warning: Glossary',
+      '',
+      `原語: ${finding.result.originalTerm}`,
+      '',
+      `Glossary の訳語: ${finding.result.candidates
+        .map((candidate) => candidate.translation || '（訳文へ入れない）')
+        .join(' / ')}`,
+      '',
+      `現在の翻訳: ${finding.result.currentTranslation}`,
+      '',
+    )
   }
 
   return lines.join('\n').trimEnd()

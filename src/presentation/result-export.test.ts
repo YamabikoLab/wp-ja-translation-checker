@@ -73,9 +73,9 @@ describe('CSV result export', () => {
 
     expect(csv.startsWith('\uFEFF')).toBe(true)
     expect(csv.slice(1).split('\r\n')).toEqual([
-      'severity,styleGuideItem,message,source,translation',
-      'Error,1-1,句読点を確認してください。,"Hello, world","こんにちは, 世界"',
-      'Warning,3-4,文脈を確認してください。,"Hello, world","こんにちは, 世界"',
+      'type,severity,styleGuideItem,message,source,translation',
+      'style-guide,Error,1-1,句読点を確認してください。,"Hello, world","こんにちは, 世界"',
+      'style-guide,Warning,3-4,文脈を確認してください。,"Hello, world","こんにちは, 世界"',
     ])
   })
 
@@ -115,7 +115,7 @@ describe('CSV result export', () => {
    */
   it('when successful result has no findings, should export only the CSV header', () => {
     expect(serializeCsv([])).toBe(
-      '\uFEFFseverity,styleGuideItem,message,source,translation',
+      '\uFEFFtype,severity,styleGuideItem,message,source,translation',
     )
   })
 })
@@ -188,6 +188,7 @@ describe('JSON result export', () => {
         warnings: 0,
       },
       findings: [],
+      glossaryFindings: [],
     })
   })
 })
@@ -367,5 +368,46 @@ describe('Markdown result export', () => {
     expect(markdown).toContain(
       '正常に確認が完了し、v1 の対象ルールでは指摘がありませんでした。',
     )
+  })
+})
+
+
+describe('Glossary result export', () => {
+  const glossaryFinding = {
+    key: '0-glossary-0-0',
+    entry: {
+      entryIndex: 0,
+      source: { singular: 'Visit website' },
+      translations: [{ index: 0, text: 'Web ページを見る' }],
+    },
+    result: {
+      entryIndex: 0,
+      translationFormIndex: 0,
+      originalTerm: 'website',
+      candidates: [{ original: 'website', translation: 'サイト', partOfSpeech: 'noun' }],
+      currentTranslation: 'Web ページを見る',
+      sourceMatches: [{ source: 'singular', start: 6, end: 13 }],
+    },
+  } as const
+
+  it('when glossary warning exists, should include it in CSV JSON and Markdown exports', () => {
+    expect(serializeCsv([], [glossaryFinding])).toContain(
+      'glossary,Warning,,website,Visit website,Web ページを見る',
+    )
+    expect(
+      JSON.parse(serializeJson('plugin-ja.po', [], [glossaryFinding])),
+    ).toMatchObject({
+      summary: { errors: 0, warnings: 1 },
+      glossaryFindings: [
+        {
+          type: 'glossary',
+          originalTerm: 'website',
+          currentTranslation: 'Web ページを見る',
+        },
+      ],
+    })
+    expect(
+      serializeMarkdown('plugin-ja.po', [], [glossaryFinding]),
+    ).toContain('Glossary の訳語: サイト')
   })
 })
