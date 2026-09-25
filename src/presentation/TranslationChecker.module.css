@@ -224,22 +224,26 @@
 }
 
 .scopeGuide {
+  display: grid;
+  gap: 16px;
+  padding: 20px 0;
   border-top: 1px solid var(--color-border);
   border-bottom: 1px solid var(--color-border);
 }
 
-.scopeGuide summary {
+.scopeGuideHeader {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
   gap: 16px;
-  padding: 14px 0;
-  color: var(--color-heading);
-  font-weight: 700;
-  cursor: pointer;
 }
 
-.scopeGuide summary:focus-visible,
+.scopeGuideHeader h3 {
+  margin: 0;
+  color: var(--color-heading);
+  font-size: 1rem;
+}
+
 .scopeGuideLinks a:focus-visible {
   outline: 3px solid var(--color-focus);
   outline-offset: 3px;
@@ -254,7 +258,6 @@
 .scopeGuideContent {
   display: grid;
   gap: 18px;
-  padding: 4px 0 20px;
 }
 
 .scopeGuideContent > p,
