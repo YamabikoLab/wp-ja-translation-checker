@@ -1216,7 +1216,7 @@ describe('Japanese v1 rule 3-2', () => {
    * - 「View posts」を「投稿を閲覧」とした翻訳を確認する。
    *
    * 期待結果:
-   * - 3-2 の Warning と確認メッセージが返る。
+   * - 3-2 の 要確認の指摘と確認メッセージが返る。
    */
   it('when View XX is translated using 閲覧, should report rule 3-2', () => {
     expect(
@@ -1270,7 +1270,7 @@ describe('Japanese v1 rule 3-3', () => {
    * - 「are not allowed to」を含む原文と、権限表現を使わない翻訳を確認する。
    *
    * 期待結果:
-   * - 3-3 の Warning と確認メッセージが返る。
+   * - 3-3 の 要確認の指摘と確認メッセージが返る。
    */
   it('when not allowed to is translated without the permission expression, should report rule 3-3', () => {
     expect(
@@ -1468,7 +1468,7 @@ describe('Japanese v1 rule 5', () => {
    * - 全角中点と半角中黒を含む翻訳をそれぞれ確認する。
    *
    * 期待結果:
-   * - どちらも同じルール 5 の Warning と確認メッセージが返る。
+   * - どちらも同じルール 5 の 要確認の指摘と確認メッセージが返る。
    */
   it('when middle dots appear in normal text, should report rule 5 for full-width and half-width forms', () => {
     expect(
@@ -1496,7 +1496,7 @@ describe('Japanese v1 rule 5', () => {
   })
 
   /**
-   * 同一翻訳内の複数の中点を、1件の Warning の位置情報へまとめることを確認する。
+   * 同一翻訳内の複数の中点を、1件の 要確認の指摘の位置情報へまとめることを確認する。
    *
    * 操作:
    * - UTF-16 で2 code unit の絵文字に続けて、全角中点と半角中黒を含む翻訳を確認する。
@@ -1538,7 +1538,35 @@ describe('Japanese v1 rule 5', () => {
       ]),
     ).toEqual([])
   })
+
+  /**
+   * 保護対象の技術文字列と通常本文の両方に中点がある場合、通常本文だけを指摘することを確認する。
+   *
+   * 事前条件:
+   * - コード表記の内部と通常本文の双方に中点が含まれる。
+   *
+   * 操作:
+   * - 対象翻訳をルール 5 で確認する。
+   *
+   * 期待結果:
+   * - 技術文字列内部の中点は除外され、通常本文の中点だけが1件の指摘として返る。
+   */
+  it('when protected and normal-text middle dots coexist, should report only the normal-text occurrence', () => {
+    expect(
+      checkMiddleDot(
+        createEntry(0, 'Code and label', 'コード `foo・bar` と行・列を確認'),
+      ),
+    ).toEqual([
+      {
+        styleGuideItem: '5. 中点「・」',
+        message:
+          '中点「・」は原則使用しません。別の表現に置き換えられないか確認してください',
+        matches: [{ start: 15, end: 16 }],
+      },
+    ])
+  })
 })
+
 describe('Japanese v1 match ranges', () => {
   /**
    * 同じ 1-4 の指摘内容に該当する複数箇所を、1件の指摘へまとめて位置情報として保持することを確認する。
