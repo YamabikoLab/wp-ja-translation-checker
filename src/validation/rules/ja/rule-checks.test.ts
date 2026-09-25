@@ -299,7 +299,7 @@ describe('Japanese v1 rule 1-4', () => {
       ),
     ).toContainEqual({
       styleGuideItem: '1-4 半角文字と全角文字の間のスペース',
-      message: '「s」と「設」の間に半角スペースを入れてください',
+      message: '「A」と「設」の間に半角スペースを入れてください',
     })
   })
 
@@ -1251,14 +1251,14 @@ describe('Japanese v1 match ranges', () => {
   it('when the same spacing boundary violation occurs multiple times, should keep all match ranges in one rule 1-4 message', () => {
     expect(
       checkSpacingBetweenHalfAndFullWidth(
-        createEntry(0, 'Settings', 'WordPress設定とPlugin設定'),
+        createEntry(0, 'Settings', '😀A設定とA設定'),
       ),
     ).toContainEqual({
       styleGuideItem: '1-4 半角文字と全角文字の間のスペース',
       message: '「s」と「設」の間に半角スペースを入れてください',
       matches: [
-        { start: 8, end: 10 },
-        { start: 17, end: 19 },
+        { start: 2, end: 4 },
+        { start: 6, end: 8 },
       ],
     })
   })
