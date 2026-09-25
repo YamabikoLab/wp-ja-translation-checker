@@ -104,7 +104,7 @@ function protectTechnicalText(text: string): ProtectedText {
     /%\([A-Za-z0-9_.-]+\)s/gu,
     /(?:[A-Za-z_][A-Za-z0-9_]*|%(?:\d+\$)?s)\(\)/gu,
     /`[^`]+`/gu,
-    /(?:[A-Z]:\\|\/)\S+/giu,
+    /(?<!<)(?:[A-Z]:\\|\/)\S+/giu,
   ]
 
   // 明示的に技術文字列と判断できる範囲だけを保護し、周囲の日本語本文は通常どおり確認する。
