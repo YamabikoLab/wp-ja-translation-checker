@@ -58,9 +58,6 @@ export type Finding = {
   entry: SuccessfulCheckResult['entries'][number]
 }
 
-/**
- * 確認結果概要で表示する Severity ごとの件数を表す。
- */
 /** 利用者へ表示する1件の Glossary Warning。 */
 export type GlossaryFinding = {
   key: string
@@ -68,6 +65,7 @@ export type GlossaryFinding = {
   result: SuccessfulCheckResult['glossaryResults'][number]
 }
 
+/** Style Guide と Glossary を合わせた確認結果概要の件数を表す。 */
 export type FindingSummary = {
   errorCount: number
   warningCount: number
@@ -243,6 +241,8 @@ export function createGlossaryFindings(
 ): readonly GlossaryFinding[] {
   return result.glossaryResults.map((glossaryResult, index) => {
     const entry = result.entries[glossaryResult.entryIndex]
+
+    // Validation が返した entryIndex と解釈済み entry の対応が崩れている場合は、別の翻訳へ Warning を誤表示しない。
     if (entry === undefined || entry.entryIndex !== glossaryResult.entryIndex) {
       throw new Error(
         `Glossary 結果の entryIndex ${glossaryResult.entryIndex} に対応する翻訳 entry がありません。`,
@@ -260,7 +260,8 @@ export function createGlossaryFindings(
 /**
  * CheckMessage 単位の指摘一覧から結果概要の件数を導出する。
  *
- * @param findings 表示対象の指摘一覧。
+ * @param findings 表示対象の Style Guide 指摘一覧。
+ * @param glossaryFindings 表示対象の Glossary Warning 一覧。
  * @returns Error、Warning、全指摘の件数。
  */
 export function summarizeFindings(
@@ -272,6 +273,7 @@ export function summarizeFindings(
 
   // 利用者向けの1指摘を単位として Severity ごとの件数を集計する。
   for (const finding of findings) {
+    // Error 以外の Style Guide 指摘は Warning として集計する公開契約に従う。
     if (finding.severity === 'Error') {
       errorCount += 1
     } else {
