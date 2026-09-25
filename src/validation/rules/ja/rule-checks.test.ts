@@ -1418,12 +1418,12 @@ describe('Japanese v1 match ranges', () => {
         {
           styleGuideItem: '1-4 半角文字と全角文字の間のスペース',
           message: '「:」の前のスペースは不要です',
-          matches: [{ start: 11, end: 21 }],
+          matches: [{ start: 11, end: 22 }],
         },
         {
           styleGuideItem: '1-4 半角文字と全角文字の間のスペース',
           message: '「:」の後にスペースを1つ入れてください',
-          matches: [{ start: 20, end: 30 }],
+          matches: [{ start: 21, end: 32 }],
         },
       ]),
     )
