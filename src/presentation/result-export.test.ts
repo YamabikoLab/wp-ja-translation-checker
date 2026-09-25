@@ -73,9 +73,9 @@ describe('CSV result export', () => {
 
     expect(csv.startsWith('\uFEFF')).toBe(true)
     expect(csv.slice(1).split('\r\n')).toEqual([
-      'type,severity,styleGuideItem,message,source,translation',
-      'style-guide,Error,1-1,句読点を確認してください。,"Hello, world","こんにちは, 世界"',
-      'style-guide,Warning,3-4,文脈を確認してください。,"Hello, world","こんにちは, 世界"',
+      'type,severity,styleGuideItem,message,source,translation,entryIndex,translationFormIndex,originalTerm,glossaryTranslations,partsOfSpeech,comments',
+      'style-guide,Error,1-1,句読点を確認してください。,"Hello, world","こんにちは, 世界",,,,,,',
+      'style-guide,Warning,3-4,文脈を確認してください。,"Hello, world","こんにちは, 世界",,,,,,',
     ])
   })
 
@@ -115,7 +115,7 @@ describe('CSV result export', () => {
    */
   it('when successful result has no findings, should export only the CSV header', () => {
     expect(serializeCsv([])).toBe(
-      '\uFEFFtype,severity,styleGuideItem,message,source,translation',
+      '\uFEFFtype,severity,styleGuideItem,message,source,translation,entryIndex,translationFormIndex,originalTerm,glossaryTranslations,partsOfSpeech,comments',
     )
   })
 })
@@ -392,7 +392,7 @@ describe('Glossary result export', () => {
 
   it('when glossary warning exists, should include it in CSV JSON and Markdown exports', () => {
     expect(serializeCsv([], [glossaryFinding])).toContain(
-      'glossary,Warning,,website,Visit website,Web ページを見る',
+      'glossary,Warning,,website,Visit website,Web ページを見る,0,0,website,サイト,noun,',
     )
     expect(
       JSON.parse(serializeJson('plugin-ja.po', [], [glossaryFinding])),
@@ -402,12 +402,14 @@ describe('Glossary result export', () => {
         {
           type: 'glossary',
           originalTerm: 'website',
+          source: 'Visit website',
           currentTranslation: 'Web ページを見る',
         },
       ],
     })
-    expect(
-      serializeMarkdown('plugin-ja.po', [], [glossaryFinding]),
-    ).toContain('Glossary の訳語: サイト')
+    const markdown = serializeMarkdown('plugin-ja.po', [], [glossaryFinding])
+    expect(markdown).toContain('entryIndex: 0')
+    expect(markdown).toContain('translationFormIndex: 0')
+    expect(markdown).toContain('- サイト / noun')
   })
 })
