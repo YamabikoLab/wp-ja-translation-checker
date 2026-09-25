@@ -23,8 +23,6 @@ Repository-wide validation commands and guidance are documented in [`docs/develo
 
 WTC uses Semantic Versioning with `package.json` as the authoritative version source. Production deployment to GitHub Pages is triggered only by publishing a non-pre-release GitHub Release whose tag matches `v<package.json version>`.
 
-Release changes are recorded in [`CHANGELOG.md`](CHANGELOG.md).
-
 ## Documentation
 
 - [v1 requirements](docs/requirements/v1-requirements.md)
