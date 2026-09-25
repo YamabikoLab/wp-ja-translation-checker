@@ -253,6 +253,29 @@ describe('Markdown result export', () => {
   })
 
   /**
+   * 前後空白を含む一致範囲でも Markdown の太字が成立することを確認する。
+   *
+   * 事前条件:
+   * - 一致範囲の先頭と末尾に空白が含まれる。
+   *
+   * 操作:
+   * - Markdown へ変換する。
+   *
+   * 期待結果:
+   * - 空白は太字記法の外に残し、実文字部分だけを太字にする。
+   */
+  it('when a Markdown match contains surrounding whitespace, should keep whitespace outside strong emphasis', () => {
+    const finding = createFinding({
+      translation: '設定 : 詳細',
+      matches: [{ start: 2, end: 5 }],
+    })
+
+    expect(serializeMarkdown('plugin-ja.po', [finding])).toContain(
+      '設定 **:** 詳細',
+    )
+  })
+
+  /**
    * 事前条件:
    * - 正常完了した結果に指摘がない。
    *
