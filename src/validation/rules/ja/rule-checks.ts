@@ -998,7 +998,7 @@ export function checkSorryPrefix(
  * スタイルガイド 5 の中点使用を確認する。
  *
  * 中点は文脈によって許容される場合があるため、通常本文に含まれる全角中点・半角中黒を
- * 要確認箇所として返す。コード等の技術文字列内部は対象外とする。
+ * 要確認の指摘として返す。技術的な表記として保護される範囲は対象外とする。
  *
  * @param entry 確認対象 entry。
  * @returns 5 に該当する指摘。
@@ -1014,7 +1014,7 @@ export function checkMiddleDot(
   const { protectedIndexes } = protectTechnicalText(translation)
   const matches: CheckMessageMatch[] = []
 
-  // 通常本文に現れる中点を同一の Warning へまとめ、技術文字列内は除外する。
+  // 通常本文に現れる中点は文脈確認が必要な同一指摘へまとめ、技術的な表記として保護される範囲は除外する。
   for (let index = 0; index < translation.length; index += 1) {
     if (protectedIndexes.has(index)) {
       continue
@@ -1037,6 +1037,7 @@ export function checkMiddleDot(
         },
       ]
 }
+
 /**
  * スタイルガイドで v1 対象とした3組の推奨表記を確認する。
  *
