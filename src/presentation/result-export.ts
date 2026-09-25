@@ -5,7 +5,7 @@
  * ルール判定、Severity 決定、locale 判定は行わない。
  */
 
-import type { Finding, GlossaryFinding } from './presentation-model'
+import type { Finding } from './presentation-model'
 
 const CSV_BOM = '\uFEFF'
 
@@ -147,74 +147,49 @@ function getFindingText(finding: Finding): {
 } {
   return {
     source: finding.entry.source.singular,
-    translation: finding.entry.translations[0]?.text ?? '',
+    translation:
+      finding.entry.translations.find(
+        (form) => form.index === finding.translationFormIndex,
+      )?.text ?? '',
   }
 }
 
 /**
  * 現在の確認結果全体を UTF-8 BOM 付き CSV へ変換する。
  *
- * @param findings 正常完了した Style Guide の確認結果全体。
- * @param glossaryFindings 正常完了した Glossary の確認結果全体。
- * @returns 1指摘を1行とした CSV 文字列。指摘0件の場合はヘッダーだけを返す。
+ * @param findings 正常完了した共通指摘一覧。
+ * @returns 1指摘を1行とした CSV 文字列。
  */
-export function serializeCsv(
-  findings: readonly Finding[],
-  glossaryFindings: readonly GlossaryFinding[] = [],
-): string {
+export function serializeCsv(findings: readonly Finding[]): string {
   const rows = [CSV_HEADERS.join(',')]
 
-  // 利用者向けの1指摘を1行として、表示と同じ順序で CSV へ出力する。
   for (const finding of findings) {
     const { source, translation } = getFindingText(finding)
+    const glossary = finding.kind === 'glossary' ? finding.glossary : undefined
+
     rows.push(
       [
-        'style-guide',
+        finding.kind,
         finding.severity,
         finding.styleGuideItem,
         finding.message,
         source,
         translation,
-        '',
-        '',
-        '',
-        '',
-        '',
-        '',
-      ]
-        .map(escapeCsvField)
-        .join(','),
-    )
-  }
-
-  // Glossary Warning は Style Guide の項目名を持たないため、種別を分離して候補情報を専用列へ出力する。
-  for (const finding of glossaryFindings) {
-    rows.push(
-      [
-        'glossary',
-        'Warning',
-        '',
-        'Glossary の訳語を確認してください',
-        finding.entry.source.singular,
-        finding.result.currentTranslation,
-        String(finding.result.entryIndex),
-        String(finding.result.translationFormIndex),
-        finding.result.originalTerm,
-        finding.result.candidates
+        String(finding.entry.entryIndex),
+        String(finding.translationFormIndex),
+        glossary?.originalTerm ?? '',
+        glossary?.candidates
           .map((candidate) => candidate.translation)
-          // 空訳語は CSV 上で候補訳として誤認されないよう出力対象から外す。
-          .filter((translation) => translation !== '')
-          .join(' / '),
-        finding.result.candidates
+          .filter((value) => value !== '')
+          .join(' / ') ?? '',
+        glossary?.candidates
           .map((candidate) => candidate.partOfSpeech ?? '')
-          // 未登録の品詞は空欄の候補として並べず、公式に存在する情報だけを出力する。
-          .filter((partOfSpeech) => partOfSpeech !== '')
-          .join(' / '),
-        finding.result.candidates
+          .filter((value) => value !== '')
+          .join(' / ') ?? '',
+        glossary?.candidates
           .map((candidate) => candidate.comment ?? '')
-          // 未登録の補足は推測で補完せず、公式に存在する補足だけを出力する。
-          .filter((comment) => comment !== '')
-          .join(' / '),
+          .filter((value) => value !== '')
+          .join(' / ') ?? '',
       ]
         .map(escapeCsvField)
         .join(','),
@@ -228,54 +203,41 @@ export function serializeCsv(
  * 現在の確認結果全体を機械利用向け JSON へ変換する。
  *
  * @param fileName 確認対象の PO ファイル名。
- * @param findings 正常完了した Style Guide の確認結果全体。
- * @param glossaryFindings 正常完了した Glossary の確認結果全体。
- * @returns file、summary、Style Guide と Glossary の各結果を持つ整形済み JSON 文字列。
+ * @param findings 正常完了した共通指摘一覧。
+ * @returns 共通指摘と Glossary 固有情報を保持する JSON。
  */
 export function serializeJson(
   fileName: string,
   findings: readonly Finding[],
-  glossaryFindings: readonly GlossaryFinding[] = [],
 ): string {
-  let errors = 0
-  let warnings = 0
-
-  const exportedFindings = findings.map((finding) => {
-    if (finding.severity === 'Error') {
-      errors += 1
-    } else {
-      warnings += 1
-    }
-
-    const { source, translation } = getFindingText(finding)
-
-    return {
-      severity: finding.severity.toLowerCase(),
-      styleGuideItem: finding.styleGuideItem,
-      message: finding.message,
-      source,
-      translation,
-      matches: finding.matches,
-    }
-  })
-
-  warnings += glossaryFindings.length
+  const errors = findings.filter((finding) => finding.severity === 'Error').length
+  const warnings = findings.length - errors
 
   return JSON.stringify(
     {
       file: fileName,
       summary: { errors, warnings },
-      findings: exportedFindings,
-      glossaryFindings: glossaryFindings.map((finding) => ({
-        severity: 'warning',
-        type: 'glossary',
-        entryIndex: finding.result.entryIndex,
-        translationFormIndex: finding.result.translationFormIndex,
-        originalTerm: finding.result.originalTerm,
-        candidates: finding.result.candidates,
-        source: finding.entry.source.singular,
-        currentTranslation: finding.result.currentTranslation,
-      })),
+      findings: findings.map((finding) => {
+        const { source, translation } = getFindingText(finding)
+
+        return {
+          type: finding.kind,
+          severity: finding.severity.toLowerCase(),
+          styleGuideItem: finding.styleGuideItem,
+          message: finding.message,
+          source,
+          translation,
+          entryIndex: finding.entry.entryIndex,
+          translationFormIndex: finding.translationFormIndex,
+          matches: finding.matches,
+          ...(finding.kind === 'glossary'
+            ? {
+                originalTerm: finding.glossary.originalTerm,
+                candidates: finding.glossary.candidates,
+              }
+            : {}),
+        }
+      }),
     },
     null,
     2,
@@ -283,10 +245,10 @@ export function serializeJson(
 }
 
 /**
- * 1件の指摘を、人が共有して読める Markdown へ変換する。
+ * 1件の共通指摘を、人が共有して読める Markdown へ変換する。
  *
  * @param finding 出力対象の1指摘。
- * @returns Severity、スタイルガイド項目、メッセージ、原文、翻訳を含む Markdown 文字列。
+ * @returns 指摘種別、根拠、原文、翻訳を含む Markdown。
  */
 export function serializeFindingMarkdown(finding: Finding): string {
   const { source, translation } = getFindingText(finding)
@@ -294,8 +256,7 @@ export function serializeFindingMarkdown(finding: Finding): string {
     translation,
     finding.matches,
   )
-
-  return [
+  const lines = [
     `### ${finding.severity}: ${finding.styleGuideItem}`,
     '',
     finding.message,
@@ -307,26 +268,42 @@ export function serializeFindingMarkdown(finding: Finding): string {
     '**翻訳**',
     '',
     highlightedTranslation,
-  ].join('\n')
+  ]
+
+  if (finding.kind === 'glossary') {
+    lines.push(
+      '',
+      '**Glossary の候補**',
+      '',
+      ...finding.glossary.candidates.map((candidate) => {
+        const details = [
+          candidate.translation || '（訳文へ入れない）',
+          candidate.partOfSpeech,
+          candidate.comment,
+        ].filter((value) => value !== undefined && value !== '')
+        return `- ${details.join(' / ')}`
+      }),
+    )
+  }
+
+  return lines.join('\n')
 }
 
 /**
  * 現在の確認結果全体を人が共有して読める Markdown へ変換する。
  *
  * @param fileName 確認対象の PO ファイル名。
- * @param findings 正常完了した Style Guide の確認結果全体。
- * @param glossaryFindings 正常完了した Glossary の確認結果全体。
- * @returns ファイル名、件数、各指摘を含む Markdown 文字列。
+ * @param findings 正常完了した共通指摘一覧。
+ * @returns ファイル名、件数、各指摘を含む Markdown。
  */
 export function serializeMarkdown(
   fileName: string,
   findings: readonly Finding[],
-  glossaryFindings: readonly GlossaryFinding[] = [],
 ): string {
   const errorCount = findings.filter(
     (finding) => finding.severity === 'Error',
   ).length
-  const warningCount = findings.length - errorCount + glossaryFindings.length
+  const warningCount = findings.length - errorCount
   const lines = [
     '## WTC チェック結果',
     '',
@@ -336,46 +313,15 @@ export function serializeMarkdown(
     '',
   ]
 
-  // どちらの検証責務からも指摘がない場合だけ、指摘なしの完了メッセージを出力する。
-  if (findings.length === 0 && glossaryFindings.length === 0) {
+  if (findings.length === 0) {
     lines.push(
       '正常に確認が完了し、v1 の対象ルールでは指摘がありませんでした。',
     )
     return lines.join('\n')
   }
 
-  // 共有先でも1指摘ごとの情報を追えるよう、表示と同じ順序で Finding 単位の共通形式を利用する。
   for (const finding of findings) {
     lines.push(serializeFindingMarkdown(finding), '')
-  }
-
-  // Glossary Warning は候補訳・品詞・補足を失わない独立節として共有用 Markdown へ出力する。
-  for (const finding of glossaryFindings) {
-    lines.push(
-      '### Warning: Glossary',
-      '',
-      `原語: ${finding.result.originalTerm}`,
-      '',
-      `entryIndex: ${finding.result.entryIndex}`,
-      `translationFormIndex: ${finding.result.translationFormIndex}`,
-      '',
-      `原文: ${finding.entry.source.singular}`,
-      '',
-      `Glossary の候補:\n${finding.result.candidates
-        .map((candidate) => {
-          // 未登録の品詞・補足は出力へ補完せず、公式 Glossary に存在する情報だけを並べる。
-          const details = [
-            candidate.translation || '（訳文へ入れない）',
-            candidate.partOfSpeech,
-            candidate.comment,
-          ].filter((value) => value !== undefined && value !== '')
-          return `- ${details.join(' / ')}`
-        })
-        .join('\n')}`,
-      '',
-      `現在の翻訳: ${finding.result.currentTranslation}`,
-      '',
-    )
   }
 
   return lines.join('\n').trimEnd()
