@@ -160,7 +160,7 @@
 }
 
 .feedback p,
-.noFindings {
+.noFindings p {
   margin: 0;
 }
 
@@ -214,10 +214,98 @@
 }
 
 .noFindings {
+  display: grid;
+  gap: 6px;
   padding: 16px 18px;
   border-radius: var(--radius-medium);
   background: var(--color-success-background);
   color: var(--color-success-text);
+  font-weight: 700;
+}
+
+.scopeGuide {
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.scopeGuide summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 0;
+  color: var(--color-heading);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.scopeGuide summary:focus-visible,
+.scopeGuideLinks a:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+.scopeGuideSummaryNote {
+  color: var(--color-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.scopeGuideContent {
+  display: grid;
+  gap: 18px;
+  padding: 4px 0 20px;
+}
+
+.scopeGuideContent > p,
+.manualCheck h3,
+.manualCheck ul,
+.scopeGuideLegend {
+  margin: 0;
+}
+
+.scopeGuideLegend {
+  display: grid;
+  gap: 10px;
+}
+
+.scopeGuideLegend div {
+  display: grid;
+  gap: 3px;
+}
+
+.scopeGuideLegend dt {
+  color: var(--color-heading);
+  font-weight: 700;
+}
+
+.scopeGuideLegend dd {
+  margin: 0;
+  color: var(--color-muted);
+}
+
+.manualCheck {
+  display: grid;
+  gap: 8px;
+}
+
+.manualCheck h3 {
+  color: var(--color-heading);
+  font-size: 1rem;
+}
+
+.manualCheck ul {
+  padding-left: 1.4rem;
+}
+
+.scopeGuideLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+}
+
+.scopeGuideLinks a {
+  color: var(--color-accent);
   font-weight: 700;
 }
 
