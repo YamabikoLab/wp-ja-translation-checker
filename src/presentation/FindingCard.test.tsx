@@ -166,3 +166,25 @@ describe('FindingCard Markdown copy action', () => {
     )
   })
 })
+
+
+describe('FindingCard correction action', () => {
+  it('when correction starts from a finding card, should show an editable draft for that finding', () => {
+    render(
+      <FindingCard
+        finding={createFinding({
+          translation: 'WordPressのテーブル',
+          source: 'WordPress Table',
+        })}
+      />,
+    )
+
+    fireEvent.click(
+      screen.getByRole('button', { name: '修正して再チェック' }),
+    )
+
+    expect(screen.getByRole('textbox', { name: '翻訳' })).toHaveValue(
+      'WordPressのテーブル',
+    )
+  })
+})
