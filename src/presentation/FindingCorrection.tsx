@@ -1,0 +1,196 @@
+/**
+ * 1件の指摘について、翻訳の修正案を画面内だけで一時編集し、既存の日本語ルールで再チェックする責任を持つ。
+ *
+ * 修正案と再チェック結果は対象カード内だけで扱い、元の PO ファイル、確認結果、集計、保存・コピー対象は変更しない。
+ */
+
+import { useState } from 'react'
+import { check } from '@/rules/ja/check'
+import type { TranslationCheckResult } from '@/rules/ja/check'
+import { ExpandableText } from './ExpandableText'
+import type { Finding } from './presentation-model'
+import styles from './TranslationChecker.module.css'
+
+const STYLE_GUIDE_URL =
+  'https://ja.wordpress.org/team/handbook/translation/translation-style-guide/'
+
+/** 1件の修正案について、利用者から見た編集・再チェック状態を表す。 */
+type CorrectionState =
+  | { status: 'viewing' }
+  | { status: 'editing'; draftTranslation: string }
+  | {
+      status: 'checked'
+      draftTranslation: string
+      result: readonly TranslationCheckResult[]
+    }
+
+/**
+ * 1件の指摘に対して、修正案の入力、再チェック、キャンセル、再チェック結果の確認を提供する。
+ *
+ * @param props 修正対象となる指摘。
+ * @param props.finding 修正案を確認する元の指摘。
+ * @returns 対象カード内で完結する修正案の確認 UI。
+ */
+export function FindingCorrection({ finding }: { finding: Finding }) {
+  const translation = finding.entry.translations[0]?.text ?? ''
+  const translationIndex = finding.entry.translations[0]?.index ?? 0
+  const [state, setState] = useState<CorrectionState>({ status: 'viewing' })
+
+  // 修正操作を開始していない間は元の指摘表示を保ち、利用者が明示的に開始した場合だけ一時編集領域を開く。
+  if (state.status === 'viewing') {
+    return (
+      <div className={styles.correctionStart}>
+        <button
+          type="button"
+          className={styles.correctionStartButton}
+          onClick={() => {
+            setState({ status: 'editing', draftTranslation: translation })
+          }}
+        >
+          修正して再チェック
+        </button>
+      </div>
+    )
+  }
+
+  /**
+   * 現在の修正案だけを、元の原文情報を保った1件の翻訳として既存ルールへ渡す。
+   *
+   * 元の確認結果は更新せず、このカード内で確認するための結果だけを保持する。
+   */
+  const handleRecheck = () => {
+    const result = check([
+      {
+        entryIndex: finding.entry.entryIndex,
+        source: finding.entry.source,
+        translations: [
+          {
+            index: translationIndex,
+            text: state.draftTranslation,
+          },
+        ],
+      },
+    ])
+
+    setState({
+      status: 'checked',
+      draftTranslation: state.draftTranslation,
+      result,
+    })
+  }
+
+  // 再チェック済みの場合だけ、その修正案に対する Error / Warning を結果表示へ渡す。
+  const checkedResult = state.status === 'checked' ? state.result[0] : undefined
+  const messages =
+    checkedResult === undefined
+      ? []
+      : [
+          ...checkedResult.errors.map((message) => ({
+            severity: 'Error' as const,
+            message,
+          })),
+          ...checkedResult.warnings.map((message) => ({
+            severity: 'Warning' as const,
+            message,
+          })),
+        ]
+
+  return (
+    <section
+      className={styles.correction}
+      aria-labelledby={`correction-title-${finding.key}`}
+    >
+      <div className={styles.correctionHeading}>
+        <div>
+          <h3 id={`correction-title-${finding.key}`}>修正案を再チェック</h3>
+          <p>
+            ここでの修正は確認用です。元の PO
+            ファイルや全体の確認結果は変更しません。
+          </p>
+        </div>
+      </div>
+
+      <label className={styles.correctionField}>
+        <span>翻訳</span>
+        <textarea
+          value={state.draftTranslation}
+          rows={4}
+          onChange={(event) => {
+            setState({
+              status: 'editing',
+              draftTranslation: event.target.value,
+            })
+          }}
+        />
+      </label>
+
+      <div className={styles.correctionActions}>
+        <button
+          type="button"
+          className={styles.correctionCheckButton}
+          onClick={handleRecheck}
+        >
+          再チェック
+        </button>
+        <button
+          type="button"
+          className={styles.correctionCancelButton}
+          onClick={() => {
+            setState({ status: 'viewing' })
+          }}
+        >
+          キャンセル
+        </button>
+      </div>
+
+      <div className={styles.correctionResult} role="status">
+        {state.status === 'checked' &&
+          (messages.length === 0 ? (
+            <p className={styles.correctionSuccess}>
+              この翻訳では問題は見つかりませんでした。
+            </p>
+          ) : (
+            <>
+              <h4>再チェック結果</h4>
+              <div className={styles.correctionFindings}>
+                {/* 修正案で残っている各指摘を、通常結果と同じ判断材料を確認できる単位で表示する。 */}
+                {messages.map(({ severity, message }, index) => (
+                  <section
+                    key={`${severity}-${message.styleGuideItem}-${index}`}
+                    className={styles.correctionFinding}
+                  >
+                    <div className={styles.correctionFindingHeader}>
+                      <span
+                        className={
+                          severity === 'Error'
+                            ? styles.errorBadge
+                            : styles.warningBadge
+                        }
+                      >
+                        {severity}
+                      </span>
+                      <p>{message.message}</p>
+                    </div>
+                    <ExpandableText
+                      text={state.draftTranslation}
+                      matches={message.matches}
+                    />
+                    <p className={styles.correctionGuide}>
+                      <span>スタイルガイド: {message.styleGuideItem}</span>
+                      <a
+                        href={STYLE_GUIDE_URL}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        WordPress 日本語翻訳スタイルガイドを確認
+                      </a>
+                    </p>
+                  </section>
+                ))}
+              </div>
+            </>
+          ))}
+      </div>
+    </section>
+  )
+}
