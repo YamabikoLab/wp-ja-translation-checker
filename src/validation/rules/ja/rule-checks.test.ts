@@ -906,6 +906,49 @@ describe('Japanese v1 rule 1-5', () => {
   })
 
   /**
+   * 文字列プレースホルダー直後の丸括弧外側に半角スペース1つがある場合を正常とすることを確認する。
+   *
+   * 操作:
+   * - 文字列プレースホルダーの直後に半角スペース1つと丸括弧が続く翻訳を確認する。
+   *
+   * 期待結果:
+   * - プレースホルダーを非表示文字列のように読み飛ばさず、1-5 の指摘は返らない。
+   */
+  it('when a placeholder is separated from an opening parenthesis by one space, should not report rule 1-5', () => {
+    expect(
+      checkEntries(checkParenthesesSpacing, [
+        createEntry(
+          0,
+          'Top seller this month %1$s (%2$d sale)',
+          '今月の上位売上 %1$s (%2$d販売)',
+        ),
+      ]),
+    ).toEqual([])
+  })
+
+  /**
+   * 文字列プレースホルダー直後の丸括弧外側スペースが不足する場合を 1-5 として検出することを確認する。
+   *
+   * 操作:
+   * - 文字列プレースホルダーと開き丸括弧が直接接する翻訳を確認する。
+   *
+   * 期待結果:
+   * - 丸括弧外側のスペース不足として 1-5 の指摘が返る。
+   */
+  it('when a placeholder touches an opening parenthesis, should report rule 1-5', () => {
+    expect(
+      getRuleMessages(
+        checkParenthesesSpacing,
+        'Top seller this month %1$s (%2$d sale)',
+        '今月の上位売上 %1$s(%2$d販売)',
+      ),
+    ).toContainEqual({
+      styleGuideItem: '1-5 半角丸括弧と前後スペース',
+      message: '丸括弧の外側は半角スペース1つにしてください',
+    })
+  })
+
+  /**
    * 丸括弧外側スペースの文字列境界・日本語句読点例外を確認する。
    *
    * 操作:
