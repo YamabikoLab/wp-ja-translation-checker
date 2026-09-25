@@ -3,7 +3,7 @@
  */
 
 /**
- * 1件の指摘表示について、利用者が個別 Markdown コピーを操作した結果を React の表示境界から確認する。
+ * 1件の指摘表示について、個別 Markdown コピーと修正案の再チェック開始を React の利用者操作から確認する。
  *
  * Clipboard API は jsdom では提供されないため、このブラウザー境界だけをテストダブルで置き換える。
  */
@@ -166,7 +166,6 @@ describe('FindingCard Markdown copy action', () => {
     )
   })
 })
-
 
 describe('FindingCard correction action', () => {
   it('when correction starts from a finding card, should show an editable draft for that finding', () => {
