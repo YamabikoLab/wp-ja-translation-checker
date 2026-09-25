@@ -70,6 +70,37 @@ function createWarningFinding(): Finding {
   }
 }
 
+
+/**
+ * Glossary 修正再チェック用の Warning を生成する。
+ *
+ * @returns website の登録訳語を含まない翻訳を持つ Glossary Finding。
+ */
+function createGlossaryFinding(): Finding {
+  return {
+    key: '0-glossary-0-0',
+    kind: 'glossary',
+    severity: 'Warning',
+    styleGuideItem: 'Glossary',
+    message: '「website」の Glossary 訳語を確認してください',
+    matches: [],
+    translationFormIndex: 0,
+    entry: {
+      entryIndex: 0,
+      source: { singular: 'Visit website' },
+      translations: [{ index: 0, text: 'ウェブページを見る' }],
+    },
+    glossary: {
+      entryIndex: 0,
+      translationFormIndex: 0,
+      originalTerm: 'website',
+      candidates: [{ original: 'website', translation: 'サイト' }],
+      currentTranslation: 'ウェブページを見る',
+      sourceMatches: [{ source: 'singular', start: 6, end: 13 }],
+    },
+  }
+}
+
 afterEach(() => {
   cleanup()
 })
@@ -185,6 +216,33 @@ describe('FindingCorrection', () => {
     ).toBeTruthy()
     expect(
       screen.getByText('スタイルガイド: 3-4 「Sorry, ...」の Sorry を訳さない'),
+    ).toBeTruthy()
+  })
+
+
+  /**
+   * Glossary Warning の修正案も同じ再チェック操作で解消確認できることを確認する。
+   *
+   * 事前条件:
+   * - website の Glossary Warning がある。
+   *
+   * 操作:
+   * - 翻訳を登録訳語「サイト」を含む内容へ修正して再チェックする。
+   *
+   * 期待結果:
+   * - Glossary Warning が消え、問題なしと表示される。
+   */
+  it('when a glossary translation is corrected, should clear the glossary warning through the common recheck action', () => {
+    render(<FindingCorrection finding={createGlossaryFinding()} />)
+
+    fireEvent.click(screen.getByRole('button', { name: '修正して再チェック' }))
+    fireEvent.change(screen.getByRole('textbox', { name: '翻訳' }), {
+      target: { value: 'サイトを見る' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: '再チェック' }))
+
+    expect(
+      screen.getByText('この翻訳では問題は見つかりませんでした。'),
     ).toBeTruthy()
   })
 
