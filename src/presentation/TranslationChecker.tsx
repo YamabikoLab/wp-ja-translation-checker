@@ -23,6 +23,7 @@ import {
   presentationReducer,
   summarizeFindings,
 } from './presentation-model'
+import { CheckScopeGuide } from './CheckScopeGuide'
 import { Feedback } from './Feedback'
 import { FindingCard } from './FindingCard'
 import { PaginationControls } from './PaginationControls'
@@ -319,11 +320,13 @@ export function TranslationChecker() {
             </dl>
 
             {summary.totalCount === 0 && (
-              <p className={styles.noFindings}>
-                {STYLE_GUIDE_LAST_UPDATED}
-                最終更新版の対象ルールでは問題が検出されませんでした。
-              </p>
+              <div className={styles.noFindings}>
+                <p>WTC の自動チェックでは問題が見つかりませんでした。</p>
+                <p>手動で確認したい項目もあります。</p>
+              </div>
             )}
+
+            <CheckScopeGuide />
 
             <div className={styles.exportArea}>
               <div>
