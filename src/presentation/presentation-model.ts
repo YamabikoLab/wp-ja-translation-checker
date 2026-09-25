@@ -46,24 +46,30 @@ export type PresentationAction =
   | { type: 'file-read-failure'; file: File }
   | { type: 'check-completed'; file: File; result: CheckResult }
 
-/**
- * 利用者向けに表示する1件の指摘を表す。
- */
-export type Finding = {
+/** Style Guide と Glossary の双方で共通して表示・操作する1件の指摘。 */
+type FindingBase = {
   key: string
   severity: 'Error' | 'Warning'
   message: string
   styleGuideItem: string
   matches: SuccessfulCheckResult['results'][number]['errors'][number]['matches']
   entry: SuccessfulCheckResult['entries'][number]
+  translationFormIndex: number
 }
 
-/** 利用者へ表示する1件の Glossary Warning。 */
-export type GlossaryFinding = {
-  key: string
-  entry: SuccessfulCheckResult['entries'][number]
-  result: SuccessfulCheckResult['glossaryResults'][number]
+/** Style Guide の判定結果から生成する通常の指摘。 */
+export type StyleGuideFinding = FindingBase & {
+  kind: 'style-guide'
 }
+
+/** Glossary の判定結果から生成し、候補情報と原文上の一致位置を保持する指摘。 */
+export type GlossaryFinding = FindingBase & {
+  kind: 'glossary'
+  glossary: SuccessfulCheckResult['glossaryResults'][number]
+}
+
+/** Result Presentation が一覧・絞り込み・ページング・修正確認で共通利用する指摘。 */
+export type Finding = StyleGuideFinding | GlossaryFinding
 
 /** Style Guide と Glossary を合わせた確認結果概要の件数を表す。 */
 export type FindingSummary = {
@@ -206,11 +212,14 @@ export function createFindings(
     for (const [messageIndex, message] of checkedEntry.errors.entries()) {
       findings.push({
         key: `${checkedEntry.entryIndex}-error-${messageIndex}`,
+        kind: 'style-guide',
         severity: 'Error',
         message: message.message,
         styleGuideItem: message.styleGuideItem,
         matches: message.matches,
         entry,
+        translationFormIndex: 0,
+        translationFormIndex: 0,
       })
     }
 
@@ -218,6 +227,7 @@ export function createFindings(
     for (const [messageIndex, message] of checkedEntry.warnings.entries()) {
       findings.push({
         key: `${checkedEntry.entryIndex}-warning-${messageIndex}`,
+        kind: 'style-guide',
         severity: 'Warning',
         message: message.message,
         styleGuideItem: message.styleGuideItem,
@@ -227,19 +237,8 @@ export function createFindings(
     }
   }
 
-  return findings
-}
-
-/**
- * Glossary Check の結果を、表示対象 entry と結び付ける。
- *
- * @param result Check Orchestration が返した正常完了結果。
- * @returns Glossary Warning と翻訳 entry の対応一覧。
- */
-export function createGlossaryFindings(
-  result: SuccessfulCheckResult,
-): readonly GlossaryFinding[] {
-  return result.glossaryResults.map((glossaryResult, index) => {
+  // Glossary Warning も同じ指摘一覧へ変換し、共通の絞り込み・ページング・修正操作へ流す。
+  for (const [index, glossaryResult] of result.glossaryResults.entries()) {
     const entry = result.entries[glossaryResult.entryIndex]
 
     // Validation が返した entryIndex と解釈済み entry の対応が崩れている場合は、別の翻訳へ Warning を誤表示しない。
@@ -249,24 +248,31 @@ export function createGlossaryFindings(
       )
     }
 
-    return {
+    findings.push({
       key: `${glossaryResult.entryIndex}-glossary-${glossaryResult.translationFormIndex}-${index}`,
+      kind: 'glossary',
+      severity: 'Warning',
+      message: `「${glossaryResult.originalTerm}」の Glossary 訳語を確認してください`,
+      styleGuideItem: 'Glossary',
+      matches: [],
       entry,
-      result: glossaryResult,
-    }
-  })
+      translationFormIndex: glossaryResult.translationFormIndex,
+      glossary: glossaryResult,
+    })
+  }
+
+  return findings
 }
+
 
 /**
  * CheckMessage 単位の指摘一覧から結果概要の件数を導出する。
  *
- * @param findings 表示対象の Style Guide 指摘一覧。
- * @param glossaryFindings 表示対象の Glossary Warning 一覧。
+ * @param findings 表示対象の Style Guide / Glossary 共通指摘一覧。
  * @returns Error、Warning、全指摘の件数。
  */
 export function summarizeFindings(
   findings: readonly Finding[],
-  glossaryFindings: readonly GlossaryFinding[] = [],
 ): FindingSummary {
   let errorCount = 0
   let warningCount = 0
@@ -281,7 +287,6 @@ export function summarizeFindings(
     }
   }
 
-  warningCount += glossaryFindings.length
 
   return {
     errorCount,
