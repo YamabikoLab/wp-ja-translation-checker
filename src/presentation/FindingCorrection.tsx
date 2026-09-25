@@ -63,8 +63,9 @@ export function FindingCorrection({ finding }: { finding: Finding }) {
    * 元の確認結果は更新せず、このカード内で確認するための結果だけを保持する。
    */
   const handleRecheck = () => {
+    // 1件だけの一時再チェックでは配列位置と entryIndex の公開契約を合わせるため、検証用 entryIndex を0へ正規化する。
     const entry = {
-      entryIndex: finding.entry.entryIndex,
+      entryIndex: 0,
       source: finding.entry.source,
       translations: [
         {
