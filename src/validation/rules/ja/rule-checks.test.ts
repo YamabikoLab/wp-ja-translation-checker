@@ -889,6 +889,7 @@ describe('Japanese v1 rule 1-8', () => {
     ).toContainEqual({
       styleGuideItem: '1-8 文末括弧と句点の位置',
       message: '文末の句点は丸括弧の外に置いてください',
+      matches: [{ start: 6, end: 8 }],
     })
   })
 })
