@@ -163,9 +163,7 @@ describe('FindingCorrection', () => {
       screen.getByText('先頭の「Sorry,」に対応する謝罪表現を削除してください'),
     ).toBeTruthy()
     expect(
-      screen.getByText(
-        'スタイルガイド: 3-4 「Sorry, ...」の Sorry を訳さない',
-      ),
+      screen.getByText('スタイルガイド: 3-4 「Sorry, ...」の Sorry を訳さない'),
     ).toBeTruthy()
   })
 
