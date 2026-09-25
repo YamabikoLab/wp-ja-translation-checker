@@ -8,7 +8,13 @@
  * Clipboard API は jsdom では提供されないため、このブラウザー境界だけをテストダブルで置き換える。
  */
 
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { Finding } from './presentation-model'
 import { FindingCard } from './FindingCard'
