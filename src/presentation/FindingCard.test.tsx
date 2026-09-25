@@ -1,60 +1,160 @@
 /**
- * 1件の指摘表示に、個別 Markdown コピー操作が利用者向けに提供されることを確認する。
+ * @vitest-environment jsdom
  */
 
-import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+/**
+ * 1件の指摘表示について、利用者が個別 Markdown コピーを操作した結果を React の表示境界から確認する。
+ *
+ * Clipboard API は jsdom では提供されないため、このブラウザー境界だけをテストダブルで置き換える。
+ */
+
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { Finding } from './presentation-model'
 import { FindingCard } from './FindingCard'
 
 /**
  * 指摘カード表示テスト用の Finding を生成する。
  *
- * @param severity 表示する Severity。
+ * @param overrides 指摘ごとに差し替える値。
  * @returns 指摘カードが利用する Finding と同じ形のテストデータ。
  */
-function createFinding(severity: 'Error' | 'Warning'): Finding {
+function createFinding(
+  overrides: Partial<{
+    key: string
+    severity: 'Error' | 'Warning'
+    styleGuideItem: string
+    message: string
+    source: string
+    translation: string
+    matches: Finding['matches']
+  }> = {},
+): Finding {
   return {
-    key: `0-${severity.toLowerCase()}-0`,
-    severity,
-    styleGuideItem: '1-9 半角数字前後の不要スペース',
-    message: '半角数字と日本語の間のスペースは削除してください。',
-    matches: [{ start: 2, end: 5 }],
+    key: overrides.key ?? '0-error-0',
+    severity: overrides.severity ?? 'Error',
+    styleGuideItem:
+      overrides.styleGuideItem ?? '1-9 半角数字前後の不要スペース',
+    message:
+      overrides.message ?? '半角数字と日本語の間のスペースは削除してください。',
+    matches: overrides.matches ?? [{ start: 2, end: 4 }],
     entry: {
       entryIndex: 0,
       source: {
-        singular: 'Item 1',
+        singular: overrides.source ?? 'Item 1',
       },
       translations: [
         {
           index: 0,
-          text: '項目 1',
+          text: overrides.translation ?? '項目 1',
         },
       ],
     },
   }
 }
 
+afterEach(() => {
+  cleanup()
+  vi.unstubAllGlobals()
+})
+
 describe('FindingCard Markdown copy action', () => {
   /**
    * 事前条件:
-   * - Error / Warning の指摘カードを表示する。
+   * - Clipboard API が利用できる。
+   * - 1件の指摘カードが表示されている。
    *
    * 操作:
-   * - 指摘カードを描画する。
+   * - 「Markdownをコピー」を押す。
    *
    * 期待結果:
-   * - Severity に関係なく、1件単位の「Markdownをコピー」ボタンが表示される。
+   * - 対象 Finding の Markdown が Clipboard API へ渡され、ボタン表示が「コピーしました」へ変わる。
    */
-  it.each(['Error', 'Warning'] as const)(
-    'when a %s finding is rendered, should show its Markdown copy button',
-    (severity) => {
-      const markup = renderToStaticMarkup(
-        <FindingCard finding={createFinding(severity)} />,
-      )
+  it('when copy succeeds, should copy the target finding Markdown and show success feedback', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    vi.stubGlobal('navigator', { clipboard: { writeText } })
+    render(<FindingCard finding={createFinding()} />)
 
-      expect(markup).toContain('Markdownをコピー')
-      expect(markup).toContain('<button')
-    },
-  )
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Markdownをコピー',
+      }),
+    )
+
+    expect(await screen.findByRole('button', { name: 'コピーしました' })).toBe(
+      document.activeElement,
+    )
+    expect(writeText).toHaveBeenCalledWith(
+      [
+        '### Error: 1-9 半角数字前後の不要スペース',
+        '',
+        '半角数字と日本語の間のスペースは削除してください。',
+        '',
+        '**原文**',
+        '',
+        'Item 1',
+        '',
+        '**翻訳**',
+        '',
+        '項目 **1**',
+      ].join('\n'),
+    )
+  })
+
+  /**
+   * 事前条件:
+   * - 異なる2件の指摘カードが表示されている。
+   *
+   * 操作:
+   * - 2件目の「Markdownをコピー」を押す。
+   *
+   * 期待結果:
+   * - 2件目だけが成功表示へ変わり、Clipboard には2件目の内容だけが渡される。
+   */
+  it('when one of multiple findings is copied, should keep copy content and feedback scoped to that card', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    vi.stubGlobal('navigator', { clipboard: { writeText } })
+    const first = createFinding()
+    const second = createFinding({
+      key: '1-warning-0',
+      severity: 'Warning',
+      styleGuideItem: '3-4 「Sorry, ...」の Sorry を訳さない',
+      message: '先頭の「Sorry,」に対応する謝罪表現を削除してください',
+      source: 'Sorry, your order was unsuccessful',
+      translation: '申し訳ございませんが、ご注文は失敗しました',
+      matches: [{ start: 0, end: 9 }],
+    })
+
+    render(
+      <>
+        <FindingCard finding={first} />
+        <FindingCard finding={second} />
+      </>,
+    )
+
+    const cards = screen.getAllByRole('article')
+    fireEvent.click(
+      within(cards[1]!).getByRole('button', {
+        name: 'Markdownをコピー',
+      }),
+    )
+
+    expect(
+      await within(cards[1]!).findByRole('button', {
+        name: 'コピーしました',
+      }),
+    ).toBeTruthy()
+    expect(
+      within(cards[0]!).getByRole('button', {
+        name: 'Markdownをコピー',
+      }),
+    ).toBeTruthy()
+    expect(writeText).toHaveBeenCalledTimes(1)
+    expect(writeText.mock.calls[0]?.[0]).toContain(
+      '### Warning: 3-4 「Sorry, ...」の Sorry を訳さない',
+    )
+    expect(writeText.mock.calls[0]?.[0]).not.toContain(
+      '1-9 半角数字前後の不要スペース',
+    )
+  })
 })
