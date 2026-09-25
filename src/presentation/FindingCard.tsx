@@ -6,8 +6,8 @@
 
 import { useEffect, useState } from 'react'
 import { ExpandableText } from './ExpandableText'
+import { copyFindingMarkdown } from './finding-markdown-copy'
 import type { Finding } from './presentation-model'
-import { serializeFindingMarkdown } from './result-export'
 import styles from './TranslationChecker.module.css'
 
 const STYLE_GUIDE_URL =
@@ -31,6 +31,7 @@ export function FindingCard({ finding }: { finding: Finding }) {
       return
     }
 
+    // コピー結果は操作直後の確認にだけ使い、次の操作を妨げない短時間のフィードバックとして自動解除する。
     const timeoutId = window.setTimeout(() => {
       setCopyFeedback(null)
     }, 2000)
@@ -41,22 +42,10 @@ export function FindingCard({ finding }: { finding: Finding }) {
   }, [copyFeedback])
 
   /**
-   * 表示中の1指摘を既存の Finding 単位 Markdown 形式でクリップボードへコピーする。
-   *
-   * Clipboard API を利用できない場合や書き込みに失敗した場合も、指摘表示自体は維持する。
+   * 表示中の1指摘をコピーし、その結果だけをカード内の一時フィードバックとして反映する。
    */
   const handleMarkdownCopy = async () => {
-    if (navigator.clipboard?.writeText === undefined) {
-      setCopyFeedback('failure')
-      return
-    }
-
-    try {
-      await navigator.clipboard.writeText(serializeFindingMarkdown(finding))
-      setCopyFeedback('success')
-    } catch {
-      setCopyFeedback('failure')
-    }
+    setCopyFeedback(await copyFindingMarkdown(finding))
   }
 
   return (
