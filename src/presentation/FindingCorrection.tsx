@@ -143,9 +143,9 @@ export function FindingCorrection({ finding }: { finding: Finding }) {
         </button>
       </div>
 
-      {state.status === 'checked' && (
-        <div className={styles.correctionResult} aria-live="polite">
-          {messages.length === 0 ? (
+      <div className={styles.correctionResult} role="status">
+        {state.status === 'checked' &&
+          (messages.length === 0 ? (
             <p className={styles.correctionSuccess}>
               この翻訳では問題は見つかりませんでした。
             </p>
@@ -189,9 +189,8 @@ export function FindingCorrection({ finding }: { finding: Finding }) {
                 ))}
               </div>
             </>
-          )}
-        </div>
-      )}
+          ))}
+      </div>
     </section>
   )
 }
