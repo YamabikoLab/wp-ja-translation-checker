@@ -167,6 +167,7 @@ describe('JSON result export', () => {
           matches: [{ start: 5, end: 6 }],
         },
       ],
+      glossaryFindings: [],
     })
   })
 
@@ -392,7 +393,7 @@ describe('Glossary result export', () => {
 
   it('when glossary warning exists, should include it in CSV JSON and Markdown exports', () => {
     expect(serializeCsv([], [glossaryFinding])).toContain(
-      'glossary,Warning,,website,Visit website,Web ページを見る,0,0,website,サイト,noun,',
+      'glossary,Warning,,Glossary の訳語を確認してください,Visit website,Web ページを見る,0,0,website,サイト,noun,',
     )
     expect(
       JSON.parse(serializeJson('plugin-ja.po', [], [glossaryFinding])),
