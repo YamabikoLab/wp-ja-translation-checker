@@ -570,7 +570,8 @@ export function checkParenthesesSpacing(
     return []
   }
 
-  const { protectedIndexes } = protectTechnicalText(translation)
+  const { protectedIndexes, hiddenMarkupIndexes } =
+    protectTechnicalText(translation)
   const messages: CheckMessage[] = []
   const fullWidthMatches: CheckMessageMatch[] = []
   const invalidOuterSpacingMatches: CheckMessageMatch[] = []
@@ -605,7 +606,7 @@ export function checkParenthesesSpacing(
     if (character === '(' && index > 0) {
       const outside = getOuterParenthesesSpacing(
         translation,
-        protectedIndexes,
+        hiddenMarkupIndexes,
         index - 1,
         -1,
       )
@@ -624,7 +625,7 @@ export function checkParenthesesSpacing(
     if (character === ')' && index < translation.length - 1) {
       const outside = getOuterParenthesesSpacing(
         translation,
-        protectedIndexes,
+        hiddenMarkupIndexes,
         index + 1,
         1,
       )
@@ -657,27 +658,28 @@ export function checkParenthesesSpacing(
 }
 
 /**
- * 丸括弧の外側について、マークアップ等の保護範囲を除いた表示本文側の隣接文字とスペース数を取得する。
+ * 丸括弧の外側について、表示されないマークアップを除いた表示本文側の隣接文字とスペース数を取得する。
+ *
+ * URL やプレースホルダーなどの可視な技術文字列は、丸括弧との表示上の境界を判定する文字として扱う。
  *
  * @param text 対象文字列。
- * @param protectedIndexes 技術文字列として判定対象外にする文字位置。
+ * @param hiddenMarkupIndexes 表示本文から除外するマークアップの文字位置。
  * @param startIndex 丸括弧の外側直近から確認を開始する位置。
  * @param direction 前方は 1、後方は -1。
  * @returns 表示本文側の文字と、その手前に存在する半角スペース数。文字列境界の場合は undefined。
  */
 function getOuterParenthesesSpacing(
   text: string,
-  protectedIndexes: ReadonlySet<number>,
+  hiddenMarkupIndexes: ReadonlySet<number>,
   startIndex: number,
   direction: 1 | -1,
 ): { character: string; spaceCount: number } | undefined {
   let index = startIndex
   let spaceCount = 0
 
-  // HTML 等の表示されない保護範囲を飛ばしつつ、本文側に実在するスペースだけを数える。
+  // 表示されないマークアップだけを飛ばし、可視な技術文字列を含む本文上の境界を確認する。
   while (index >= 0 && index < text.length) {
-    // マークアップ等の保護範囲は表示本文の隣接文字として扱わない。
-    if (protectedIndexes.has(index)) {
+    if (hiddenMarkupIndexes.has(index)) {
       index += direction
       continue
     }
