@@ -32,7 +32,7 @@ function createFinding(
       overrides.styleGuideItem ?? '1-9 半角数字前後の不要スペース',
     message:
       overrides.message ?? '半角数字と日本語の間のスペースは削除してください。',
-    matches: overrides.matches ?? [{ start: 2, end: 5 }],
+    matches: overrides.matches ?? [{ start: 2, end: 4 }],
     entry: {
       entryIndex: 0,
       source: {
