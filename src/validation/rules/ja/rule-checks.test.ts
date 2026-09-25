@@ -10,6 +10,7 @@ import {
   checkHalfWidthCharacters,
   checkInnerParenthesesSpacing,
   checkJapanesePunctuation,
+  checkMiddleDot,
   checkNotAllowedExpression,
   checkNumberSpacing,
   checkParenthesesSpacing,
@@ -1459,6 +1460,89 @@ describe('Japanese v1 rule 3-6', () => {
   })
 })
 
+describe('Japanese v1 rule 5', () => {
+  /**
+   * 通常本文の全角中点と半角中黒を、文脈確認が必要なルール 5 として検出することを確認する。
+   *
+   * 操作:
+   * - 全角中点と半角中黒を含む翻訳をそれぞれ確認する。
+   *
+   * 期待結果:
+   * - どちらも同じルール 5 の Warning と確認メッセージが返る。
+   */
+  it('when middle dots appear in normal text, should report rule 5 for full-width and half-width forms', () => {
+    expect(
+      getRuleMessages(
+        checkMiddleDot,
+        'Reorder rows and columns',
+        '行・列を並び替える',
+      ),
+    ).toContainEqual({
+      styleGuideItem: '5. 中点「・」',
+      message:
+        '中点「・」は原則使用しません。別の表現に置き換えられないか確認してください',
+    })
+    expect(
+      getRuleMessages(
+        checkMiddleDot,
+        'Reorder rows and columns',
+        '行･列を並び替える',
+      ),
+    ).toContainEqual({
+      styleGuideItem: '5. 中点「・」',
+      message:
+        '中点「・」は原則使用しません。別の表現に置き換えられないか確認してください',
+    })
+  })
+
+  /**
+   * 同一翻訳内の複数の中点を、1件の Warning の位置情報へまとめることを確認する。
+   *
+   * 操作:
+   * - UTF-16 で2 code unit の絵文字に続けて、全角中点と半角中黒を含む翻訳を確認する。
+   *
+   * 期待結果:
+   * - 1件の CheckMessage に両方の [start, end) が UTF-16 code unit offset で保持される。
+   */
+  it('when multiple middle dots appear, should keep every UTF-16 match range in one warning', () => {
+    expect(
+      checkMiddleDot(
+        createEntry(
+          0,
+          'Reorder items',
+          '😀行・列と項目･設定を並び替える',
+        ),
+      ),
+    ).toEqual([
+      {
+        styleGuideItem: '5. 中点「・」',
+        message:
+          '中点「・」は原則使用しません。別の表現に置き換えられないか確認してください',
+        matches: [
+          { start: 3, end: 4 },
+          { start: 8, end: 9 },
+        ],
+      },
+    ])
+  })
+
+  /**
+   * 明示的な技術文字列内部の中点を、日本語本文のルール 5 として扱わないことを確認する。
+   *
+   * 操作:
+   * - コード表記の内部だけに中点を含む翻訳を確認する。
+   *
+   * 期待結果:
+   * - ルール 5 の指摘は返らない。
+   */
+  it('when a middle dot appears only inside protected technical text, should not report rule 5', () => {
+    expect(
+      checkEntries(checkMiddleDot, [
+        createEntry(0, 'Code', 'コード `foo・bar` を確認'),
+      ]),
+    ).toEqual([])
+  })
+})
 describe('Japanese v1 match ranges', () => {
   /**
    * 同じ 1-4 の指摘内容に該当する複数箇所を、1件の指摘へまとめて位置情報として保持することを確認する。
