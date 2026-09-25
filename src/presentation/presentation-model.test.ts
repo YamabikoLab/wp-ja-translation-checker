@@ -709,7 +709,6 @@ describe('Rule filtering', () => {
   })
 })
 
-
 describe('Pagination', () => {
   /**
    * 0件では空の表示範囲とページ番号を返すことを確認する。
@@ -776,6 +775,28 @@ describe('Pagination', () => {
     expect(createPaginationModel(source, 1, 25).totalPages).toBe(5)
     expect(createPaginationModel(source, 1, 50).totalPages).toBe(3)
     expect(createPaginationModel(source, 1, 100).totalPages).toBe(2)
+  })
+
+  /**
+   * 表示件数の倍数では空の余剰ページを作らないことを確認する。
+   *
+   * 事前条件:
+   * - 100件の指摘がある。
+   *
+   * 操作:
+   * - 50件表示でページモデルを導出する。
+   *
+   * 期待結果:
+   * - 総ページ数は2ページとなり、2ページ目にも50件表示される。
+   */
+  it('when the finding count is an exact multiple of page size, should not create an extra page', () => {
+    const source = createFindings(createSuccessResult(100, 0))
+    const model = createPaginationModel(source, 2, 50)
+
+    expect(model.totalPages).toBe(2)
+    expect(model.rangeStart).toBe(51)
+    expect(model.rangeEnd).toBe(100)
+    expect(model.visibleFindings).toHaveLength(50)
   })
 
   /**
