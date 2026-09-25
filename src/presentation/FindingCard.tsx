@@ -4,8 +4,10 @@
  * 指摘一覧全体の絞り込みやページ状態は扱わず、受け取った1件の表示だけを所有する。
  */
 
+import { useEffect, useState } from 'react'
 import { ExpandableText } from './ExpandableText'
 import type { Finding } from './presentation-model'
+import { serializeFindingMarkdown } from './result-export'
 import styles from './TranslationChecker.module.css'
 
 const STYLE_GUIDE_URL =
@@ -20,6 +22,42 @@ const STYLE_GUIDE_URL =
  */
 export function FindingCard({ finding }: { finding: Finding }) {
   const translation = finding.entry.translations[0]?.text ?? ''
+  const [copyFeedback, setCopyFeedback] = useState<
+    'success' | 'failure' | null
+  >(null)
+
+  useEffect(() => {
+    if (copyFeedback === null) {
+      return
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setCopyFeedback(null)
+    }, 2000)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [copyFeedback])
+
+  /**
+   * 表示中の1指摘を既存の Finding 単位 Markdown 形式でクリップボードへコピーする。
+   *
+   * Clipboard API を利用できない場合や書き込みに失敗した場合も、指摘表示自体は維持する。
+   */
+  const handleMarkdownCopy = async () => {
+    if (navigator.clipboard?.writeText === undefined) {
+      setCopyFeedback('failure')
+      return
+    }
+
+    try {
+      await navigator.clipboard.writeText(serializeFindingMarkdown(finding))
+      setCopyFeedback('success')
+    } catch {
+      setCopyFeedback('failure')
+    }
+  }
 
   return (
     <article className={styles.finding}>
@@ -53,12 +91,27 @@ export function FindingCard({ finding }: { finding: Finding }) {
         </section>
       </div>
 
-      <p className={styles.guideReference}>
-        <span>スタイルガイド: {finding.styleGuideItem}</span>
-        <a href={STYLE_GUIDE_URL} target="_blank" rel="noreferrer">
-          WordPress 日本語翻訳スタイルガイドを確認
-        </a>
-      </p>
+      <div className={styles.findingFooter}>
+        <p className={styles.guideReference}>
+          <span>スタイルガイド: {finding.styleGuideItem}</span>
+          <a href={STYLE_GUIDE_URL} target="_blank" rel="noreferrer">
+            WordPress 日本語翻訳スタイルガイドを確認
+          </a>
+        </p>
+        <button
+          type="button"
+          className={styles.findingCopyButton}
+          onClick={handleMarkdownCopy}
+        >
+          <span aria-live="polite">
+            {copyFeedback === 'success'
+              ? 'コピーしました'
+              : copyFeedback === 'failure'
+                ? 'コピーできませんでした'
+                : 'Markdownをコピー'}
+          </span>
+        </button>
+      </div>
     </article>
   )
 }
