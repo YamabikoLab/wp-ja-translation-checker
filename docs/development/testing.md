@@ -28,6 +28,12 @@ npm run audit
 npm run knip
 ```
 
+Glossary の静的データを公式ページから明示的に再生成する開発コマンド:
+
+```bash
+npm run glossary:update
+```
+
 - `npm run format:check` checks repository formatting with Prettier.
 - `npm run lint` runs ESLint across the repository.
 - `npm test` runs the Vitest suite once with `vitest run`.
@@ -35,6 +41,7 @@ npm run knip
 - `npm run validate` runs the full application validation sequence in this order: formatting, linting, tests, then build.
 - `npm run audit` checks npm dependencies and fails when npm reports a high or critical vulnerability.
 - `npm run knip` checks for unused files, dependencies, and exports.
+- `npm run glossary:update` fetches the official Japanese WordPress.org Glossary and regenerates the committed static data. It is a maintenance command, not a validation check.
 - The build writes generated output under `dist/`; do not commit it.
 
 Use `npm run validate` as the repository-wide application completion check when all application validation steps apply. PR Validation runs this check, `npm run audit`, and Knip when started manually with GitHub Actions. Knip is enabled by default and can be disabled with the `run_knip` workflow input for manual runs. Keep `npm test` scoped to Vitest so automated tests can be run independently from formatting, linting, and build validation.

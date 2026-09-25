@@ -1,14 +1,15 @@
 /**
- * 1件の指摘について、翻訳の修正案を画面内だけで一時編集し、既存の日本語ルールで再チェックする責任を持つ。
+ * 1件の指摘について、翻訳の修正案を画面内だけで一時編集し、Style Guide と Glossary の双方で再チェックする責任を持つ。
  *
  * 修正案と再チェック結果は対象カード内だけで扱い、元の PO ファイル、確認結果、集計、保存・コピー対象は変更しない。
  */
 
 import { useState } from 'react'
+import { checkJapaneseGlossary } from '@/glossary/ja/check'
+import { JAPANESE_GLOSSARY } from '@/glossary/ja/glossary-data'
 import { check } from '@/rules/ja/check'
-import type { TranslationCheckResult } from '@/rules/ja/check'
 import { ExpandableText } from './ExpandableText'
-import type { Finding } from './presentation-model'
+import { createFindings, type Finding } from './presentation-model'
 import styles from './TranslationChecker.module.css'
 
 const STYLE_GUIDE_URL =
@@ -21,7 +22,7 @@ type CorrectionState =
   | {
       status: 'checked'
       draftTranslation: string
-      result: readonly TranslationCheckResult[]
+      result: readonly Finding[]
     }
 
 /**
@@ -32,8 +33,12 @@ type CorrectionState =
  * @returns 対象カード内で完結する修正案の確認 UI。
  */
 export function FindingCorrection({ finding }: { finding: Finding }) {
-  const translation = finding.entry.translations[0]?.text ?? ''
-  const translationIndex = finding.entry.translations[0]?.index ?? 0
+  const translationForm = finding.entry.translations.find(
+    (form) => form.index === finding.translationFormIndex,
+  )
+  const translation = translationForm?.text ?? ''
+  const translationIndex =
+    translationForm?.index ?? finding.translationFormIndex
   const [state, setState] = useState<CorrectionState>({ status: 'viewing' })
 
   // 修正操作を開始していない間は元の指摘表示を保ち、利用者が明示的に開始した場合だけ一時編集領域を開く。
@@ -54,46 +59,39 @@ export function FindingCorrection({ finding }: { finding: Finding }) {
   }
 
   /**
-   * 現在の修正案だけを、元の原文情報を保った1件の翻訳として既存ルールへ渡す。
+   * 現在の修正案だけを、元の原文情報を保った1件の翻訳として Style Guide / Glossary の両検証へ渡す。
    *
    * 元の確認結果は更新せず、このカード内で確認するための結果だけを保持する。
    */
   const handleRecheck = () => {
-    const result = check([
-      {
-        entryIndex: finding.entry.entryIndex,
-        source: finding.entry.source,
-        translations: [
-          {
-            index: translationIndex,
-            text: state.draftTranslation,
-          },
-        ],
-      },
-    ])
+    // 1件だけの一時再チェックでは配列位置と entryIndex の公開契約を合わせるため、検証用 entryIndex を0へ正規化する。
+    const entry = {
+      entryIndex: 0,
+      source: finding.entry.source,
+      translations: [
+        {
+          index: translationIndex,
+          text: state.draftTranslation,
+        },
+      ],
+    }
+    const styleGuideResults = check([entry])
+    const glossaryResults = checkJapaneseGlossary([entry], JAPANESE_GLOSSARY)
 
     setState({
       status: 'checked',
       draftTranslation: state.draftTranslation,
-      result,
+      result: createFindings({
+        status: 'success',
+        entries: [entry],
+        results: styleGuideResults,
+        glossaryResults,
+      }),
     })
   }
 
   // 再チェック済みの場合だけ、その修正案に対する Error / Warning を結果表示へ渡す。
-  const checkedResult = state.status === 'checked' ? state.result[0] : undefined
-  const messages =
-    checkedResult === undefined
-      ? []
-      : [
-          ...checkedResult.errors.map((message) => ({
-            severity: 'Error' as const,
-            message,
-          })),
-          ...checkedResult.warnings.map((message) => ({
-            severity: 'Warning' as const,
-            message,
-          })),
-        ]
+  const messages = state.status === 'checked' ? state.result : []
 
   return (
     <section
@@ -154,20 +152,20 @@ export function FindingCorrection({ finding }: { finding: Finding }) {
               <h4>再チェック結果</h4>
               <div className={styles.correctionFindings}>
                 {/* 修正案で残っている各指摘を、通常結果と同じ判断材料を確認できる単位で表示する。 */}
-                {messages.map(({ severity, message }, index) => (
+                {messages.map((message) => (
                   <section
-                    key={`${severity}-${message.styleGuideItem}-${index}`}
+                    key={message.key}
                     className={styles.correctionFinding}
                   >
                     <div className={styles.correctionFindingHeader}>
                       <span
                         className={
-                          severity === 'Error'
+                          message.severity === 'Error'
                             ? styles.errorBadge
                             : styles.warningBadge
                         }
                       >
-                        {severity}
+                        {message.severity}
                       </span>
                       <p>{message.message}</p>
                     </div>
@@ -175,14 +173,33 @@ export function FindingCorrection({ finding }: { finding: Finding }) {
                       text={state.draftTranslation}
                       matches={message.matches}
                     />
+                    {message.kind === 'glossary' && (
+                      <p className={styles.correctionGuide}>
+                        Glossary 候補:{' '}
+                        {message.glossary.candidates
+                          .map((candidate) => candidate.translation)
+                          .filter((translation) => translation !== '')
+                          .join(' / ')}
+                      </p>
+                    )}
                     <p className={styles.correctionGuide}>
-                      <span>スタイルガイド: {message.styleGuideItem}</span>
+                      <span>
+                        {message.kind === 'glossary'
+                          ? '確認項目: Glossary'
+                          : `スタイルガイド: ${message.styleGuideItem}`}
+                      </span>
                       <a
-                        href={STYLE_GUIDE_URL}
+                        href={
+                          message.kind === 'glossary'
+                            ? 'https://translate.wordpress.org/locale/ja/default/glossary/'
+                            : STYLE_GUIDE_URL
+                        }
                         target="_blank"
                         rel="noreferrer"
                       >
-                        WordPress 日本語翻訳スタイルガイドを確認
+                        {message.kind === 'glossary'
+                          ? 'WordPress.org 日本語 Glossary を確認'
+                          : 'WordPress 日本語翻訳スタイルガイドを確認'}
                       </a>
                     </p>
                   </section>

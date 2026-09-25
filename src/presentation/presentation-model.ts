@@ -46,21 +46,32 @@ export type PresentationAction =
   | { type: 'file-read-failure'; file: File }
   | { type: 'check-completed'; file: File; result: CheckResult }
 
-/**
- * 利用者向けに表示する1件の指摘を表す。
- */
-export type Finding = {
+/** Style Guide と Glossary の双方で共通して表示・操作する1件の指摘。 */
+type FindingBase = {
   key: string
   severity: 'Error' | 'Warning'
   message: string
   styleGuideItem: string
   matches: SuccessfulCheckResult['results'][number]['errors'][number]['matches']
   entry: SuccessfulCheckResult['entries'][number]
+  translationFormIndex: number
 }
 
-/**
- * 確認結果概要で表示する Severity ごとの件数を表す。
- */
+/** Style Guide の判定結果から生成する通常の指摘。 */
+type StyleGuideFinding = FindingBase & {
+  kind: 'style-guide'
+}
+
+/** Glossary の判定結果から生成し、候補情報と原文上の一致位置を保持する指摘。 */
+type GlossaryFinding = FindingBase & {
+  kind: 'glossary'
+  glossary: SuccessfulCheckResult['glossaryResults'][number]
+}
+
+/** Result Presentation が一覧・絞り込み・ページング・修正確認で共通利用する指摘。 */
+export type Finding = StyleGuideFinding | GlossaryFinding
+
+/** Style Guide と Glossary を合わせた確認結果概要の件数を表す。 */
 export type FindingSummary = {
   errorCount: number
   warningCount: number
@@ -68,7 +79,7 @@ export type FindingSummary = {
 }
 
 /**
- * ルールフィルターで選択できる1ルールと、現在の確認結果に含まれる指摘件数を表す。
+ * 項目フィルターで選択できる Style Guide 項目または Glossary と、現在の確認結果に含まれる指摘件数を表す。
  */
 export type RuleFilterOption = {
   styleGuideItem: string
@@ -177,10 +188,10 @@ export function presentationReducer(
 }
 
 /**
- * 正常完了した Validation Core の結果を、CheckMessage 単位の表示一覧へ変換する。
+ * 正常完了した Validation Core の Style Guide / Glossary 結果を、共通の指摘一覧へ変換する。
  *
  * @param result Check Orchestration が返した正常完了結果。
- * @returns entryIndex から原文・翻訳を参照した指摘一覧。
+ * @returns Style Guide と Glossary を同じ表示・操作基盤で扱える指摘一覧。
  */
 export function createFindings(
   result: SuccessfulCheckResult,
@@ -201,11 +212,13 @@ export function createFindings(
     for (const [messageIndex, message] of checkedEntry.errors.entries()) {
       findings.push({
         key: `${checkedEntry.entryIndex}-error-${messageIndex}`,
+        kind: 'style-guide',
         severity: 'Error',
         message: message.message,
         styleGuideItem: message.styleGuideItem,
         matches: message.matches,
         entry,
+        translationFormIndex: entry.translations[0]?.index ?? 0,
       })
     }
 
@@ -213,13 +226,39 @@ export function createFindings(
     for (const [messageIndex, message] of checkedEntry.warnings.entries()) {
       findings.push({
         key: `${checkedEntry.entryIndex}-warning-${messageIndex}`,
+        kind: 'style-guide',
         severity: 'Warning',
         message: message.message,
         styleGuideItem: message.styleGuideItem,
         matches: message.matches,
         entry,
+        translationFormIndex: entry.translations[0]?.index ?? 0,
       })
     }
+  }
+
+  // Glossary Warning も同じ指摘一覧へ変換し、共通の絞り込み・ページング・修正操作へ流す。
+  for (const [index, glossaryResult] of result.glossaryResults.entries()) {
+    const entry = result.entries[glossaryResult.entryIndex]
+
+    // Validation が返した entryIndex と解釈済み entry の対応が崩れている場合は、別の翻訳へ Warning を誤表示しない。
+    if (entry === undefined || entry.entryIndex !== glossaryResult.entryIndex) {
+      throw new Error(
+        `Glossary 結果の entryIndex ${glossaryResult.entryIndex} に対応する翻訳 entry がありません。`,
+      )
+    }
+
+    findings.push({
+      key: `${glossaryResult.entryIndex}-glossary-${glossaryResult.translationFormIndex}-${index}`,
+      kind: 'glossary',
+      severity: 'Warning',
+      message: `「${glossaryResult.originalTerm}」の Glossary 訳語を確認してください`,
+      styleGuideItem: 'Glossary',
+      matches: [],
+      entry,
+      translationFormIndex: glossaryResult.translationFormIndex,
+      glossary: glossaryResult,
+    })
   }
 
   return findings
@@ -228,7 +267,7 @@ export function createFindings(
 /**
  * CheckMessage 単位の指摘一覧から結果概要の件数を導出する。
  *
- * @param findings 表示対象の指摘一覧。
+ * @param findings 表示対象の Style Guide / Glossary 共通指摘一覧。
  * @returns Error、Warning、全指摘の件数。
  */
 export function summarizeFindings(
@@ -239,6 +278,7 @@ export function summarizeFindings(
 
   // 利用者向けの1指摘を単位として Severity ごとの件数を集計する。
   for (const finding of findings) {
+    // Error 以外の指摘は、Style Guide / Glossary の種別にかかわらず Warning として集計する。
     if (finding.severity === 'Error') {
       errorCount += 1
     } else {
@@ -254,7 +294,7 @@ export function summarizeFindings(
 }
 
 /**
- * 現在の確認結果に存在するルールを、最初に現れた順で重複なく集計する。
+ * 現在の確認結果に存在する Style Guide 項目と Glossary を、最初に現れた順で重複なく集計する。
  *
  * @param findings 正常完了結果から導出した全指摘。
  * @returns ルール名と CheckMessage 単位の指摘件数。
@@ -264,7 +304,7 @@ export function createRuleFilterOptions(
 ): readonly RuleFilterOption[] {
   const counts = new Map<string, number>()
 
-  // 画面で選択可能なルールと件数だけを導出し、元の指摘一覧は変更しない。
+  // 画面で選択可能な確認項目と件数だけを導出し、元の指摘一覧は変更しない。
   for (const finding of findings) {
     counts.set(
       finding.styleGuideItem,
@@ -279,7 +319,7 @@ export function createRuleFilterOptions(
 }
 
 /**
- * 選択された1ルールに一致する指摘だけを画面表示用として導出する。
+ * 選択された1確認項目に一致する指摘だけを画面表示用として導出する。
  *
  * @param findings 正常完了結果から導出した全指摘。
  * @param selectedStyleGuideItem 選択中のスタイルガイド項目。null は「すべてのルール」を表す。

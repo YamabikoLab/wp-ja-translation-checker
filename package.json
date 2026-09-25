@@ -13,7 +13,8 @@
     "validate": "npm run format:check && npm run lint && npm test && npm run build",
     "preview": "vite preview",
     "audit": "npm audit --audit-level=high",
-    "knip": "knip"
+    "knip": "knip",
+    "glossary:update": "node scripts/update-glossary.mjs"
   },
   "dependencies": {
     "gettext-converter": "1.4.0",

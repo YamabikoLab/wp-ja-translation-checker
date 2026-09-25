@@ -30,10 +30,12 @@ function createFinding(
 ): Finding {
   return {
     key: overrides.key ?? '0-error-0',
+    kind: 'style-guide',
     severity: overrides.severity ?? 'Error',
     styleGuideItem: overrides.styleGuideItem ?? '1-1',
     message: overrides.message ?? '句読点を確認してください。',
     matches: overrides.matches ?? [{ start: 5, end: 6 }],
+    translationFormIndex: 0,
     entry: {
       entryIndex: 0,
       source: {
@@ -73,9 +75,9 @@ describe('CSV result export', () => {
 
     expect(csv.startsWith('\uFEFF')).toBe(true)
     expect(csv.slice(1).split('\r\n')).toEqual([
-      'severity,styleGuideItem,message,source,translation',
-      'Error,1-1,句読点を確認してください。,"Hello, world","こんにちは, 世界"',
-      'Warning,3-4,文脈を確認してください。,"Hello, world","こんにちは, 世界"',
+      'type,severity,styleGuideItem,message,source,translation,entryIndex,translationFormIndex,originalTerm,glossaryTranslations,partsOfSpeech,comments',
+      'style-guide,Error,1-1,句読点を確認してください。,"Hello, world","こんにちは, 世界",0,0,,,,',
+      'style-guide,Warning,3-4,文脈を確認してください。,"Hello, world","こんにちは, 世界",0,0,,,,',
     ])
   })
 
@@ -115,7 +117,7 @@ describe('CSV result export', () => {
    */
   it('when successful result has no findings, should export only the CSV header', () => {
     expect(serializeCsv([])).toBe(
-      '\uFEFFseverity,styleGuideItem,message,source,translation',
+      '\uFEFFtype,severity,styleGuideItem,message,source,translation,entryIndex,translationFormIndex,originalTerm,glossaryTranslations,partsOfSpeech,comments',
     )
   })
 })
@@ -151,19 +153,25 @@ describe('JSON result export', () => {
       },
       findings: [
         {
+          type: 'style-guide',
           severity: 'error',
           styleGuideItem: '1-1',
           message: '句読点を確認してください。',
           source: 'Hello, world',
           translation: 'こんにちは, 世界',
+          entryIndex: 0,
+          translationFormIndex: 0,
           matches: [{ start: 5, end: 6 }],
         },
         {
+          type: 'style-guide',
           severity: 'warning',
           styleGuideItem: '3-4',
           message: '句読点を確認してください。',
           source: 'Hello, world',
           translation: 'こんにちは, 世界',
+          entryIndex: 0,
+          translationFormIndex: 0,
           matches: [{ start: 5, end: 6 }],
         },
       ],
@@ -367,5 +375,66 @@ describe('Markdown result export', () => {
     expect(markdown).toContain(
       '正常に確認が完了し、v1 の対象ルールでは指摘がありませんでした。',
     )
+  })
+})
+
+describe('Glossary result export', () => {
+  const glossaryFinding: Finding = {
+    key: '0-glossary-0-0',
+    kind: 'glossary',
+    severity: 'Warning',
+    styleGuideItem: 'Glossary',
+    message: '「website」の Glossary 訳語を確認してください',
+    matches: [],
+    translationFormIndex: 0,
+    entry: {
+      entryIndex: 0,
+      source: { singular: 'Visit website' },
+      translations: [{ index: 0, text: 'Web ページを見る' }],
+    },
+    glossary: {
+      entryIndex: 0,
+      translationFormIndex: 0,
+      originalTerm: 'website',
+      candidates: [
+        { original: 'website', translation: 'サイト', partOfSpeech: 'noun' },
+      ],
+      currentTranslation: 'Web ページを見る',
+      sourceMatches: [{ source: 'singular', start: 6, end: 13 }],
+    },
+  }
+
+  /**
+   * Glossary Warning が共通 Finding として各出力形式へ含まれることを確認する。
+   *
+   * 操作:
+   * - 共通指摘一覧を CSV / JSON / Markdown へ変換する。
+   *
+   * 期待結果:
+   * - 各形式で Glossary の種別、候補訳、対象翻訳を確認できる。
+   */
+  it('when glossary finding exists, should export it through the common finding collection', () => {
+    expect(serializeCsv([glossaryFinding])).toContain(
+      'glossary,Warning,Glossary,「website」の Glossary 訳語を確認してください,Visit website,Web ページを見る,0,0,website,サイト,noun,',
+    )
+
+    expect(
+      JSON.parse(serializeJson('plugin-ja.po', [glossaryFinding])),
+    ).toMatchObject({
+      summary: { errors: 0, warnings: 1 },
+      findings: [
+        {
+          type: 'glossary',
+          originalTerm: 'website',
+          translation: 'Web ページを見る',
+          translationFormIndex: 0,
+        },
+      ],
+    })
+
+    const markdown = serializeMarkdown('plugin-ja.po', [glossaryFinding])
+    expect(markdown).toContain('### Warning: Glossary')
+    expect(markdown).toContain('「website」の Glossary 訳語を確認してください')
+    expect(markdown).toContain('- サイト / noun')
   })
 })

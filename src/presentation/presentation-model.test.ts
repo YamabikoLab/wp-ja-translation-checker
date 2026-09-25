@@ -67,8 +67,45 @@ function createSuccessResult(
               })),
             },
           ],
+    glossaryResults: [],
   }
 }
+
+describe('Finding presentation', () => {
+  /**
+   * 空の先頭 plural フォームを除外した後も、Style Guide 指摘を実際の検査対象フォームへ結び付けることを確認する。
+   *
+   * 事前条件:
+   * - 元の msgstr[0] は空で、解釈済み翻訳には元の msgstr[1] だけが残っている。
+   * - Style Guide の指摘がその entry に対して存在する。
+   *
+   * 操作:
+   * - 正常完了結果から表示用の指摘一覧を生成する。
+   *
+   * 期待結果:
+   * - Style Guide 指摘は元の msgstr[1] を表す translationFormIndex 1 を保持する。
+   */
+  it('when the first plural form is empty, should keep the checked translation form index for Style Guide findings', () => {
+    const baseResult = createSuccessResult(1, 0)
+    const result = {
+      ...baseResult,
+      entries: [
+        {
+          ...baseResult.entries[0],
+          translations: [{ index: 1, text: '検査対象の翻訳' }],
+        },
+      ],
+    }
+
+    const findings = createFindings(result)
+
+    expect(findings).toHaveLength(1)
+    expect(findings[0]).toMatchObject({
+      kind: 'style-guide',
+      translationFormIndex: 1,
+    })
+  })
+})
 
 describe('Presentation state', () => {
   /**
@@ -428,6 +465,152 @@ describe('Presentation result model', () => {
   })
 
   /**
+   * Glossary 結果を対応する entry と結び付け、Style Guide と同じ共通表示モデルへ変換することを確認する。
+   *
+   * 事前条件:
+   * - 正常完了結果に1件の Glossary Warning がある。
+   *
+   * 操作:
+   * - Glossary 表示モデルを生成する。
+   *
+   * 期待結果:
+   * - Warning と元 entry が同じ entryIndex で結び付く。
+   */
+  it('when success has a glossary result, should expose it with the matching entry', () => {
+    const result = {
+      ...createSuccessResult(0, 0),
+      glossaryResults: [
+        {
+          entryIndex: 0,
+          translationFormIndex: 0,
+          originalTerm: 'settings',
+          candidates: [{ original: 'settings', translation: '設定' }],
+          currentTranslation: '全ての設定を保存して下さい',
+          sourceMatches: [{ source: 'singular' as const, start: 9, end: 17 }],
+        },
+      ],
+    }
+
+    const findings = createFindings(result)
+    const glossaryFinding = findings.find(
+      (finding) => finding.kind === 'glossary',
+    )
+
+    expect(findings).toHaveLength(1)
+    expect(glossaryFinding?.entry).toBe(result.entries[0])
+    expect(glossaryFinding?.styleGuideItem).toBe('Glossary')
+    expect(
+      glossaryFinding?.kind === 'glossary'
+        ? glossaryFinding.glossary.originalTerm
+        : undefined,
+    ).toBe('settings')
+  })
+
+  /**
+   * Glossary 結果の entryIndex が解釈済み entry と一致しない場合に誤表示しないことを確認する。
+   *
+   * 事前条件:
+   * - Glossary Warning の entryIndex に対応する entry が存在しない。
+   *
+   * 操作:
+   * - Glossary 表示モデルを生成する。
+   *
+   * 期待結果:
+   * - 契約不整合として失敗する。
+   */
+  it('when glossary entry index does not match the entries position, should reject the inconsistent result', () => {
+    const result = {
+      ...createSuccessResult(0, 0),
+      glossaryResults: [
+        {
+          entryIndex: 1,
+          translationFormIndex: 0,
+          originalTerm: 'settings',
+          candidates: [{ original: 'settings', translation: '設定' }],
+          currentTranslation: '全ての設定を保存して下さい',
+          sourceMatches: [{ source: 'singular' as const, start: 9, end: 17 }],
+        },
+      ],
+    }
+
+    expect(() => createFindings(result)).toThrow(
+      'Glossary 結果の entryIndex 1 に対応する翻訳 entry がありません。',
+    )
+  })
+
+  /**
+   * Glossary Warning が結果概要の Warning 件数へ加算されることを確認する。
+   *
+   * 事前条件:
+   * - Style Guide の Error 1件と Glossary Warning 1件がある。
+   *
+   * 操作:
+   * - 結果概要を集計する。
+   *
+   * 期待結果:
+   * - Error 1件、Warning 1件、全体2件となる。
+   */
+  it('when glossary warnings exist, should include them in the warning summary', () => {
+    const result = {
+      ...createSuccessResult(1, 0),
+      glossaryResults: [
+        {
+          entryIndex: 0,
+          translationFormIndex: 0,
+          originalTerm: 'settings',
+          candidates: [{ original: 'settings', translation: '設定' }],
+          currentTranslation: '全ての設定を保存して下さい',
+          sourceMatches: [{ source: 'singular' as const, start: 9, end: 17 }],
+        },
+      ],
+    }
+
+    expect(summarizeFindings(createFindings(result))).toEqual({
+      errorCount: 1,
+      warningCount: 1,
+      totalCount: 2,
+    })
+  })
+
+  /**
+   * Glossary Warning も通常ルールと同じフィルター・ページング対象になることを確認する。
+   *
+   * 事前条件:
+   * - Style Guide 指摘と Glossary Warning が同じ結果に含まれる。
+   *
+   * 操作:
+   * - Glossary で絞り込み、ページモデルを生成する。
+   *
+   * 期待結果:
+   * - Glossary の指摘だけが共通 Finding として残り、ページング対象になる。
+   */
+  it('when glossary warnings are filtered, should paginate them through the common finding model', () => {
+    const result = {
+      ...createSuccessResult(1, 0),
+      glossaryResults: [
+        {
+          entryIndex: 0,
+          translationFormIndex: 0,
+          originalTerm: 'settings',
+          candidates: [{ original: 'settings', translation: '設定' }],
+          currentTranslation: '全ての設定を保存して下さい',
+          sourceMatches: [{ source: 'singular' as const, start: 9, end: 17 }],
+        },
+      ],
+    }
+    const findings = createFindings(result)
+    const options = createRuleFilterOptions(findings)
+    const filtered = filterFindingsByRule(findings, 'Glossary')
+    const model = createPaginationModel(filtered, 1, 25)
+
+    expect(options).toContainEqual({ styleGuideItem: 'Glossary', count: 1 })
+    expect(filtered).toHaveLength(1)
+    expect(filtered[0]?.kind).toBe('glossary')
+    expect(model.totalCount).toBe(1)
+    expect(model.visibleFindings).toEqual(filtered)
+  })
+
+  /**
    * Error だけを含む正常結果の件数を確認する。
    *
    * 事前条件:
@@ -581,26 +764,32 @@ describe('Rule filtering', () => {
     const findings = [
       {
         key: '0-error-0',
+        kind: 'style-guide' as const,
         severity: 'Error' as const,
         message: 'Error 1',
         styleGuideItem: '1-1 日本語の句読点',
         matches: [],
+        translationFormIndex: 0,
         entry,
       },
       {
         key: '0-warning-0',
+        kind: 'style-guide' as const,
         severity: 'Warning' as const,
         message: 'Warning 1',
         styleGuideItem: '3-2 View XX',
         matches: [],
+        translationFormIndex: 0,
         entry,
       },
       {
         key: '0-warning-1',
+        kind: 'style-guide' as const,
         severity: 'Warning' as const,
         message: 'Warning 2',
         styleGuideItem: '1-1 日本語の句読点',
         matches: [],
+        translationFormIndex: 0,
         entry,
       },
     ]
@@ -630,26 +819,32 @@ describe('Rule filtering', () => {
     const findings = [
       {
         key: '0-error-0',
+        kind: 'style-guide' as const,
         severity: 'Error' as const,
         message: 'Error 1',
         styleGuideItem: '1-1 日本語の句読点',
         matches: [],
+        translationFormIndex: 0,
         entry,
       },
       {
         key: '0-warning-0',
+        kind: 'style-guide' as const,
         severity: 'Warning' as const,
         message: 'Warning 1',
         styleGuideItem: '1-1 日本語の句読点',
         matches: [],
+        translationFormIndex: 0,
         entry,
       },
       {
         key: '0-error-1',
+        kind: 'style-guide' as const,
         severity: 'Error' as const,
         message: 'Error 2',
         styleGuideItem: '1-2 英数字・記号の半角表記',
         matches: [],
+        translationFormIndex: 0,
         entry,
       },
     ]

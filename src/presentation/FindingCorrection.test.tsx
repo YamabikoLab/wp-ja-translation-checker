@@ -3,7 +3,7 @@
  */
 
 /**
- * 1件の翻訳修正案について、編集、既存ルールによる再チェック、結果確認、キャンセルを React の利用者操作から確認する。
+ * 1件の翻訳修正案について、編集、Style Guide / Glossary の共通再チェック、結果確認、キャンセルを React の利用者操作から確認する。
  */
 
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
@@ -20,10 +20,12 @@ import { FindingCorrection } from './FindingCorrection'
 function createFinding(translation = 'WordPressのテーブル'): Finding {
   return {
     key: '0-error-0',
+    kind: 'style-guide',
     severity: 'Error',
     styleGuideItem: '1-4 半角文字と全角文字の間のスペース',
     message: '「s」と「の」の間に半角スペースを入れてください',
     matches: [{ start: 8, end: 10 }],
+    translationFormIndex: 0,
     entry: {
       entryIndex: 0,
       source: {
@@ -47,10 +49,12 @@ function createFinding(translation = 'WordPressのテーブル'): Finding {
 function createWarningFinding(): Finding {
   return {
     key: '0-warning-0',
+    kind: 'style-guide',
     severity: 'Warning',
     styleGuideItem: '3-4 「Sorry, ...」の Sorry を訳さない',
     message: '先頭の「Sorry,」に対応する謝罪表現を削除してください',
     matches: [{ start: 0, end: 9 }],
+    translationFormIndex: 0,
     entry: {
       entryIndex: 0,
       source: {
@@ -62,6 +66,36 @@ function createWarningFinding(): Finding {
           text: '申し訳ございませんが、ご注文は失敗しました',
         },
       ],
+    },
+  }
+}
+
+/**
+ * Glossary 修正再チェック用の Warning を生成する。
+ *
+ * @returns website の登録訳語を含まない翻訳を持つ Glossary Finding。
+ */
+function createGlossaryFinding(): Finding {
+  return {
+    key: '0-glossary-0-0',
+    kind: 'glossary',
+    severity: 'Warning',
+    styleGuideItem: 'Glossary',
+    message: '「website」の Glossary 訳語を確認してください',
+    matches: [],
+    translationFormIndex: 0,
+    entry: {
+      entryIndex: 0,
+      source: { singular: 'Visit website' },
+      translations: [{ index: 0, text: 'ウェブページを見る' }],
+    },
+    glossary: {
+      entryIndex: 0,
+      translationFormIndex: 0,
+      originalTerm: 'website',
+      candidates: [{ original: 'website', translation: 'サイト' }],
+      currentTranslation: 'ウェブページを見る',
+      sourceMatches: [{ source: 'singular', start: 6, end: 13 }],
     },
   }
 }
@@ -181,6 +215,32 @@ describe('FindingCorrection', () => {
     ).toBeTruthy()
     expect(
       screen.getByText('スタイルガイド: 3-4 「Sorry, ...」の Sorry を訳さない'),
+    ).toBeTruthy()
+  })
+
+  /**
+   * Glossary Warning の修正案も同じ再チェック操作で解消確認できることを確認する。
+   *
+   * 事前条件:
+   * - website の Glossary Warning がある。
+   *
+   * 操作:
+   * - 翻訳を登録訳語「サイト」を含む内容へ修正して再チェックする。
+   *
+   * 期待結果:
+   * - Glossary Warning が消え、問題なしと表示される。
+   */
+  it('when a glossary translation is corrected, should clear the glossary warning through the common recheck action', () => {
+    render(<FindingCorrection finding={createGlossaryFinding()} />)
+
+    fireEvent.click(screen.getByRole('button', { name: '修正して再チェック' }))
+    fireEvent.change(screen.getByRole('textbox', { name: '翻訳' }), {
+      target: { value: 'サイトを見る' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: '再チェック' }))
+
+    expect(
+      screen.getByText('この翻訳では問題は見つかりませんでした。'),
     ).toBeTruthy()
   })
 
