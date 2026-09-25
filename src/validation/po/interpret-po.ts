@@ -45,7 +45,7 @@ export type PoMetadata = {
  *
  * index は正規化後の配列位置ではなく、元の `msgstr[n]` の `n` を保持する。
  */
-export type TranslationForm = {
+type TranslationForm = {
   index: number
   text: string
 }
@@ -68,7 +68,7 @@ export type TranslationEntry = {
 /**
  * 正常に解釈された PO の Validation Core 用データを表す。
  */
-export type InterpretedPo = {
+type InterpretedPo = {
   metadata: PoMetadata
   entries: readonly TranslationEntry[]
 }

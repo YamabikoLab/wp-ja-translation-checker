@@ -94,7 +94,7 @@ const EDGE_PAGE_COUNT = 3
 const SIBLING_PAGE_COUNT = 1
 
 /** ページ番号ナビゲーションに表示するページ番号または省略記号。 */
-export type PaginationItem = number | 'ellipsis'
+type PaginationItem = number | 'ellipsis'
 
 /** 指摘一覧の現在ページを表示するために必要な導出値。 */
 export type PaginationModel = {
