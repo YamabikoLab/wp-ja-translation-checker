@@ -299,7 +299,7 @@ describe('Japanese v1 rule 1-4', () => {
       ),
     ).toContainEqual({
       styleGuideItem: '1-4 半角文字と全角文字の間のスペース',
-      message: '「A」と「設」の間に半角スペースを入れてください',
+      message: '「s」と「設」の間に半角スペースを入れてください',
     })
   })
 
@@ -1255,7 +1255,7 @@ describe('Japanese v1 match ranges', () => {
       ),
     ).toContainEqual({
       styleGuideItem: '1-4 半角文字と全角文字の間のスペース',
-      message: '「s」と「設」の間に半角スペースを入れてください',
+      message: '「A」と「設」の間に半角スペースを入れてください',
       matches: [
         { start: 2, end: 4 },
         { start: 6, end: 8 },
