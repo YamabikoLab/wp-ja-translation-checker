@@ -33,12 +33,38 @@ describe('Japanese glossary check', () => {
     ).toEqual([])
   })
 
-  it('when glossary term differs only by ASCII case, should detect it without matching inside another alphanumeric word', () => {
+  /**
+   * Glossary term は ASCII の大文字小文字を区別せず検出する一方、
+   * より長い英数字語の一部として現れる文字列は対象にしないことを確認する。
+   *
+   * 事前条件:
+   * - 原文に大文字表記の Glossary term が独立語としてある。
+   * - 別の原文には同じ文字列が英数字語の途中にだけ含まれる。
+   *
+   * 操作:
+   * - それぞれ Glossary Check を実行する。
+   *
+   * 期待結果:
+   * - 独立語は Glossary 訳語で成立する。
+   * - 英数字語の途中一致だけでは Warning を返さない。
+   */
+  it('when glossary term differs only by ASCII case or appears inside another alphanumeric word, should match only the standalone term', () => {
     expect(
       checkJapaneseGlossary(
         [
-          createEntry({ singular: 'POST and poster' }, [
-            { index: 0, text: '投稿を表示' },
+          createEntry({ singular: 'POST' }, [
+            { index: 0, text: '投稿' },
+          ]),
+        ],
+        glossary,
+      ),
+    ).toEqual([])
+
+    expect(
+      checkJapaneseGlossary(
+        [
+          createEntry({ singular: 'poster' }, [
+            { index: 0, text: 'ポスター' },
           ]),
         ],
         glossary,
