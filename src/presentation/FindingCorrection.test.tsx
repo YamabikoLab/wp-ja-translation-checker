@@ -95,6 +95,23 @@ describe('FindingCorrection', () => {
   })
 
   /**
+   * 修正案の編集を開始したとき、再チェック結果の通知領域が結果更新前から存在することを確認する。
+   *
+   * 操作:
+   * - 「修正して再チェック」を押す。
+   *
+   * 期待結果:
+   * - 結果表示前から空の status 領域が存在し、再チェック後の内容更新を支援技術へ通知できる。
+   */
+  it('when correction starts, should keep an empty status region mounted before recheck', () => {
+    render(<FindingCorrection finding={createFinding()} />)
+
+    fireEvent.click(screen.getByRole('button', { name: '修正して再チェック' }))
+
+    expect(screen.getByRole('status').textContent).toBe('')
+  })
+
+  /**
    * 問題を解消した修正案を再チェックしたとき、問題なしとして確認できることを確認する。
    *
    * 操作:
