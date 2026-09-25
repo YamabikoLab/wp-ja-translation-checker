@@ -188,10 +188,10 @@ export function presentationReducer(
 }
 
 /**
- * 正常完了した Validation Core の結果を、CheckMessage 単位の表示一覧へ変換する。
+ * 正常完了した Validation Core の Style Guide / Glossary 結果を、共通の指摘一覧へ変換する。
  *
  * @param result Check Orchestration が返した正常完了結果。
- * @returns entryIndex から原文・翻訳を参照した指摘一覧。
+ * @returns Style Guide と Glossary を同じ表示・操作基盤で扱える指摘一覧。
  */
 export function createFindings(
   result: SuccessfulCheckResult,
@@ -219,7 +219,6 @@ export function createFindings(
         matches: message.matches,
         entry,
         translationFormIndex: 0,
-        translationFormIndex: 0,
       })
     }
 
@@ -233,6 +232,7 @@ export function createFindings(
         styleGuideItem: message.styleGuideItem,
         matches: message.matches,
         entry,
+        translationFormIndex: 0,
       })
     }
   }
@@ -279,14 +279,13 @@ export function summarizeFindings(
 
   // 利用者向けの1指摘を単位として Severity ごとの件数を集計する。
   for (const finding of findings) {
-    // Error 以外の Style Guide 指摘は Warning として集計する公開契約に従う。
+    // Error 以外の指摘は、Style Guide / Glossary の種別にかかわらず Warning として集計する。
     if (finding.severity === 'Error') {
       errorCount += 1
     } else {
       warningCount += 1
     }
   }
-
 
   return {
     errorCount,
