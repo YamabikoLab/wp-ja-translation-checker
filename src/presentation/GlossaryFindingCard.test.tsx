@@ -58,12 +58,11 @@ describe('GlossaryFindingCard', () => {
     expect(screen.getByText('設定の初期状態を表す場合。')).toBeTruthy()
     expect(screen.getByText('標準を選択')).toBeTruthy()
 
-    expect(
-      screen.getByRole('link', {
-        name: 'WordPress.org 日本語 Glossary を確認',
-      }),
-    ).toHaveAttribute(
-      'href',
+    const link = screen.getByRole('link', {
+      name: 'WordPress.org 日本語 Glossary を確認',
+    })
+
+    expect(link.getAttribute('href')).toBe(
       'https://translate.wordpress.org/locale/ja/default/glossary/',
     )
   })
