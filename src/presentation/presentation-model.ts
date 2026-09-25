@@ -52,6 +52,7 @@ export type Finding = {
   severity: 'Error' | 'Warning'
   message: string
   styleGuideItem: string
+  matches: SuccessfulCheckResult['results'][number]['errors'][number]['matches']
   entry: SuccessfulCheckResult['entries'][number]
 }
 
@@ -169,6 +170,7 @@ export function createFindings(
         severity: 'Error',
         message: message.message,
         styleGuideItem: message.styleGuideItem,
+        matches: message.matches,
         entry,
       })
     }
@@ -180,6 +182,7 @@ export function createFindings(
         severity: 'Warning',
         message: message.message,
         styleGuideItem: message.styleGuideItem,
+        matches: message.matches,
         entry,
       })
     }
