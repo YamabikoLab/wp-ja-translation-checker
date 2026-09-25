@@ -1258,7 +1258,7 @@ describe('Japanese v1 match ranges', () => {
       message: '「s」と「設」の間に半角スペースを入れてください',
       matches: [
         { start: 8, end: 10 },
-        { start: 16, end: 18 },
+        { start: 17, end: 19 },
       ],
     })
   })
