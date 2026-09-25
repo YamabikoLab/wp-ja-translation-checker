@@ -187,6 +187,8 @@ export function serializeCsv(
     )
   }
 
+  // Glossary Warning は Style Guide の項目名を持たないため、種別を分離して候補情報を専用列へ出力する。
+  // Glossary Warning は候補訳・品詞・補足を失わない独立節として共有用 Markdown へ出力する。
   for (const finding of glossaryFindings) {
     rows.push(
       [
@@ -332,6 +334,7 @@ export function serializeMarkdown(
     '',
   ]
 
+  // どちらの検証責務からも指摘がない場合だけ、指摘なしの完了メッセージを出力する。
   if (findings.length === 0 && glossaryFindings.length === 0) {
     lines.push(
       '正常に確認が完了し、v1 の対象ルールでは指摘がありませんでした。',
@@ -357,6 +360,7 @@ export function serializeMarkdown(
       '',
       `Glossary の候補:\n${finding.result.candidates
         .map((candidate) => {
+          // 未登録の品詞・補足は出力へ補完せず、公式 Glossary に存在する情報だけを並べる。
           const details = [
             candidate.translation || '（訳文へ入れない）',
             candidate.partOfSpeech,
