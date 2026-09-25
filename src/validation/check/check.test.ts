@@ -316,7 +316,18 @@ describe('Check Orchestration', () => {
     expect(source).toBe(original)
   })
   /**
-   * Glossary 登録語が原文にあり登録訳語が翻訳にない場合に、Style Guide 結果とは別に Warning を公開する。
+   * Glossary 登録語が原文にあり登録訳語が翻訳にない場合に、Style Guide 結果とは別に Warning を公開することを確認する。
+   *
+   * 事前条件:
+   * - 日本語 PO の原文に Glossary 登録語 `website` がある。
+   * - 翻訳に登録訳語「サイト」が含まれない。
+   *
+   * 操作:
+   * - Check Orchestration の公開入口から確認する。
+   *
+   * 期待結果:
+   * - 正常完了する。
+   * - Glossary Warning に entryIndex、translationFormIndex、原語、現在の翻訳が含まれる。
    */
   it('when Japanese PO violates glossary translation, should expose glossary results separately from style guide results', () => {
     const source = [
