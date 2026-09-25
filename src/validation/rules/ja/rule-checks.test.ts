@@ -470,6 +470,69 @@ describe('Japanese v1 rule 1-4', () => {
     })
   })
 
+
+  /**
+   * URL がコロン直後に続く場合も、URL 自体を非表示文字列として読み飛ばさないことを確認する。
+   *
+   * 操作:
+   * - ラベル用コロンの直後にスペースなしで URL が続く翻訳を確認する。
+   *
+   * 期待結果:
+   * - コロン後のスペース不足が 1-4 として返る。
+   */
+  it('when a URL follows a colon without a space, should report rule 1-4', () => {
+    expect(
+      getRuleMessages(
+        checkSpacingBetweenHalfAndFullWidth,
+        'URL',
+        'URL:https://example.com',
+      ),
+    ).toContainEqual({
+      styleGuideItem: '1-4 半角文字と全角文字の間のスペース',
+      message: '「:」の後にスペースを1つ入れてください',
+    })
+  })
+
+  /**
+   * プレースホルダーがコロン直後に続く場合も、表示本文上の文字として境界判定することを確認する。
+   *
+   * 操作:
+   * - ラベル用コロンの直後にスペースなしで文字列プレースホルダーが続く翻訳を確認する。
+   *
+   * 期待結果:
+   * - コロン後のスペース不足が 1-4 として返る。
+   */
+  it('when a placeholder follows a colon without a space, should report rule 1-4', () => {
+    expect(
+      getRuleMessages(checkSpacingBetweenHalfAndFullWidth, 'Value', '値:%s'),
+    ).toContainEqual({
+      styleGuideItem: '1-4 半角文字と全角文字の間のスペース',
+      message: '「:」の後にスペースを1つ入れてください',
+    })
+  })
+
+  /**
+   * URL の後ろにあるコロン前スペースも、URL を読み飛ばさず検出することを確認する。
+   *
+   * 操作:
+   * - URL とコロンの間に不要なスペースを含む翻訳を確認する。
+   *
+   * 期待結果:
+   * - コロン前の不要スペースが 1-4 として返る。
+   */
+  it('when a URL is followed by a spaced colon, should report rule 1-4', () => {
+    expect(
+      getRuleMessages(
+        checkSpacingBetweenHalfAndFullWidth,
+        'URL',
+        'https://example.com :',
+      ),
+    ).toContainEqual({
+      styleGuideItem: '1-4 半角文字と全角文字の間のスペース',
+      message: '「:」の前のスペースは不要です',
+    })
+  })
+
   /**
    * コロン前の全角スペースも不要なスペースとして 1-4 で検出することを確認する。
    *
