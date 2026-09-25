@@ -20,7 +20,7 @@ function normalizeMatches(
   text: string,
   matches: Finding['matches'],
 ): readonly Finding['matches'][number][] {
-  const validMatches = matches
+  const validMatches = [...matches]
     .filter(
       ({ start, end }) =>
         Number.isInteger(start) &&
@@ -29,7 +29,7 @@ function normalizeMatches(
         start < end &&
         end <= text.length,
     )
-    .toSorted((left, right) => left.start - right.start || left.end - right.end)
+    .sort((left, right) => left.start - right.start || left.end - right.end)
 
   const normalized: Array<Finding['matches'][number]> = []
 
