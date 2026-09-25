@@ -20,10 +20,12 @@ import { FindingCorrection } from './FindingCorrection'
 function createFinding(translation = 'WordPressのテーブル'): Finding {
   return {
     key: '0-error-0',
+    kind: 'style-guide',
     severity: 'Error',
     styleGuideItem: '1-4 半角文字と全角文字の間のスペース',
     message: '「s」と「の」の間に半角スペースを入れてください',
     matches: [{ start: 8, end: 10 }],
+    translationFormIndex: 0,
     entry: {
       entryIndex: 0,
       source: {
@@ -47,10 +49,12 @@ function createFinding(translation = 'WordPressのテーブル'): Finding {
 function createWarningFinding(): Finding {
   return {
     key: '0-warning-0',
+    kind: 'style-guide',
     severity: 'Warning',
     styleGuideItem: '3-4 「Sorry, ...」の Sorry を訳さない',
     message: '先頭の「Sorry,」に対応する謝罪表現を削除してください',
     matches: [{ start: 0, end: 9 }],
+    translationFormIndex: 0,
     entry: {
       entryIndex: 0,
       source: {
