@@ -35,7 +35,7 @@ function normalizeMatches(
 
   // 同一箇所・重複・隣接する一致範囲は1つへまとめ、出力時に同じ文字を二重化しない。
   for (const match of validMatches) {
-    const previous = normalized.at(-1)
+    const previous = normalized[normalized.length - 1]
 
     if (previous !== undefined && match.start <= previous.end) {
       normalized[normalized.length - 1] = {
