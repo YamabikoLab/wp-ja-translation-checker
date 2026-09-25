@@ -6,8 +6,10 @@
 
 import type { CheckResult } from '@/check/check'
 
+/** Check Orchestration が正常完了した場合の公開結果。 */
 type SuccessfulCheckResult = Extract<CheckResult, { status: 'success' }>
 
+/** 確認を完了できなかった理由と、利用者へ提示するために必要な入力情報。 */
 type FeedbackState =
   | {
       status: 'feedback'
