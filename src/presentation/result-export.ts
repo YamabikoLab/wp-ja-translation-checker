@@ -210,7 +210,9 @@ export function serializeJson(
   fileName: string,
   findings: readonly Finding[],
 ): string {
-  const errors = findings.filter((finding) => finding.severity === 'Error').length
+  const errors = findings.filter(
+    (finding) => finding.severity === 'Error',
+  ).length
   const warnings = findings.length - errors
 
   return JSON.stringify(

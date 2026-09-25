@@ -37,7 +37,8 @@ export function FindingCorrection({ finding }: { finding: Finding }) {
     (form) => form.index === finding.translationFormIndex,
   )
   const translation = translationForm?.text ?? ''
-  const translationIndex = translationForm?.index ?? finding.translationFormIndex
+  const translationIndex =
+    translationForm?.index ?? finding.translationFormIndex
   const [state, setState] = useState<CorrectionState>({ status: 'viewing' })
 
   // 修正操作を開始していない間は元の指摘表示を保ち、利用者が明示的に開始した場合だけ一時編集領域を開く。
@@ -152,7 +153,10 @@ export function FindingCorrection({ finding }: { finding: Finding }) {
               <div className={styles.correctionFindings}>
                 {/* 修正案で残っている各指摘を、通常結果と同じ判断材料を確認できる単位で表示する。 */}
                 {messages.map((message) => (
-                  <section key={message.key} className={styles.correctionFinding}>
+                  <section
+                    key={message.key}
+                    className={styles.correctionFinding}
+                  >
                     <div className={styles.correctionFindingHeader}>
                       <span
                         className={

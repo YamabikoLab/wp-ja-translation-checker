@@ -70,7 +70,6 @@ function createWarningFinding(): Finding {
   }
 }
 
-
 /**
  * Glossary 修正再チェック用の Warning を生成する。
  *
@@ -218,7 +217,6 @@ describe('FindingCorrection', () => {
       screen.getByText('スタイルガイド: 3-4 「Sorry, ...」の Sorry を訳さない'),
     ).toBeTruthy()
   })
-
 
   /**
    * Glossary Warning の修正案も同じ再チェック操作で解消確認できることを確認する。

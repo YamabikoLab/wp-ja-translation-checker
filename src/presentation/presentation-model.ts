@@ -264,7 +264,6 @@ export function createFindings(
   return findings
 }
 
-
 /**
  * CheckMessage 単位の指摘一覧から結果概要の件数を導出する。
  *

@@ -167,11 +167,7 @@ export function TranslationChecker() {
    * 現在の確認結果全体を CSV として保存する。
    */
   const handleCsvDownload = () => {
-    downloadResult(
-      serializeCsv(findings),
-      'csv',
-      'text/csv;charset=utf-8',
-    )
+    downloadResult(serializeCsv(findings), 'csv', 'text/csv;charset=utf-8')
   }
 
   /**

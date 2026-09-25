@@ -111,11 +111,15 @@ export function FindingCard({ finding }: { finding: Finding }) {
                 <li
                   key={`${candidate.translation}-${candidate.partOfSpeech ?? ''}-${index}`}
                 >
-                  <strong>{candidate.translation || '（訳文へ入れない）'}</strong>
+                  <strong>
+                    {candidate.translation || '（訳文へ入れない）'}
+                  </strong>
                   {candidate.partOfSpeech !== undefined && (
                     <span> / {candidate.partOfSpeech}</span>
                   )}
-                  {candidate.comment !== undefined && <p>{candidate.comment}</p>}
+                  {candidate.comment !== undefined && (
+                    <p>{candidate.comment}</p>
+                  )}
                 </li>
               ))}
             </ul>
