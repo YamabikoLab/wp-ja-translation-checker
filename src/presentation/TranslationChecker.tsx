@@ -94,6 +94,7 @@ function Feedback({
  *
  * @param props 文字列表示に必要な属性。
  * @param props.text 表示対象の文字列。
+ * @param props.matches 翻訳内の一致範囲。原文表示では省略可能。
  * @returns 長文時だけ展開操作を持つ文字列表示。
  */
 
@@ -120,7 +121,7 @@ function ExpandableText({
 
   // 重複・隣接する範囲を1つへまとめ、同じ文字を欠落・重複させずに表示する。
   for (const match of visibleMatches) {
-    const previous = normalizedMatches.at(-1)
+    const previous = normalizedMatches[normalizedMatches.length - 1]
 
     if (previous !== undefined && match.start <= previous.end) {
       normalizedMatches[normalizedMatches.length - 1] = {
