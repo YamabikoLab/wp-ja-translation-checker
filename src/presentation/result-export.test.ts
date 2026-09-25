@@ -213,7 +213,7 @@ describe('Markdown result export', () => {
     expect(markdown).toContain('### Error: 1-1')
     expect(markdown).toContain('### Error: 1-4')
     expect(markdown.match(/Hello, world/g)).toHaveLength(2)
-    expect(markdown.match(/こんにちは, 世界/g)).toHaveLength(2)
+    expect(markdown.match(/こんにちは\*\*,\*\* 世界/g)).toHaveLength(2)
   })
 
   /**
@@ -247,7 +247,7 @@ describe('Markdown result export', () => {
       translation: '全て保存して全て確認',
       matches: [
         { start: 0, end: 2 },
-        { start: 7, end: 9 },
+        { start: 6, end: 8 },
       ],
     })
   })
