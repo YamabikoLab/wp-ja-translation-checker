@@ -76,8 +76,12 @@ function findSourceTerms(
   // 長い語句から原文へ割り当て、同一範囲を短い部分語で重複指摘しない。
   for (const group of groups) {
     let from = 0
+
+    // 同じ Glossary term が原文中に複数回現れる場合も、各出現位置を確認対象として収集する。
     while (from <= lower.length - group.normalized.length) {
       const start = lower.indexOf(group.normalized, from)
+
+      // 現在位置以降に対象語がなければ、その Glossary term の探索を終了する。
       if (start < 0) break
       const end = start + group.normalized.length
       from = start + 1
@@ -88,6 +92,7 @@ function findSourceTerms(
         (!isAsciiAlphaNumeric(group.normalized[group.normalized.length - 1]) ||
           !isAsciiAlphaNumeric(text[end]))
 
+      // 英数字語の途中一致と、長い語句ですでに採用した範囲への部分一致は確認対象にしない。
       if (!boundaryMatches || occupied.slice(start, end).some(Boolean)) continue
 
       for (let index = start; index < end; index += 1) occupied[index] = true
@@ -112,7 +117,9 @@ export function checkJapaneseGlossary(
   const groups = createTermGroups(glossary)
   const results: GlossaryCheckResult[] = []
 
+  // PO 内の各翻訳 entry は独立した Glossary 確認単位として扱う。
   for (const entry of entries) {
+    // plural 原文が存在する場合だけ同じ Glossary 検出規則を適用し、singular と合わせて候補を集める。
     const detected = [
       ...findSourceTerms(entry.source.singular, 'singular', groups),
       ...(entry.source.plural === undefined
@@ -127,6 +134,8 @@ export function checkJapaneseGlossary(
     // singular / plural の双方で見つかった同一 term を1つの確認対象へまとめる。
     for (const item of detected) {
       const current = byTerm.get(item.group.normalized)
+
+      // 同一 term の最初の一致では候補集合を作り、以後の一致はその集合へ位置情報だけを追加する。
       if (current === undefined) {
         byTerm.set(item.group.normalized, {
           group: item.group,
@@ -139,16 +148,22 @@ export function checkJapaneseGlossary(
 
     // 1つの Glossary term について、登録された全候補を同じ判断材料として扱う。
     for (const { group, matches } of byTerm.values()) {
+      // 空訳語は「訳文にこの文字列を含める」という自動判定が成立しないため候補から除外する。
       const usableCandidates = group.candidates.filter(
         (candidate) => candidate.translation !== '',
       )
+
+      // 空訳語しか登録されていない term は自動で不一致と断定せず、人による確認対象にも追加しない。
       if (usableCandidates.length === 0) continue
 
       // plural form 間で成立条件を共有せず、各翻訳フォームを独立して確認する。
       for (const translationForm of entry.translations) {
+        // 複数候補のうち1つでも現在の翻訳に含まれていれば、Glossary に沿った可能性があるものとして成立させる。
         const matchesGlossary = usableCandidates.some((candidate) =>
           translationForm.text.includes(candidate.translation),
         )
+
+        // 登録候補のいずれかを満たす翻訳フォームは Warning にしない。
         if (matchesGlossary) continue
 
         results.push({
