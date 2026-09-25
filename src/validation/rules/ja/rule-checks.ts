@@ -79,7 +79,7 @@ const APOLOGY_PREFIXES = [
 ] as const
 
 /**
- * 日本語本文の表記規則から除外する技術文字列の位置情報を表す。
+ * 日本語本文の表記規則から除外する技術文字列と、表示本文から除外する HTML マークアップの位置情報を表す。
  */
 type ProtectedText = {
   text: string
@@ -92,7 +92,7 @@ type ProtectedText = {
  * 明示的に判別できる代表的な技術文字列の位置を保護する。
  *
  * @param text 確認対象の翻訳。
- * @returns 元文字列と、本文ルールの判定対象外にする文字位置。
+ * @returns 元文字列と、本文ルールの判定対象外にする文字位置、および表示本文から除外する HTML マークアップ位置。
  */
 function protectTechnicalText(text: string): ProtectedText {
   const protectedIndexes = new Set<number>()
@@ -150,9 +150,9 @@ function getTranslation(entry: TranslationEntry): string | undefined {
 }
 
 /**
- * 保護範囲を除いた表示本文上で、指定位置の外側にあるスペースと隣接文字を取得する。
+ * HTML マークアップを除いた表示本文上で、指定位置の外側にあるスペースと隣接文字を取得する。
  *
- * HTML 等の表示されない技術文字列は読み飛ばすが、本文側に実在するスペースは元文字列上の位置とともに保持する。
+ * 表示されない HTML マークアップだけを読み飛ばし、URL やプレースホルダーなどの可視な技術文字列は本文上の文字として扱う。
  *
  * @param text 確認対象の翻訳。
  * @param hiddenMarkupIndexes 表示本文から除外する HTML マークアップの文字位置。
@@ -177,7 +177,7 @@ function getVisibleAdjacentText(
   let index = startIndex
   const spacingIndexes: number[] = []
 
-  // 表示されない保護範囲を除外し、本文側のスペースと最初の可視文字だけを取得する。
+  // 表示されない HTML マークアップだけを除外し、本文側のスペースと最初の可視文字を取得する。
   while (index >= 0 && index < text.length) {
     if (hiddenMarkupIndexes.has(index)) {
       index += direction
