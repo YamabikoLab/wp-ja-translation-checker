@@ -8,6 +8,79 @@
 import type { Finding } from './presentation-model'
 
 const CSV_BOM = '\uFEFF'
+
+/**
+ * 翻訳内の一致範囲を、重複や隣接による文字列の欠落・重複が起きない順序へ正規化する。
+ *
+ * @param text 対象の翻訳。
+ * @param matches Validation Core が返した一致範囲。
+ * @returns 対象文字列内に収まる、開始位置順で重複しない範囲。
+ */
+function normalizeMatches(
+  text: string,
+  matches: Finding['matches'],
+): readonly Finding['matches'][number][] {
+  const validMatches = matches
+    .filter(
+      ({ start, end }) =>
+        Number.isInteger(start) &&
+        Number.isInteger(end) &&
+        start >= 0 &&
+        start < end &&
+        end <= text.length,
+    )
+    .toSorted((left, right) => left.start - right.start || left.end - right.end)
+
+  const normalized: Array<Finding['matches'][number]> = []
+
+  // 同一箇所・重複・隣接する一致範囲は1つへまとめ、出力時に同じ文字を二重化しない。
+  for (const match of validMatches) {
+    const previous = normalized.at(-1)
+
+    if (previous !== undefined && match.start <= previous.end) {
+      normalized[normalized.length - 1] = {
+        start: previous.start,
+        end: Math.max(previous.end, match.end),
+      }
+    } else {
+      normalized.push(match)
+    }
+  }
+
+  return normalized
+}
+
+/**
+ * Markdown で確認しやすいよう、翻訳の一致範囲だけを太字で表現する。
+ *
+ * @param text 出力対象の翻訳。
+ * @param matches Validation Core が返した一致範囲。
+ * @returns 一致範囲を Markdown の太字記法で囲んだ翻訳。
+ */
+function formatMarkdownTranslation(
+  text: string,
+  matches: Finding['matches'],
+): string {
+  const normalized = normalizeMatches(text, matches)
+
+  if (normalized.length === 0) {
+    return text
+  }
+
+  const parts: string[] = []
+  let cursor = 0
+
+  // 元文字列の順序を維持したまま、一致範囲だけに表示用の Markdown 記法を付与する。
+  for (const match of normalized) {
+    parts.push(text.slice(cursor, match.start))
+    parts.push(`**${text.slice(match.start, match.end)}**`)
+    cursor = match.end
+  }
+
+  parts.push(text.slice(cursor))
+  return parts.join('')
+}
+
 const CSV_HEADERS = [
   'severity',
   'styleGuideItem',
@@ -103,6 +176,7 @@ export function serializeJson(
       message: finding.message,
       source,
       translation,
+      matches: finding.matches,
     }
   })
 
@@ -151,6 +225,10 @@ export function serializeMarkdown(
   // 共有先でも1指摘ごとの情報を追えるよう、表示と同じ順序で原文・翻訳を付ける。
   for (const finding of findings) {
     const { source, translation } = getFindingText(finding)
+    const highlightedTranslation = formatMarkdownTranslation(
+      translation,
+      finding.matches,
+    )
 
     lines.push(
       `### ${finding.severity}: ${finding.styleGuideItem}`,
@@ -163,7 +241,7 @@ export function serializeMarkdown(
       '',
       '**翻訳**',
       '',
-      translation,
+      highlightedTranslation,
       '',
     )
   }
