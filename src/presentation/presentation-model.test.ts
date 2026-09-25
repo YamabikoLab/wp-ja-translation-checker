@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest'
 import type { CheckResult } from '@/check/check'
 import {
   createFindings,
+  createGlossaryFindings,
   createPaginationModel,
   createRuleFilterOptions,
   filterFindingsByRule,
@@ -426,6 +427,111 @@ describe('Presentation result model', () => {
     expect(() => createFindings(inconsistentResult)).toThrow(
       '確認結果の entryIndex 0 に対応する翻訳 entry がありません。',
     )
+  })
+
+  /**
+   * Glossary 結果を対応する entry と結び付け、Style Guide とは別の表示モデルとして保持することを確認する。
+   *
+   * 事前条件:
+   * - 正常完了結果に1件の Glossary Warning がある。
+   *
+   * 操作:
+   * - Glossary 表示モデルを生成する。
+   *
+   * 期待結果:
+   * - Warning と元 entry が同じ entryIndex で結び付く。
+   */
+  it('when success has a glossary result, should expose it with the matching entry', () => {
+    const result = {
+      ...createSuccessResult(0, 0),
+      glossaryResults: [
+        {
+          entryIndex: 0,
+          translationFormIndex: 0,
+          originalTerm: 'settings',
+          candidates: [{ original: 'settings', translation: '設定' }],
+          currentTranslation: '全ての設定を保存して下さい',
+          sourceMatches: [{ source: 'singular' as const, start: 9, end: 17 }],
+        },
+      ],
+    }
+
+    const glossaryFindings = createGlossaryFindings(result)
+
+    expect(glossaryFindings).toHaveLength(1)
+    expect(glossaryFindings[0]?.entry).toBe(result.entries[0])
+    expect(glossaryFindings[0]?.result.originalTerm).toBe('settings')
+  })
+
+  /**
+   * Glossary 結果の entryIndex が解釈済み entry と一致しない場合に誤表示しないことを確認する。
+   *
+   * 事前条件:
+   * - Glossary Warning の entryIndex に対応する entry が存在しない。
+   *
+   * 操作:
+   * - Glossary 表示モデルを生成する。
+   *
+   * 期待結果:
+   * - 契約不整合として失敗する。
+   */
+  it('when glossary entry index does not match the entries position, should reject the inconsistent result', () => {
+    const result = {
+      ...createSuccessResult(0, 0),
+      glossaryResults: [
+        {
+          entryIndex: 1,
+          translationFormIndex: 0,
+          originalTerm: 'settings',
+          candidates: [{ original: 'settings', translation: '設定' }],
+          currentTranslation: '全ての設定を保存して下さい',
+          sourceMatches: [{ source: 'singular' as const, start: 9, end: 17 }],
+        },
+      ],
+    }
+
+    expect(() => createGlossaryFindings(result)).toThrow(
+      'Glossary 結果の entryIndex 1 に対応する翻訳 entry がありません。',
+    )
+  })
+
+  /**
+   * Glossary Warning が結果概要の Warning 件数へ加算されることを確認する。
+   *
+   * 事前条件:
+   * - Style Guide の Error 1件と Glossary Warning 1件がある。
+   *
+   * 操作:
+   * - 結果概要を集計する。
+   *
+   * 期待結果:
+   * - Error 1件、Warning 1件、全体2件となる。
+   */
+  it('when glossary warnings exist, should include them in the warning summary', () => {
+    const result = {
+      ...createSuccessResult(1, 0),
+      glossaryResults: [
+        {
+          entryIndex: 0,
+          translationFormIndex: 0,
+          originalTerm: 'settings',
+          candidates: [{ original: 'settings', translation: '設定' }],
+          currentTranslation: '全ての設定を保存して下さい',
+          sourceMatches: [{ source: 'singular' as const, start: 9, end: 17 }],
+        },
+      ],
+    }
+
+    expect(
+      summarizeFindings(
+        createFindings(result),
+        createGlossaryFindings(result),
+      ),
+    ).toEqual({
+      errorCount: 1,
+      warningCount: 1,
+      totalCount: 2,
+    })
   })
 
   /**
