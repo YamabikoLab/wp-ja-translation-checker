@@ -79,7 +79,7 @@ export type FindingSummary = {
 }
 
 /**
- * ルールフィルターで選択できる1ルールと、現在の確認結果に含まれる指摘件数を表す。
+ * 項目フィルターで選択できる Style Guide 項目または Glossary と、現在の確認結果に含まれる指摘件数を表す。
  */
 export type RuleFilterOption = {
   styleGuideItem: string
@@ -295,7 +295,7 @@ export function summarizeFindings(
 }
 
 /**
- * 現在の確認結果に存在するルールを、最初に現れた順で重複なく集計する。
+ * 現在の確認結果に存在する Style Guide 項目と Glossary を、最初に現れた順で重複なく集計する。
  *
  * @param findings 正常完了結果から導出した全指摘。
  * @returns ルール名と CheckMessage 単位の指摘件数。
@@ -305,7 +305,7 @@ export function createRuleFilterOptions(
 ): readonly RuleFilterOption[] {
   const counts = new Map<string, number>()
 
-  // 画面で選択可能なルールと件数だけを導出し、元の指摘一覧は変更しない。
+  // 画面で選択可能な確認項目と件数だけを導出し、元の指摘一覧は変更しない。
   for (const finding of findings) {
     counts.set(
       finding.styleGuideItem,
@@ -320,7 +320,7 @@ export function createRuleFilterOptions(
 }
 
 /**
- * 選択された1ルールに一致する指摘だけを画面表示用として導出する。
+ * 選択された1確認項目に一致する指摘だけを画面表示用として導出する。
  *
  * @param findings 正常完了結果から導出した全指摘。
  * @param selectedStyleGuideItem 選択中のスタイルガイド項目。null は「すべてのルール」を表す。
