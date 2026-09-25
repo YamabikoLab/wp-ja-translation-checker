@@ -86,10 +86,15 @@ describe('Finding presentation', () => {
    * - Style Guide 指摘は元の msgstr[1] を表す translationFormIndex 1 を保持する。
    */
   it('when the first plural form is empty, should keep the checked translation form index for Style Guide findings', () => {
-    const result = createSuccessResult(1, 0)
-    result.entries[0] = {
-      ...result.entries[0],
-      translations: [{ index: 1, text: '検査対象の翻訳' }],
+    const baseResult = createSuccessResult(1, 0)
+    const result = {
+      ...baseResult,
+      entries: [
+        {
+          ...baseResult.entries[0],
+          translations: [{ index: 1, text: '検査対象の翻訳' }],
+        },
+      ],
     }
 
     const findings = createFindings(result)
