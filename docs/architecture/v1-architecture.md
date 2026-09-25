@@ -124,7 +124,7 @@ Presentation は利用者向け interaction state と表示を所有し、個別
 
 正常完了した確認結果から、現在存在するスタイルガイド項目と指摘件数を導出し、選択中の1ルールに一致する指摘だけを画面表示対象として導出する。ルール選択状態は Presentation が所有し、Validation Core の結果や判定条件は変更しない。
 
-正常完了した現在の確認結果について、指摘単位と原文・翻訳の対応を保ったまま CSV / JSON / Markdown へ表現し、ブラウザーの保存・クリップボード能力を通じて利用者へ提供する。
+正常完了した現在の確認結果について、指摘単位と原文・翻訳・一致箇所の対応を保ったまま画面表示および CSV / JSON / Markdown へ表現し、ブラウザーの保存・クリップボード能力を通じて利用者へ提供する。具体的な HTML / Markdown 表現は Presentation が所有する。
 
 ##### Invariants
 
@@ -189,9 +189,15 @@ PO Interpretation が生成した entry 一覧をまとめて受け取り、各 
 ##### Contract
 
 ```ts
+export type CheckMessageMatch = {
+  start: number
+  end: number
+}
+
 export type CheckMessage = {
   styleGuideItem: string
   message: string
+  matches: readonly CheckMessageMatch[]
 }
 
 export type TranslationCheckResult = {
@@ -211,6 +217,9 @@ export function check(
 - 指摘が1件もなければ `[]` を返す。
 - `entryIndex` は PO Interpretation の identity を使用する。
 - 日本語 v1 の公開結果に `translationFormIndex` を含めない。
+- `matches` は `entry.translations[0].text` に対する UTF-16 code unit offset の `[start, end)` とし、位置を特定できない場合は空配列を返す。
+- 同一指摘の複数箇所は1つの `CheckMessage.matches` に保持し、異なる指摘内容を統合しない。
+- HTML / Markdown などの表示表現を `CheckMessage` に含めない。
 - 個別チェックを外部 export しない。
 - Finding Coordination を設けない。
 - Design の優先関係と重複回避は各チェックの判定条件として扱う。
@@ -384,7 +393,7 @@ Validation Core を React / DOM から分離する。Presentation は日本語�
 
 ### QR-03 Result comprehensibility
 
-- 日本語チェックは各指摘に `styleGuideItem` と利用者向け `message` を返す。
+- 日本語チェックは各指摘に `styleGuideItem`、利用者向け `message`、位置を特定できる一致箇所の `matches` を返す。
 - 原文・翻訳等の表示に必要な追加情報は、Presentation / Check Orchestration を実装する時点で責務に沿って定義する。
 - 日本語ルールの内部構造を Presentation へ漏らさない。
 
@@ -406,7 +415,7 @@ Check Orchestration が1回の確認要求について返す全体結果。正�
 
 **CheckMessage**
 
-日本語 v1 の1指摘が返す最小情報。`styleGuideItem` と `message` を持つ。
+日本語 v1 の1指摘が返す最小情報。`styleGuideItem`、`message`、翻訳内の一致範囲を表す `matches` を持つ。
 
 **Locale**
 
