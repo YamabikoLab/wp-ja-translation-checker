@@ -465,6 +465,8 @@ export function checkSpacingBetweenHalfAndFullWidth(
     if (
       before !== undefined &&
       after !== undefined &&
+      before.spacingIndexes.length === 0 &&
+      after.spacingIndexes.length === 0 &&
       /\d/u.test(before.character) &&
       /\d/u.test(after.character)
     ) {
