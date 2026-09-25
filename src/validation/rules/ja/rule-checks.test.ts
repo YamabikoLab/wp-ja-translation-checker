@@ -23,6 +23,7 @@ import {
 import type { CheckMessage } from './rule-checks'
 
 type RuleCheck = (entry: TranslationEntry) => readonly CheckMessage[]
+type MessageWithoutMatches = Omit<CheckMessage, 'matches'>
 
 /**
  * 個別ルールテスト用の翻訳 entry を生成する。
@@ -54,8 +55,13 @@ function createEntry(
 function checkEntries(
   rule: RuleCheck,
   entries: readonly TranslationEntry[],
-): readonly CheckMessage[] {
-  return entries.flatMap((entry) => rule(entry))
+): readonly MessageWithoutMatches[] {
+  return entries.flatMap((entry) =>
+    rule(entry).map(({ styleGuideItem, message }) => ({
+      styleGuideItem,
+      message,
+    })),
+  )
 }
 
 /**
@@ -70,8 +76,13 @@ function getRuleMessages(
   rule: RuleCheck,
   source: string,
   translation: string,
-): readonly CheckMessage[] {
-  return rule(createEntry(7, source, translation))
+): readonly MessageWithoutMatches[] {
+  return rule(createEntry(7, source, translation)).map(
+    ({ styleGuideItem, message }) => ({
+      styleGuideItem,
+      message,
+    }),
+  )
 }
 
 describe('Japanese v1 rule 1-1', () => {
@@ -183,6 +194,30 @@ describe('Japanese v1 rule 1-1', () => {
         ),
       ]),
     ).toEqual([])
+  })
+
+  /**
+   * 同一指摘に複数の該当箇所がある場合の位置情報を確認する。
+   *
+   * 操作:
+   * - UTF-16 で2 code unit の絵文字に続けて、同じ不適切な句読点を2箇所含む翻訳を確認する。
+   *
+   * 期待結果:
+   * - 1件の CheckMessage に2箇所の [start, end) が UTF-16 code unit offset で保持される。
+   */
+  it('when the same punctuation finding occurs multiple times, should keep every UTF-16 match range in one message', () => {
+    expect(
+      checkJapanesePunctuation(createEntry(7, 'Message', '😀設定，保存，完了')),
+    ).toEqual([
+      {
+        styleGuideItem: '1-1 日本語の句読点',
+        message: '日本語の句読点は「、」「。」を使用してください',
+        matches: [
+          { start: 4, end: 5 },
+          { start: 7, end: 8 },
+        ],
+      },
+    ])
   })
 })
 
