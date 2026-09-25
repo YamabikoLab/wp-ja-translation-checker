@@ -217,6 +217,34 @@ export function serializeJson(
 }
 
 /**
+ * 1件の指摘を、人が共有して読める Markdown へ変換する。
+ *
+ * @param finding 出力対象の1指摘。
+ * @returns Severity、スタイルガイド項目、メッセージ、原文、翻訳を含む Markdown 文字列。
+ */
+export function serializeFindingMarkdown(finding: Finding): string {
+  const { source, translation } = getFindingText(finding)
+  const highlightedTranslation = formatMarkdownTranslation(
+    translation,
+    finding.matches,
+  )
+
+  return [
+    `### ${finding.severity}: ${finding.styleGuideItem}`,
+    '',
+    finding.message,
+    '',
+    '**原文**',
+    '',
+    source,
+    '',
+    '**翻訳**',
+    '',
+    highlightedTranslation,
+  ].join('\n')
+}
+
+/**
  * 現在の確認結果全体を人が共有して読める Markdown へ変換する。
  *
  * @param fileName 確認対象の PO ファイル名。
@@ -247,28 +275,9 @@ export function serializeMarkdown(
     return lines.join('\n')
   }
 
-  // 共有先でも1指摘ごとの情報を追えるよう、表示と同じ順序で原文・翻訳を付ける。
+  // 共有先でも1指摘ごとの情報を追えるよう、表示と同じ順序で Finding 単位の共通形式を利用する。
   for (const finding of findings) {
-    const { source, translation } = getFindingText(finding)
-    const highlightedTranslation = formatMarkdownTranslation(
-      translation,
-      finding.matches,
-    )
-
-    lines.push(
-      `### ${finding.severity}: ${finding.styleGuideItem}`,
-      '',
-      finding.message,
-      '',
-      '**原文**',
-      '',
-      source,
-      '',
-      '**翻訳**',
-      '',
-      highlightedTranslation,
-      '',
-    )
+    lines.push(serializeFindingMarkdown(finding), '')
   }
 
   return lines.join('\n').trimEnd()
