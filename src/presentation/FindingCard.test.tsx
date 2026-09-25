@@ -183,8 +183,9 @@ describe('FindingCard correction action', () => {
       screen.getByRole('button', { name: '修正して再チェック' }),
     )
 
-    expect(screen.getByRole('textbox', { name: '翻訳' })).toHaveValue(
-      'WordPressのテーブル',
-    )
+    expect(
+      (screen.getByRole('textbox', { name: '翻訳' }) as HTMLTextAreaElement)
+        .value,
+    ).toBe('WordPressのテーブル')
   })
 })
