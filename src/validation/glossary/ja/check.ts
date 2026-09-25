@@ -12,6 +12,7 @@ import type {
   GlossarySourceMatch,
 } from './glossary'
 
+/** 大小文字を無視して同一視する1原語と、その全登録候補を表す内部照合単位。 */
 type TermGroup = {
   originalTerm: string
   normalized: string
