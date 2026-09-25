@@ -10,6 +10,7 @@ import {
   checkHalfWidthCharacters,
   checkInnerParenthesesSpacing,
   checkJapanesePunctuation,
+  checkMiddleDot,
   checkNotAllowedExpression,
   checkNumberSpacing,
   checkParenthesesSpacing,
@@ -62,6 +63,7 @@ export function check(
       ...checkViewExpression(entry),
       ...checkNotAllowedExpression(entry),
       ...checkSorryPrefix(entry),
+      ...checkMiddleDot(entry),
     ]
 
     // 問題のない entry は公開結果へ含めず、1件以上の指摘がある場合だけ結果を生成する。
