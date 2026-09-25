@@ -84,6 +84,7 @@ const APOLOGY_PREFIXES = [
 type ProtectedText = {
   text: string
   protectedIndexes: ReadonlySet<number>
+  hiddenMarkupIndexes: ReadonlySet<number>
 }
 
 /**
@@ -95,31 +96,47 @@ type ProtectedText = {
  */
 function protectTechnicalText(text: string): ProtectedText {
   const protectedIndexes = new Set<number>()
+  const hiddenMarkupIndexes = new Set<number>()
   const patterns = [
-    /https?:\/\/[^\s]+/giu,
-    /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/giu,
-    /<[^>]+>/gu,
-    /\{\{\/?[A-Za-z][A-Za-z0-9_-]*\}\}/gu,
-    /%(?:\d+\$)?s/gu,
-    /%\([A-Za-z0-9_.-]+\)s/gu,
-    /(?:[A-Za-z_][A-Za-z0-9_]*|%(?:\d+\$)?s)\(\)/gu,
-    /`[^`]+`/gu,
-    /(?:[A-Z]:\\|\/(?![A-Za-z][A-Za-z0-9_-]*>))\S+/giu,
+    { pattern: /https?:\/\/[^\s]+/giu, hiddenMarkup: false },
+    {
+      pattern: /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/giu,
+      hiddenMarkup: false,
+    },
+    { pattern: /<[^>]+>/gu, hiddenMarkup: true },
+    {
+      pattern: /\{\{\/?[A-Za-z][A-Za-z0-9_-]*\}\}/gu,
+      hiddenMarkup: false,
+    },
+    { pattern: /%(?:\d+\$)?s/gu, hiddenMarkup: false },
+    { pattern: /%\([A-Za-z0-9_.-]+\)s/gu, hiddenMarkup: false },
+    {
+      pattern: /(?:[A-Za-z_][A-Za-z0-9_]*|%(?:\d+\$)?s)\(\)/gu,
+      hiddenMarkup: false,
+    },
+    { pattern: /`[^`]+`/gu, hiddenMarkup: false },
+    {
+      pattern: /(?:[A-Z]:\\|\/(?![A-Za-z][A-Za-z0-9_-]*>))\S+/giu,
+      hiddenMarkup: false,
+    },
   ]
 
   // 明示的に技術文字列と判断できる範囲だけを保護し、周囲の日本語本文は通常どおり確認する。
-  for (const pattern of patterns) {
+  for (const { pattern, hiddenMarkup } of patterns) {
     for (const match of text.matchAll(pattern)) {
       const start = match.index
       const value = match[0]
 
       for (let index = start; index < start + value.length; index += 1) {
         protectedIndexes.add(index)
+        if (hiddenMarkup) {
+          hiddenMarkupIndexes.add(index)
+        }
       }
     }
   }
 
-  return { text, protectedIndexes }
+  return { text, protectedIndexes, hiddenMarkupIndexes }
 }
 
 /**
@@ -138,7 +155,7 @@ function getTranslation(entry: TranslationEntry): string | undefined {
  * HTML 等の表示されない技術文字列は読み飛ばすが、本文側に実在するスペースは元文字列上の位置とともに保持する。
  *
  * @param text 確認対象の翻訳。
- * @param protectedIndexes 技術文字列として判定対象外にする文字位置。
+ * @param hiddenMarkupIndexes 表示本文から除外する HTML マークアップの文字位置。
  * @param startIndex 基準位置の直近から確認を開始する位置。
  * @param direction 前方は 1、後方は -1。
  * @param spacingCharacters スペースとして扱う文字集合。
@@ -146,7 +163,7 @@ function getTranslation(entry: TranslationEntry): string | undefined {
  */
 function getVisibleAdjacentText(
   text: string,
-  protectedIndexes: ReadonlySet<number>,
+  hiddenMarkupIndexes: ReadonlySet<number>,
   startIndex: number,
   direction: 1 | -1,
   spacingCharacters: ReadonlySet<string>,
@@ -162,7 +179,7 @@ function getVisibleAdjacentText(
 
   // 表示されない保護範囲を除外し、本文側のスペースと最初の可視文字だけを取得する。
   while (index >= 0 && index < text.length) {
-    if (protectedIndexes.has(index)) {
+    if (hiddenMarkupIndexes.has(index)) {
       index += direction
       continue
     }
@@ -342,7 +359,8 @@ export function checkSpacingBetweenHalfAndFullWidth(
     return []
   }
 
-  const { protectedIndexes } = protectTechnicalText(translation)
+  const { protectedIndexes, hiddenMarkupIndexes } =
+    protectTechnicalText(translation)
   const spacingText = translation.replace(/%\d*\$?d/gu, (value) =>
     '0'.repeat(value.length),
   )
@@ -453,14 +471,14 @@ export function checkSpacingBetweenHalfAndFullWidth(
 
     const before = getVisibleAdjacentText(
       translation,
-      protectedIndexes,
+      hiddenMarkupIndexes,
       index - 1,
       -1,
       spacingCharacters,
     )
     const after = getVisibleAdjacentText(
       translation,
-      protectedIndexes,
+      hiddenMarkupIndexes,
       index + 1,
       1,
       spacingCharacters,
