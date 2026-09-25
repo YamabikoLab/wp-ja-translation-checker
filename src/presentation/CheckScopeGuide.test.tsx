@@ -6,7 +6,7 @@
  * WTC のチェック範囲案内が、初期状態を邪魔せず必要な情報へ到達できることを React の表示境界から確認する。
  */
 
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { CheckScopeGuide } from './CheckScopeGuide'
 
@@ -47,6 +47,8 @@ describe('CheckScopeGuide', () => {
    */
   it('when guidance content is inspected, should expose the three check categories and detail links', () => {
     render(<CheckScopeGuide />)
+
+    fireEvent.click(screen.getByText('WTC のチェック範囲'))
 
     expect(screen.getByText('✅ 自動チェック')).toBeTruthy()
     expect(screen.getByText('△ 一部チェック')).toBeTruthy()
