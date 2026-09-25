@@ -28,7 +28,8 @@ export function CheckScopeGuide() {
 
       <div className={styles.scopeGuideContent}>
         <p>
-          WTC は WordPress 日本語翻訳スタイルガイドのうち、機械的に判定できる項目を確認します。チェック結果だけでスタイルガイド全体への準拠を保証するものではありません。
+          WTC は WordPress
+          日本語翻訳スタイルガイドのうち、機械的に判定できる項目を確認します。チェック結果だけでスタイルガイド全体への準拠を保証するものではありません。
         </p>
 
         <dl className={styles.scopeGuideLegend}>
@@ -38,7 +39,9 @@ export function CheckScopeGuide() {
           </div>
           <div>
             <dt>△ 一部チェック</dt>
-            <dd>特定の原文パターンなど、判定できる条件に限って確認する項目。</dd>
+            <dd>
+              特定の原文パターンなど、判定できる条件に限って確認する項目。
+            </dd>
           </div>
           <div>
             <dt>👀 手動確認</dt>
