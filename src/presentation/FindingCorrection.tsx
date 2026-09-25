@@ -36,6 +36,7 @@ export function FindingCorrection({ finding }: { finding: Finding }) {
   const translationIndex = finding.entry.translations[0]?.index ?? 0
   const [state, setState] = useState<CorrectionState>({ status: 'viewing' })
 
+  // 修正操作を開始していない間は元の指摘表示を保ち、利用者が明示的に開始した場合だけ一時編集領域を開く。
   if (state.status === 'viewing') {
     return (
       <div className={styles.correctionStart}>
@@ -78,6 +79,7 @@ export function FindingCorrection({ finding }: { finding: Finding }) {
     })
   }
 
+  // 再チェック済みの場合だけ、その修正案に対する Error / Warning を結果表示へ渡す。
   const checkedResult = state.status === 'checked' ? state.result[0] : undefined
   const messages =
     checkedResult === undefined
@@ -151,6 +153,7 @@ export function FindingCorrection({ finding }: { finding: Finding }) {
             <>
               <h4>再チェック結果</h4>
               <div className={styles.correctionFindings}>
+                {/* 修正案で残っている各指摘を、通常結果と同じ判断材料を確認できる単位で表示する。 */}
                 {messages.map(({ severity, message }, index) => (
                   <section
                     key={`${severity}-${message.styleGuideItem}-${index}`}
