@@ -234,7 +234,7 @@ describe('FindingCard correction action', () => {
     await screen.findByRole('button', { name: 'コピーしました' })
 
     expect(writeText).toHaveBeenCalledTimes(1)
-    expect(writeText.mock.calls[0]?.[0]).toContain('WordPressのテーブル')
+    expect(writeText.mock.calls[0]?.[0]).toContain('WordPres**sの**テーブル')
     expect(writeText.mock.calls[0]?.[0]).not.toContain('WordPress のテーブル')
   })
 })
