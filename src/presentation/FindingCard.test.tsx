@@ -240,3 +240,69 @@ describe('FindingCard correction action', () => {
     expect(writeText.mock.calls[0]?.[0]).not.toContain('WordPress のテーブル')
   })
 })
+
+describe('FindingCard Glossary presentation', () => {
+  const glossaryFinding: Finding = {
+    key: '0-glossary-1-0',
+    kind: 'glossary',
+    severity: 'Warning',
+    styleGuideItem: 'Glossary',
+    message: '「website」の Glossary 訳語を確認してください',
+    matches: [],
+    translationFormIndex: 1,
+    entry: {
+      entryIndex: 0,
+      source: {
+        singular: 'website',
+        plural: 'websites for website',
+      },
+      translations: [
+        { index: 0, text: 'サイト' },
+        { index: 1, text: 'ウェブページ' },
+      ],
+    },
+    glossary: {
+      entryIndex: 0,
+      translationFormIndex: 1,
+      originalTerm: 'website',
+      candidates: [
+        {
+          original: 'website',
+          translation: 'サイト',
+          partOfSpeech: 'noun',
+          comment: 'Web site の訳語。',
+        },
+      ],
+      currentTranslation: 'ウェブページ',
+      sourceMatches: [
+        { source: 'singular', start: 0, end: 7 },
+        { source: 'plural', start: 13, end: 20 },
+      ],
+    },
+  }
+
+  /**
+   * Glossary Warning も通常カードで対象原語、対象翻訳フォーム、候補訳を確認できることを確認する。
+   *
+   * 操作:
+   * - Glossary Finding を共通カードへ表示する。
+   *
+   * 期待結果:
+   * - 原文上の Glossary term が強調される。
+   * - Warning 対象の msgstr[n] が翻訳として表示される。
+   * - Glossary 候補と公式参照リンクを確認できる。
+   */
+  it('when a glossary finding is shown, should expose its source match, target translation form, candidates, and glossary reference', () => {
+    const { container } = render(<FindingCard finding={glossaryFinding} />)
+
+    expect(container.querySelectorAll('mark')).toHaveLength(2)
+    expect(screen.getByText('ウェブページ')).toBeTruthy()
+    expect(screen.getByText('サイト')).toBeTruthy()
+    expect(screen.getByText('Web site の訳語。')).toBeTruthy()
+    expect(
+      screen.getByRole('link', {
+        name: 'WordPress.org 日本語 Glossary を確認',
+      }),
+    ).toBeTruthy()
+  })
+})
