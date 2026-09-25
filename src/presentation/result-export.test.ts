@@ -30,10 +30,12 @@ function createFinding(
 ): Finding {
   return {
     key: overrides.key ?? '0-error-0',
+    kind: 'style-guide',
     severity: overrides.severity ?? 'Error',
     styleGuideItem: overrides.styleGuideItem ?? '1-1',
     message: overrides.message ?? '句読点を確認してください。',
     matches: overrides.matches ?? [{ start: 5, end: 6 }],
+    translationFormIndex: 0,
     entry: {
       entryIndex: 0,
       source: {
@@ -74,8 +76,8 @@ describe('CSV result export', () => {
     expect(csv.startsWith('\uFEFF')).toBe(true)
     expect(csv.slice(1).split('\r\n')).toEqual([
       'type,severity,styleGuideItem,message,source,translation,entryIndex,translationFormIndex,originalTerm,glossaryTranslations,partsOfSpeech,comments',
-      'style-guide,Error,1-1,句読点を確認してください。,"Hello, world","こんにちは, 世界",,,,,,',
-      'style-guide,Warning,3-4,文脈を確認してください。,"Hello, world","こんにちは, 世界",,,,,,',
+      'style-guide,Error,1-1,句読点を確認してください。,"Hello, world","こんにちは, 世界",0,0,,,,',
+      'style-guide,Warning,3-4,文脈を確認してください。,"Hello, world","こんにちは, 世界",0,0,,,,',
     ])
   })
 
@@ -151,23 +153,28 @@ describe('JSON result export', () => {
       },
       findings: [
         {
+          type: 'style-guide',
           severity: 'error',
           styleGuideItem: '1-1',
           message: '句読点を確認してください。',
           source: 'Hello, world',
           translation: 'こんにちは, 世界',
+          entryIndex: 0,
+          translationFormIndex: 0,
           matches: [{ start: 5, end: 6 }],
         },
         {
+          type: 'style-guide',
           severity: 'warning',
           styleGuideItem: '3-4',
           message: '句読点を確認してください。',
           source: 'Hello, world',
           translation: 'こんにちは, 世界',
+          entryIndex: 0,
+          translationFormIndex: 0,
           matches: [{ start: 5, end: 6 }],
         },
       ],
-      glossaryFindings: [],
     })
   })
 
@@ -189,7 +196,6 @@ describe('JSON result export', () => {
         warnings: 0,
       },
       findings: [],
-      glossaryFindings: [],
     })
   })
 })
@@ -373,14 +379,20 @@ describe('Markdown result export', () => {
 })
 
 describe('Glossary result export', () => {
-  const glossaryFinding = {
+  const glossaryFinding: Finding = {
     key: '0-glossary-0-0',
+    kind: 'glossary',
+    severity: 'Warning',
+    styleGuideItem: 'Glossary',
+    message: '「website」の Glossary 訳語を確認してください',
+    matches: [],
+    translationFormIndex: 0,
     entry: {
       entryIndex: 0,
       source: { singular: 'Visit website' },
       translations: [{ index: 0, text: 'Web ページを見る' }],
     },
-    result: {
+    glossary: {
       entryIndex: 0,
       translationFormIndex: 0,
       originalTerm: 'website',
@@ -390,41 +402,39 @@ describe('Glossary result export', () => {
       currentTranslation: 'Web ページを見る',
       sourceMatches: [{ source: 'singular', start: 6, end: 13 }],
     },
-  } as const
+  }
 
   /**
-   * Glossary Warning を共有・保存するとき、判断に必要な識別情報と候補情報を各出力形式で失わないことを確認する。
-   *
-   * 事前条件:
-   * - 原語、候補訳、品詞、entryIndex、translationFormIndex を持つ Glossary Warning がある。
+   * Glossary Warning が共通 Finding として各出力形式へ含まれることを確認する。
    *
    * 操作:
-   * - CSV / JSON / Markdown へ変換する。
+   * - 共通指摘一覧を CSV / JSON / Markdown へ変換する。
    *
    * 期待結果:
-   * - Warning 件数に加算される。
-   * - 各形式に Glossary 種別、原語、候補訳、対象位置、現在の翻訳が含まれる。
+   * - 各形式で Glossary の種別、候補訳、対象翻訳を確認できる。
    */
-  it('when glossary warning exists, should include it in CSV JSON and Markdown exports', () => {
-    expect(serializeCsv([], [glossaryFinding])).toContain(
-      'glossary,Warning,,Glossary の訳語を確認してください,Visit website,Web ページを見る,0,0,website,サイト,noun,',
+  it('when glossary finding exists, should export it through the common finding collection', () => {
+    expect(serializeCsv([glossaryFinding])).toContain(
+      'glossary,Warning,Glossary,「website」の Glossary 訳語を確認してください,Visit website,Web ページを見る,0,0,website,サイト,noun,',
     )
+
     expect(
-      JSON.parse(serializeJson('plugin-ja.po', [], [glossaryFinding])),
+      JSON.parse(serializeJson('plugin-ja.po', [glossaryFinding])),
     ).toMatchObject({
       summary: { errors: 0, warnings: 1 },
-      glossaryFindings: [
+      findings: [
         {
           type: 'glossary',
           originalTerm: 'website',
-          source: 'Visit website',
-          currentTranslation: 'Web ページを見る',
+          translation: 'Web ページを見る',
+          translationFormIndex: 0,
         },
       ],
     })
-    const markdown = serializeMarkdown('plugin-ja.po', [], [glossaryFinding])
-    expect(markdown).toContain('entryIndex: 0')
-    expect(markdown).toContain('translationFormIndex: 0')
+
+    const markdown = serializeMarkdown('plugin-ja.po', [glossaryFinding])
+    expect(markdown).toContain('### Warning: Glossary')
+    expect(markdown).toContain('「website」の Glossary 訳語を確認してください')
     expect(markdown).toContain('- サイト / noun')
   })
 })
