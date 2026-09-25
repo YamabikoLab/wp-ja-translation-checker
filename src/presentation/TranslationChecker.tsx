@@ -268,6 +268,7 @@ function PaginationControls({
   const editingRef = useRef(false)
 
   useEffect(() => {
+    // 他方のページ操作で確定ページが変わっても、利用者が入力途中の文字列は上書きしない。
     if (!editingRef.current) {
       setPageDraft(String(currentPage))
     }
@@ -281,6 +282,7 @@ function PaginationControls({
 
     editingRef.current = false
 
+    // 直接入力では、存在するページを表す整数だけを確定済みページとして採用する。
     if (Number.isInteger(nextPage) && nextPage >= 1 && nextPage <= totalPages) {
       setPageDraft(String(nextPage))
       onPageChange(nextPage)
@@ -311,6 +313,7 @@ function PaginationControls({
           </select>
         </label>
 
+        {/* 1ページだけの場合は移動操作を省き、表示件数の選択だけを残す。 */}
         {totalPages > 1 && (
           <>
             <nav
@@ -567,6 +570,7 @@ export function TranslationChecker() {
    * @param nextPageSize 新しい1ページあたりの表示件数。
    */
   const handlePageSizeChange = (nextPageSize: number) => {
+    // 画面で提供している表示件数だけを共有状態へ採用する。
     if (
       !PAGE_SIZE_OPTIONS.includes(
         nextPageSize as (typeof PAGE_SIZE_OPTIONS)[number],
