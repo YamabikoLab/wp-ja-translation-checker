@@ -113,6 +113,12 @@ const CSV_HEADERS = [
   'message',
   'source',
   'translation',
+  'entryIndex',
+  'translationFormIndex',
+  'originalTerm',
+  'glossaryTranslations',
+  'partsOfSpeech',
+  'comments',
 ] as const
 
 /**
@@ -168,6 +174,12 @@ export function serializeCsv(
         finding.message,
         source,
         translation,
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
       ]
         .map(escapeCsvField)
         .join(','),
@@ -183,6 +195,21 @@ export function serializeCsv(
         finding.result.originalTerm,
         finding.entry.source.singular,
         finding.result.currentTranslation,
+        String(finding.result.entryIndex),
+        String(finding.result.translationFormIndex),
+        finding.result.originalTerm,
+        finding.result.candidates
+          .map((candidate) => candidate.translation)
+          .filter((translation) => translation !== '')
+          .join(' / '),
+        finding.result.candidates
+          .map((candidate) => candidate.partOfSpeech ?? '')
+          .filter((partOfSpeech) => partOfSpeech !== '')
+          .join(' / '),
+        finding.result.candidates
+          .map((candidate) => candidate.comment ?? '')
+          .filter((comment) => comment !== '')
+          .join(' / '),
       ]
         .map(escapeCsvField)
         .join(','),
@@ -240,6 +267,7 @@ export function serializeJson(
         translationFormIndex: finding.result.translationFormIndex,
         originalTerm: finding.result.originalTerm,
         candidates: finding.result.candidates,
+        source: finding.entry.source.singular,
         currentTranslation: finding.result.currentTranslation,
       })),
     },
@@ -319,9 +347,21 @@ export function serializeMarkdown(
       '',
       `原語: ${finding.result.originalTerm}`,
       '',
-      `Glossary の訳語: ${finding.result.candidates
-        .map((candidate) => candidate.translation || '（訳文へ入れない）')
-        .join(' / ')}`,
+      `entryIndex: ${finding.result.entryIndex}`,
+      `translationFormIndex: ${finding.result.translationFormIndex}`,
+      '',
+      `原文: ${finding.entry.source.singular}`,
+      '',
+      `Glossary の候補:\n${finding.result.candidates
+        .map((candidate) => {
+          const details = [
+            candidate.translation || '（訳文へ入れない）',
+            candidate.partOfSpeech,
+            candidate.comment,
+          ].filter((value) => value !== undefined && value !== '')
+          return `- ${details.join(' / ')}`
+        })
+        .join('\n')}`,
       '',
       `現在の翻訳: ${finding.result.currentTranslation}`,
       '',
