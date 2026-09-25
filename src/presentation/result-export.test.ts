@@ -392,6 +392,19 @@ describe('Glossary result export', () => {
     },
   } as const
 
+  /**
+   * Glossary Warning を共有・保存するとき、判断に必要な識別情報と候補情報を各出力形式で失わないことを確認する。
+   *
+   * 事前条件:
+   * - 原語、候補訳、品詞、entryIndex、translationFormIndex を持つ Glossary Warning がある。
+   *
+   * 操作:
+   * - CSV / JSON / Markdown へ変換する。
+   *
+   * 期待結果:
+   * - Warning 件数に加算される。
+   * - 各形式に Glossary 種別、原語、候補訳、対象位置、現在の翻訳が含まれる。
+   */
   it('when glossary warning exists, should include it in CSV JSON and Markdown exports', () => {
     expect(serializeCsv([], [glossaryFinding])).toContain(
       'glossary,Warning,,Glossary の訳語を確認してください,Visit website,Web ページを見る,0,0,website,サイト,noun,',
