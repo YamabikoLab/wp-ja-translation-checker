@@ -14,17 +14,20 @@ const STYLE_GUIDE_URL =
   'https://ja.wordpress.org/team/handbook/translation/translation-style-guide/'
 
 /**
- * 結果概要から開閉できる WTC のチェック範囲案内。
+ * 結果概要に常時表示する WTC のチェック範囲案内。
  *
  * @returns 自動チェック・一部チェック・手動確認の役割分担と詳細資料への導線。
  */
 export function CheckScopeGuide() {
   return (
-    <details className={styles.scopeGuide}>
-      <summary>
-        <span>WTC のチェック範囲</span>
+    <section
+      className={styles.scopeGuide}
+      aria-labelledby="check-scope-guide-title"
+    >
+      <div className={styles.scopeGuideHeader}>
+        <h3 id="check-scope-guide-title">WTC のチェック範囲</h3>
         <span className={styles.scopeGuideSummaryNote}>12項目をチェック</span>
-      </summary>
+      </div>
 
       <div className={styles.scopeGuideContent}>
         <p>
@@ -73,6 +76,6 @@ export function CheckScopeGuide() {
           </a>
         </p>
       </div>
-    </details>
+    </section>
   )
 }
