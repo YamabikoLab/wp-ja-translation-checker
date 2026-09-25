@@ -211,7 +211,7 @@ describe('Finding Markdown export', () => {
       translation: '項目 1 と項目 2',
       matches: [
         { start: 2, end: 5 },
-        { start: 8, end: 11 },
+        { start: 8, end: 10 },
       ],
     })
 
