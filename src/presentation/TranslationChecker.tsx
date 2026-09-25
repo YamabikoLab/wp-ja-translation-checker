@@ -57,10 +57,12 @@ export function TranslationChecker() {
   const focusTarget = getCompletionFocusTarget(state)
 
   useEffect(() => {
+    // 確認不能時だけ重要なフィードバック領域へフォーカスを移し、通常操作中のフォーカスは奪わない。
     if (focusTarget === 'feedback') {
       feedbackRef.current?.focus()
     }
 
+    // 正常完了時だけ結果概要へフォーカスを移し、確認完了をキーボード利用者へ到達させる。
     if (focusTarget === 'summary') {
       summaryRef.current?.focus()
     }
@@ -74,6 +76,7 @@ export function TranslationChecker() {
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
 
+    // ブラウザーから実ファイルが選択されていない変更イベントは現在入力を変更しない。
     if (file === undefined) {
       return
     }
@@ -91,12 +94,15 @@ export function TranslationChecker() {
    * 同じ File の確認が進行中なら重複実行せず、入力差し替え後の古い完了結果は reducer が適用しない。
    */
   const handleCheck = async () => {
+    // 入力がない状態と確認進行中は、新しい確認要求を開始できない。
     if (state.status === 'no-file' || state.status === 'checking') {
       return
     }
 
     const file = state.file
 
+    // 同一 File の確認がすでに進行中なら、重複した非同期処理を開始しない。
+    // 入力差し替え後の古い完了処理が、新しい File の進行中状態を解除しないよう一致時だけクリアする。
     if (activeFileRef.current === file) {
       return
     }
@@ -112,6 +118,7 @@ export function TranslationChecker() {
     try {
       source = await file.text()
     } catch {
+      // この File が現在も進行中の入力である場合だけ進行中マーカーを解除する。
       if (activeFileRef.current === file) {
         activeFileRef.current = null
       }
@@ -141,6 +148,9 @@ export function TranslationChecker() {
     extension: 'csv' | 'json',
     mediaType: string,
   ) => {
+    // 正常完了結果がない状態では、過去または途中のデータを保存対象にしない。
+    // 正常完了結果がない状態では JSON 出力を開始しない。
+    // 正常完了結果がない状態では Markdown コピーを開始しない。
     if (state.status !== 'success') {
       return
     }
@@ -194,6 +204,7 @@ export function TranslationChecker() {
       return
     }
 
+    // Clipboard API を利用できない環境はコピー失敗として利用者へ通知する。
     if (navigator.clipboard?.writeText === undefined) {
       setCopyFeedback('failure')
       return
@@ -226,6 +237,7 @@ export function TranslationChecker() {
    */
   const handlePageSizeChange = (nextPageSize: number) => {
     // 画面で提供している表示件数だけを共有状態へ採用する。
+    // 画面が提供していない表示件数は Presentation 状態へ取り込まない。
     if (
       !PAGE_SIZE_OPTIONS.includes(
         nextPageSize as (typeof PAGE_SIZE_OPTIONS)[number],
@@ -271,6 +283,7 @@ export function TranslationChecker() {
           />
         </label>
 
+        {/* 実ファイルが選択済みの場合だけ、現在の確認対象を利用者へ示す。 */}
         {selectedFile !== null && (
           <p className={styles.selectedFile}>
             選択中: <strong>{selectedFile.name}</strong>
@@ -286,6 +299,7 @@ export function TranslationChecker() {
           {state.status === 'checking' ? '確認中…' : '確認する'}
         </button>
 
+        {/* 確認処理の進行中だけ状態通知を表示する。 */}
         {state.status === 'checking' && (
           <p className={styles.checking} role="status">
             {state.file.name} を確認しています。
@@ -293,6 +307,7 @@ export function TranslationChecker() {
         )}
       </section>
 
+      {/* 確認不能状態だけ、原因に応じたフィードバック領域を表示する。 */}
       {state.status === 'feedback' && (
         <section
           ref={feedbackRef}
@@ -304,6 +319,7 @@ export function TranslationChecker() {
         </section>
       )}
 
+      {/* 正常完了後だけ、結果概要と各指摘を表示する。 */}
       {state.status === 'success' && (
         <>
           <section
@@ -328,6 +344,7 @@ export function TranslationChecker() {
               </div>
             </dl>
 
+            {/* Style Guide と Glossary の双方で指摘がない場合だけ、指摘なしの案内を表示する。 */}
             {summary.totalCount === 0 && (
               <div className={styles.noFindings}>
                 <p>WTC の自動チェックでは問題が見つかりませんでした。</p>
@@ -368,11 +385,13 @@ export function TranslationChecker() {
                   Markdown をコピー
                 </button>
               </div>
+              {/* コピー成功時だけ完了通知を表示する。 */}
               {copyFeedback === 'success' && (
                 <p className={styles.copySuccess} role="status">
                   Markdown をクリップボードへコピーしました。
                 </p>
               )}
+              {/* コピー失敗時だけ、利用者が対処できるエラー通知を表示する。 */}
               {copyFeedback === 'failure' && (
                 <p className={styles.copyFailure} role="alert">
                   Markdown
@@ -382,6 +401,7 @@ export function TranslationChecker() {
             </div>
           </section>
 
+          {/* Glossary Warning が存在する場合だけ、Style Guide と分離した確認領域を表示する。 */}
           {glossaryFindings.length > 0 && (
             <section
               className={styles.findingsSection}
@@ -403,6 +423,7 @@ export function TranslationChecker() {
             </section>
           )}
 
+          {/* Style Guide 指摘が存在する場合だけ、既存の指摘一覧と絞り込み操作を表示する。 */}
           {findings.length > 0 && (
             <section
               className={styles.findingsSection}
