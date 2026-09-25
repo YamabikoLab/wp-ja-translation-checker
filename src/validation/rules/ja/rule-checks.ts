@@ -151,7 +151,11 @@ function getVisibleAdjacentText(
   direction: 1 | -1,
   spacingCharacters: ReadonlySet<string>,
 ):
-  | { character: string; characterIndex: number; spacingIndexes: readonly number[] }
+  | {
+      character: string
+      characterIndex: number
+      spacingIndexes: readonly number[]
+    }
   | undefined {
   let index = startIndex
   const spacingIndexes: number[] = []
@@ -487,11 +491,7 @@ export function checkSpacingBetweenHalfAndFullWidth(
           !validColonSpacingCharacters.has(translation[spacingIndex] ?? ''),
       )
 
-      if (
-        spacingCount === 0 ||
-        spacingCount > 1 ||
-        hasInvalidSpacing
-      ) {
+      if (spacingCount === 0 || spacingCount > 1 || hasInvalidSpacing) {
         colonAfterMatches.push({
           start: index,
           end: after.characterIndex + 1,

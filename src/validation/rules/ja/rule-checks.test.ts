@@ -582,11 +582,7 @@ describe('Japanese v1 rule 1-4', () => {
   it('when one trailing space follows a colon across protected markup, should not report rule 1-4', () => {
     expect(
       checkEntries(checkSpacingBetweenHalfAndFullWidth, [
-        createEntry(
-          0,
-          'Ads',
-          '<strong>Ads:</strong> Google 広告',
-        ),
+        createEntry(0, 'Ads', '<strong>Ads:</strong> Google 広告'),
       ]),
     ).toEqual([])
   })
@@ -1397,7 +1393,6 @@ describe('Japanese v1 match ranges', () => {
       ]),
     )
   })
-
 
   /**
    * 保護された終了タグをまたぐコロン前後の指摘でも、元の翻訳文字列上の位置を保持することを確認する。
