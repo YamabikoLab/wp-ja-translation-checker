@@ -206,7 +206,8 @@ describe('Finding Markdown export', () => {
   it('when an error finding contains multiple matches and line breaks, should serialize one complete finding', () => {
     const finding = createFinding({
       styleGuideItem: '1-9 半角数字前後の不要スペース',
-      message: '半角数字と日本語の間のスペースは削除してください\n再確認してください。',
+      message:
+        '半角数字と日本語の間のスペースは削除してください\n再確認してください。',
       source: 'Line 1\nLine 2',
       translation: '項目 1 と項目 2',
       matches: [
