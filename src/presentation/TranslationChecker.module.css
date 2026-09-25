@@ -117,6 +117,7 @@
 
 .checkButton,
 .exportButton,
+.findingCopyButton,
 .textToggle {
   width: fit-content;
   border: 0;
@@ -139,6 +140,7 @@
 
 .checkButton:focus-visible,
 .exportButton:focus-visible,
+.findingCopyButton:focus-visible,
 .textToggle:focus-visible,
 .fileInput input:focus-visible,
 .ruleFilter select:focus-visible,
@@ -514,21 +516,39 @@
   border-top: 1px dashed var(--color-border);
 }
 
-.guideReference {
+.findingFooter {
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
   justify-content: space-between;
-  gap: 10px 18px;
-  margin: 0;
+  gap: 12px 18px;
   padding: 18px 24px;
   border-top: 1px solid var(--color-border);
   background: var(--color-subtle);
+}
+
+.guideReference {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  margin: 0;
   font-size: 0.9rem;
 }
 
 .guideReference a {
   color: var(--color-accent);
   font-weight: 700;
+}
+
+.findingCopyButton {
+  flex: 0 0 auto;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-heading);
+}
+
+.findingCopyButton:hover {
+  border-color: var(--color-accent);
 }
 
 @media (max-width: 720px) {
@@ -575,7 +595,9 @@
     overflow-x: auto;
   }
 
-  .findingHeader {
+  .findingHeader,
+  .findingFooter {
+    align-items: flex-start;
     flex-direction: column;
   }
 }
