@@ -28,6 +28,7 @@ import { FindingCard } from './FindingCard'
 import { PaginationControls } from './PaginationControls'
 import { serializeCsv, serializeJson, serializeMarkdown } from './result-export'
 import styles from './TranslationChecker.module.css'
+
 const STYLE_GUIDE_LAST_UPDATED = '2026年8月28日'
 
 /** Markdown コピー操作の結果として利用者へ通知する状態。 */
