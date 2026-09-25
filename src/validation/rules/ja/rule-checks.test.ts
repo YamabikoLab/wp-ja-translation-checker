@@ -649,6 +649,24 @@ describe('Japanese v1 rule 1-4', () => {
     ).toEqual([])
   })
 
+
+  /**
+   * テンプレートマークアップをまたいだコロン後の半角スペースも、表示本文上の正しいスペースとして扱うことを確認する。
+   *
+   * 操作:
+   * - コロン直後に終了テンプレートマークアップがあり、その後に半角スペース1つと日本語本文が続く翻訳を確認する。
+   *
+   * 期待結果:
+   * - 1-4 の指摘は返らない。
+   */
+  it('when one trailing space follows a colon across template markup, should not report rule 1-4', () => {
+    expect(
+      checkEntries(checkSpacingBetweenHalfAndFullWidth, [
+        createEntry(0, 'Ads', '{{Link}}Ads:{{/Link}} Google 広告'),
+      ]),
+    ).toEqual([])
+  })
+
   /**
    * 終了タグをまたいでもコロン後にスペースがなければ 1-4 として検出することを確認する。
    *
