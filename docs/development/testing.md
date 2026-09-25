@@ -24,6 +24,8 @@ npm run lint
 npm test
 npm run build
 npm run validate
+npm run audit
+npm run knip
 ```
 
 - `npm run format:check` checks repository formatting with Prettier.
@@ -31,9 +33,11 @@ npm run validate
 - `npm test` runs the Vitest suite once with `vitest run`.
 - `npm run build` runs the TypeScript build and creates the Vite production bundle.
 - `npm run validate` runs the full application validation sequence in this order: formatting, linting, tests, then build.
+- `npm run audit` checks npm dependencies and fails when npm reports a high or critical vulnerability.
+- `npm run knip` checks for unused files, dependencies, and exports.
 - The build writes generated output under `dist/`; do not commit it.
 
-Use `npm run validate` as the repository-wide completion check when all application validation steps apply. PR Validation runs this same completion check only when started manually with GitHub Actions. Keep `npm test` scoped to Vitest so automated tests can be run independently from formatting, linting, and build validation.
+Use `npm run validate` as the repository-wide application completion check when all application validation steps apply. PR Validation runs this check, `npm run audit`, and Knip when started manually with GitHub Actions. Knip is enabled by default and can be disabled with the `run_knip` workflow input for manual runs. Keep `npm test` scoped to Vitest so automated tests can be run independently from formatting, linting, and build validation.
 
 Check changed lines for whitespace errors with:
 
@@ -45,7 +49,9 @@ Vitest uses its Node environment by default. Add a DOM environment or React DOM 
 
 ## Security validation
 
-Gitleaks runs in GitHub Actions as a dedicated security workflow for pull requests, pushes to `main`, and manual runs. It scans the full Git history with the standard Gitleaks rules and redacts detected secret values from logs. This responsibility remains separate from PR Validation, which covers application quality checks.
+Gitleaks runs in GitHub Actions as a dedicated security workflow for pull requests, pushes to `main`, and manual runs. It scans the full Git history with the standard Gitleaks rules and redacts detected secret values from logs.
+
+Dependency vulnerability checks use `npm run audit` and run as part of PR Validation. Gitleaks remains separate because it scans repository history for secrets rather than npm dependency vulnerabilities.
 
 Gitleaks is not an npm validation command and is not required as a local development dependency.
 
@@ -64,7 +70,7 @@ They are long-running or interactive and should not be treated as handoff valida
 
 - Documentation-only changes: `git diff --check origin/main...HEAD`.
 - JavaScript, TypeScript, JSX, TSX, test, or configuration changes that affect application compilation: `npm run validate` and the repository check.
-- Dependency manifest or lock-file changes: run `npm run validate` after `npm ci`, and keep `package.json` and `package-lock.json` aligned.
+- Dependency manifest or lock-file changes: run `npm run validate`, `npm run audit`, and `npm run knip` after `npm ci`, and keep `package.json` and `package-lock.json` aligned.
 - GitHub Actions workflow changes: review the final workflow diff and run `git diff --check origin/main...HEAD`.
 - Mixed changes: combine the applicable groups.
 
