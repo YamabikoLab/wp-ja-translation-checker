@@ -96,17 +96,64 @@ function Feedback({
  * @param props.text 表示対象の文字列。
  * @returns 長文時だけ展開操作を持つ文字列表示。
  */
-function ExpandableText({ text }: { text: string }) {
+
+function ExpandableText({
+  text,
+  matches = [],
+}: {
+  text: string
+  matches?: Finding['matches']
+}) {
   const [expanded, setExpanded] = useState(false)
   const { isLong, collapsed } = getCollapsedText(text)
+  const displayedText = isLong && !expanded ? collapsed : text
+  const originalVisibleEnd =
+    isLong && !expanded ? collapsed.slice(0, -1).length : text.length
+  const visibleMatches = matches
+    .map(({ start, end }) => ({
+      start: Math.max(0, start),
+      end: Math.min(end, originalVisibleEnd),
+    }))
+    .filter(({ start, end }) => start < end)
+    .toSorted((left, right) => left.start - right.start || left.end - right.end)
+  const normalizedMatches: Array<Finding['matches'][number]> = []
+
+  // 重複・隣接する範囲を1つへまとめ、同じ文字を欠落・重複させずに表示する。
+  for (const match of visibleMatches) {
+    const previous = normalizedMatches.at(-1)
+
+    if (previous !== undefined && match.start <= previous.end) {
+      normalizedMatches[normalizedMatches.length - 1] = {
+        start: previous.start,
+        end: Math.max(previous.end, match.end),
+      }
+    } else {
+      normalizedMatches.push(match)
+    }
+  }
+
+  const content = []
+  let cursor = 0
+
+  // 元の翻訳文字列を順番どおり保持し、一致範囲だけを視覚的な強調へ変換する。
+  for (const [index, match] of normalizedMatches.entries()) {
+    content.push(displayedText.slice(cursor, match.start))
+    content.push(
+      <mark className={styles.ngMatch} key={`${match.start}-${match.end}-${index}`}>
+        {displayedText.slice(match.start, match.end)}
+      </mark>,
+    )
+    cursor = match.end
+  }
+  content.push(displayedText.slice(cursor))
 
   if (!isLong) {
-    return <p className={styles.translationText}>{text}</p>
+    return <p className={styles.translationText}>{content}</p>
   }
 
   return (
     <div>
-      <p className={styles.translationText}>{expanded ? text : collapsed}</p>
+      <p className={styles.translationText}>{content}</p>
       <button
         type="button"
         className={styles.textToggle}
@@ -157,7 +204,7 @@ function FindingCard({ finding }: { finding: Finding }) {
         </section>
         <section className={styles.comparisonPanel}>
           <h3>翻訳</h3>
-          <ExpandableText text={translation} />
+          <ExpandableText text={translation} matches={finding.matches} />
         </section>
       </div>
 
